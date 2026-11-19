@@ -8,7 +8,7 @@ import {
   motion,
   type Variants,
 } from "motion/react";
-import { ArrowLeft, ArrowRight, CheckCircle2, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Save, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/common/BrandLogo";
 import { FieldError, fadeUp } from "@/features/form/form-controls";
@@ -21,8 +21,15 @@ import {
   StepReview,
   type StepErrors,
 } from "@/features/onboarding/components/steps";
-import { ONBOARDING_STEPS, type OnboardingData, type OnboardingProject } from "@/types/onboarding";
+import {
+  ONBOARDING_STEPS,
+  INDIAN_STATES,
+  EDUCATION_LEVELS,
+  type OnboardingData,
+  type OnboardingProject,
+} from "@/types/onboarding";
 import { UploadResumeButton } from "@/components/resume/upload-resume-button";
+import type { ParsedResumePayload } from "@/lib/resume/parser";
 
 /* --------------------------------- Animation -------------------------------- */
 
@@ -167,6 +174,131 @@ function parseProjects(val: unknown): OnboardingProject[] {
   return [];
 }
 
+function cleanMobile(raw?: string): string {
+  if (!raw) return "";
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 12 && digits.startsWith("91")) {
+    return digits.slice(2);
+  }
+  if (digits.length === 11 && digits.startsWith("0")) {
+    return digits.slice(1);
+  }
+  if (digits.length === 10) {
+    return digits;
+  }
+  return digits.slice(-10);
+}
+
+function extractCity(location?: string): string {
+  if (!location) return "";
+  const parts = location.split(",").map((s) => s.trim()).filter(Boolean);
+  return parts.length > 0 ? parts[0] : "";
+}
+
+function extractState(location?: string): string {
+  if (!location) return "";
+  const lower = location.toLowerCase();
+  for (const st of INDIAN_STATES) {
+    if (lower.includes(st.toLowerCase())) {
+      return st;
+    }
+  }
+  if (lower.includes("bengaluru") || lower.includes("bangalore") || lower.includes("mysuru") || lower.includes("mangalore")) return "Karnataka";
+  if (lower.includes("mumbai") || lower.includes("pune") || lower.includes("nagpur")) return "Maharashtra";
+  if (lower.includes("noida")) return "Uttar Pradesh";
+  if (lower.includes("gurgaon") || lower.includes("gurugram")) return "Haryana";
+  if (lower.includes("delhi")) return "Delhi";
+  if (lower.includes("hyderabad")) return "Telangana";
+  if (lower.includes("chennai") || lower.includes("coimbatore")) return "Tamil Nadu";
+  if (lower.includes("kolkata")) return "West Bengal";
+  if (lower.includes("ahmedabad")) return "Gujarat";
+  if (lower.includes("jaipur")) return "Rajasthan";
+  if (lower.includes("kochi") || lower.includes("trivandrum")) return "Kerala";
+  return "";
+}
+
+function inferEducationLevel(degree?: string): string {
+  if (!degree) return "";
+  const d = degree.toLowerCase();
+  if (/\b(?:b\.?tech|b\.?e\.?|bachelor of technology|bachelor of engineering)\b/i.test(d)) return "BE / B.Tech";
+  if (/\b(?:m\.?tech|m\.?e\.?|master of technology|master of engineering)\b/i.test(d)) return "ME / M.Tech";
+  if (/\b(?:bca|bachelor of computer applications)\b/i.test(d)) return "BCA";
+  if (/\b(?:mca|master of computer applications)\b/i.test(d)) return "MCA";
+  if (/\b(?:b\.?sc|bsc|bachelor of science)\b/i.test(d)) return "B.Sc / B.Sc (Hons)";
+  if (/\b(?:m\.?sc|msc|master of science)\b/i.test(d)) return "M.Sc";
+  if (/\b(?:b\.?com|bcom|bachelor of commerce)\b/i.test(d)) return "B.Com / B.Com (Hons)";
+  if (/\b(?:m\.?com|mcom|master of commerce)\b/i.test(d)) return "M.Com";
+  if (/\b(?:bba|bbm)\b/i.test(d)) return "BBA / BBM";
+  if (/\b(?:mba|pgdm|master of business)\b/i.test(d)) return "MBA / PGDM";
+  if (/\b(?:b\.?des|b\.?arch|architecture)\b/i.test(d)) return "B.Des / B.Arch";
+  if (/\b(?:mbbs|bds)\b/i.test(d)) return "MBBS / BDS";
+  if (/\b(?:pharm|pharmacy)\b/i.test(d)) return "B.Pharm / D.Pharm";
+  if (/\b(?:nursing)\b/i.test(d)) return "B.Sc Nursing";
+  if (/\b(?:llb|law)\b/i.test(d)) return "BA LLB / BBA LLB / LLB";
+  if (/\b(?:phd|doctorate|doctoral)\b/i.test(d)) return "PhD / Doctoral";
+  if (/\b(?:diploma)\b/i.test(d)) return "Diploma";
+  if (/\b(?:master|postgraduate|pg)\b/i.test(d)) return "Postgraduate (PG / Master's)";
+  if (/\b(?:bachelor|undergraduate|ug)\b/i.test(d)) return "Undergraduate (UG / Bachelor's)";
+  return "";
+}
+
+function inferAcademicDomain(parsed: ParsedResumePayload): string {
+  const edu = parsed.education?.[0];
+  const combined = [
+    edu?.degree || "",
+    edu?.branch || "",
+    ...(parsed.skills || []).map((s) => s.name),
+    ...(parsed.experience || []).map((e) => e.title),
+  ].join(" ").toLowerCase();
+
+  if (/\b(computer|software|developer|programming|web|frontend|backend|fullstack|react|python|java|javascript|data science|machine learning|ai|cloud|cyber|it|information technology|bca|mca)\b/i.test(combined)) {
+    return "Computer Science and IT";
+  }
+  if (/\b(mechanical|civil|electrical|electronics|circuit|autocad|vlsi|robotics|aerospace|chemical)\b/i.test(combined)) {
+    return "Engineering and Technology";
+  }
+  if (/\b(commerce|accounting|accountant|audit|tax|gst|tally|finance|banking|b\.?com|m\.?com|ca)\b/i.test(combined)) {
+    return "Commerce, Accounting and Finance";
+  }
+  if (/\b(mba|bba|management|business administration|marketing|human resources|sales|strategy)\b/i.test(combined)) {
+    return "Business and Management";
+  }
+  if (/\b(mbbs|doctor|medicine|clinical|hospital|patient|surgery)\b/i.test(combined)) {
+    return "Healthcare and Medical Sciences";
+  }
+  if (/\b(nursing|pharmacy|b\.?pharm|allied health)\b/i.test(combined)) {
+    return "Pharmacy, Nursing and Allied Health";
+  }
+  if (/\b(law|llb|advocate|legal|court|judiciary|attorney)\b/i.test(combined)) {
+    return "Law and Legal Studies";
+  }
+  if (/\b(architecture|interior design|graphic design|ui\/ux|creative)\b/i.test(combined)) {
+    return "Design, Architecture and Creative Industries";
+  }
+  return "Computer Science and IT";
+}
+
+function extractGraduationYear(endYear?: string): string {
+  if (!endYear) return "";
+  const match = endYear.match(/\b(20\d\d)\b/);
+  return match ? match[1] : "";
+}
+
+function inferGradingType(score?: string): string {
+  if (!score) return "";
+  const s = score.toLowerCase();
+  if (s.includes("cgpa") || /^\d+(\.\d+)?(\s*\/\s*10)?$/.test(s.trim())) {
+    return "CGPA (10-point Scale)";
+  }
+  if (s.includes("%") || s.includes("percent")) {
+    return "Percentage (%)";
+  }
+  if (s.includes("distinction") || s.includes("first class")) {
+    return "First Class with Distinction";
+  }
+  return "CGPA (10-point Scale)";
+}
+
 /* ------------------------------------ Page ----------------------------------- */
 
 export default function OnboardingPage() {
@@ -180,6 +312,141 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   const [isOnboarded, setIsOnboarded] = useState(false);
   const [fromDashboard, setFromDashboard] = useState(false);
+  const [autofillSuccessMessage, setAutofillSuccessMessage] = useState<string | null>(null);
+
+  const handleAutofillResume = (parsed: ParsedResumePayload) => {
+    if (!parsed) return;
+
+    const edu = parsed.education?.[0];
+    const city = extractCity(parsed.contactInfo?.location);
+    const state = extractState(parsed.contactInfo?.location);
+    const domain = inferAcademicDomain(parsed);
+    const level = inferEducationLevel(edu?.degree);
+    const gradYear = extractGraduationYear(edu?.endYear);
+    const gradingType = inferGradingType(edu?.score);
+
+    const extractedSkills = Array.isArray(parsed.skills)
+      ? parsed.skills.map((s) => s.name?.trim()).filter(Boolean)
+      : [];
+
+    const extractedProjects: OnboardingProject[] = Array.isArray(parsed.projects)
+      ? parsed.projects.map((p, idx) => ({
+          id: `proj_${Date.now()}_${idx}`,
+          title: p.title || `Project ${idx + 1}`,
+          role: p.subtitle || "",
+          description:
+            Array.isArray(p.bullets) && p.bullets.length > 0
+              ? p.bullets.join("\n")
+              : p.subtitle || "",
+          technologies:
+            Array.isArray(p.techStack) && p.techStack.length > 0
+              ? p.techStack.join(", ")
+              : "",
+          url: p.url || "",
+        }))
+      : [];
+
+    const experienceText = Array.isArray(parsed.experience)
+      ? parsed.experience
+          .map((exp) => {
+            const dates = [
+              exp.startDate,
+              exp.endDate || (exp.isCurrent ? "Present" : ""),
+            ]
+              .filter(Boolean)
+              .join(" - ");
+            const header = [exp.title, exp.company].filter(Boolean).join(" at ");
+            const meta = [header, dates, exp.location].filter(Boolean).join(" | ");
+            const bullets = Array.isArray(exp.bullets)
+              ? exp.bullets.map((b) => `• ${b}`).join("\n")
+              : "";
+            return [meta, bullets].filter(Boolean).join("\n");
+          })
+          .filter(Boolean)
+          .join("\n\n")
+      : "";
+
+    const certificationsText = Array.isArray(parsed.certifications)
+      ? parsed.certifications
+          .map((cert) =>
+            [cert.title, cert.issuer, cert.year].filter(Boolean).join(" - ")
+          )
+          .filter(Boolean)
+          .join("\n")
+      : "";
+
+    const preferredRole =
+      parsed.experience?.[0]?.title ||
+      (parsed.projects?.[0]?.title ? `${parsed.projects[0].title} Specialist` : "");
+
+    const inferredInterests: string[] = [];
+    if (domain === "Computer Science and IT") {
+      inferredInterests.push("Software & Information Technology");
+      inferredInterests.push("Engineering & Technology");
+    } else if (domain === "Engineering and Technology") {
+      inferredInterests.push("Engineering & Technology");
+    } else if (domain === "Commerce, Accounting and Finance") {
+      inferredInterests.push("Finance, Banking & Accounting");
+    } else if (domain === "Business and Management") {
+      inferredInterests.push("Business & General Management");
+      inferredInterests.push("Marketing, Brand & Sales");
+    } else if (domain === "Healthcare and Medical Sciences") {
+      inferredInterests.push("Healthcare, Medicine & Nursing");
+    } else if (domain === "Law and Legal Studies") {
+      inferredInterests.push("Legal Practice & Judiciary");
+    } else if (domain === "Design, Architecture and Creative Industries") {
+      inferredInterests.push("Design, Creative & Architecture");
+    }
+
+    setData((prev) => {
+      const updatedSkills = Array.from(
+        new Set([...prev.skills, ...extractedSkills])
+      );
+      const updatedProjects =
+        extractedProjects.length > 0 ? extractedProjects : prev.projects;
+      const updatedInterests = Array.from(
+        new Set([...prev.careerInterests, ...inferredInterests])
+      );
+
+      return {
+        ...prev,
+        name: parsed.contactInfo?.name?.trim() || prev.name,
+        email: parsed.contactInfo?.email?.trim() || prev.email,
+        mobile: parsed.contactInfo?.phone
+          ? cleanMobile(parsed.contactInfo.phone) || prev.mobile
+          : prev.mobile,
+        city: city || prev.city,
+        state: state || prev.state,
+        academicDomain: domain || prev.academicDomain,
+        educationLevel: level || prev.educationLevel,
+        institution: edu?.institution || prev.institution,
+        course: edu?.degree || prev.course,
+        specialization: edu?.branch || prev.specialization,
+        graduationYear: gradYear || prev.graduationYear,
+        gradingType: gradingType || prev.gradingType,
+        gradeValue: edu?.score || prev.gradeValue,
+        skills: updatedSkills,
+        projects: updatedProjects,
+        experience: experienceText || prev.experience,
+        certifications: certificationsText || prev.certifications,
+        preferredJobRole: preferredRole || prev.preferredJobRole,
+        careerInterests:
+          updatedInterests.length > 0 ? updatedInterests : prev.careerInterests,
+      };
+    });
+
+    setErrors({});
+    const counts: string[] = [];
+    if (parsed.contactInfo?.name) counts.push("Name");
+    if (edu?.institution || edu?.degree) counts.push("Education");
+    if (extractedSkills.length > 0) counts.push(`${extractedSkills.length} Skills`);
+    if (extractedProjects.length > 0) counts.push(`${extractedProjects.length} Projects`);
+    if (parsed.experience && parsed.experience.length > 0) counts.push(`${parsed.experience.length} Roles`);
+
+    setAutofillSuccessMessage(
+      `Extracted and populated: ${counts.join(", ") || "Profile Details"}. You can review and adjust any field below.`
+    );
+  };
 
   useEffect(() => {
     async function loadCurrentStudent() {
@@ -464,13 +731,45 @@ export default function OnboardingPage() {
             </div>
           </motion.div>
 
+          {/* Autofill Notification Banner */}
+          {autofillSuccessMessage && (
+            <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-950 shadow-xs animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
+                  <CheckCircle2 size={18} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-emerald-950">
+                    Profile Auto-Filled from Resume!
+                  </p>
+                  <p className="text-[11px] text-emerald-800">
+                    {autofillSuccessMessage}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAutofillSuccessMessage(null)}
+                className="text-emerald-700 hover:text-emerald-900 p-1.5 rounded-lg hover:bg-emerald-100/80 transition"
+                aria-label="Dismiss notification"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          )}
+
           {/* Quick Resume Upload Option */}
           {step === 0 && (
             <div className="mb-6">
               <UploadResumeButton
                 variant="banner"
+                mode="onboarding"
                 label="Already have a resume? Upload it to fill your Career Passport faster."
                 sublabel="We automatically extract your degrees, experience, and skills into your profile."
+                onAutofill={handleAutofillResume}
+                onSuccess={({ parsedData }) => {
+                  if (parsedData) handleAutofillResume(parsedData);
+                }}
               />
             </div>
           )}

@@ -7,6 +7,7 @@
 import React, { useState } from "react";
 import { UploadCloud, FileUp, Sparkles, ArrowRight } from "lucide-react";
 import { UploadResumeModal } from "./upload-resume-modal";
+import type { ParsedResumePayload } from "@/lib/resume/parser";
 
 export interface UploadResumeButtonProps {
   variant?: "primary-card" | "button" | "outline" | "compact" | "banner";
@@ -14,7 +15,13 @@ export interface UploadResumeButtonProps {
   sublabel?: string;
   className?: string;
   defaultTargetRole?: string;
-  onSuccess?: (result: { resumeId?: string | null; passportScore?: number | null }) => void;
+  mode?: "default" | "onboarding";
+  onSuccess?: (result: {
+    resumeId?: string | null;
+    passportScore?: number | null;
+    parsedData?: ParsedResumePayload | null;
+  }) => void;
+  onAutofill?: (parsed: ParsedResumePayload) => void;
 }
 
 export function UploadResumeButton({
@@ -23,7 +30,9 @@ export function UploadResumeButton({
   sublabel,
   className = "",
   defaultTargetRole = "",
+  mode = "default",
   onSuccess,
+  onAutofill,
 }: UploadResumeButtonProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -73,7 +82,9 @@ export function UploadResumeButton({
           isOpen={modalOpen}
           onClose={() => setModalOpen(false)}
           defaultTargetRole={defaultTargetRole}
+          mode={mode}
           onSuccess={onSuccess}
+          onAutofill={onAutofill}
         />
       </>
     );
@@ -114,7 +125,9 @@ export function UploadResumeButton({
           isOpen={modalOpen}
           onClose={() => setModalOpen(false)}
           defaultTargetRole={defaultTargetRole}
+          mode={mode}
           onSuccess={onSuccess}
+          onAutofill={onAutofill}
         />
       </>
     );
@@ -137,7 +150,9 @@ export function UploadResumeButton({
           isOpen={modalOpen}
           onClose={() => setModalOpen(false)}
           defaultTargetRole={defaultTargetRole}
+          mode={mode}
           onSuccess={onSuccess}
+          onAutofill={onAutofill}
         />
       </>
     );
@@ -161,7 +176,9 @@ export function UploadResumeButton({
           isOpen={modalOpen}
           onClose={() => setModalOpen(false)}
           defaultTargetRole={defaultTargetRole}
+          mode={mode}
           onSuccess={onSuccess}
+          onAutofill={onAutofill}
         />
       </>
     );
@@ -183,7 +200,9 @@ export function UploadResumeButton({
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         defaultTargetRole={defaultTargetRole}
+        mode={mode}
         onSuccess={onSuccess}
+        onAutofill={onAutofill}
       />
     </>
   );
