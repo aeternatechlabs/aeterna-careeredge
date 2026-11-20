@@ -140,8 +140,12 @@ export class SupabaseStorageProvider implements StorageProvider {
   private supabaseUrl: string;
   private apiKey: string;
   private bucket: string;
+  private fallback: LocalPrivateStorageProvider;
+  private bucketEnsured = false;
 
   constructor() {
+    this.fallback = new LocalPrivateStorageProvider();
+
     this.supabaseUrl = (
       process.env.SUPABASE_URL ||
       process.env.NEXT_PUBLIC_SUPABASE_URL ||
@@ -161,7 +165,7 @@ export class SupabaseStorageProvider implements StorageProvider {
     this.bucket = process.env.SUPABASE_STORAGE_BUCKET || "documents";
 
     if (!this.apiKey) {
-      console.warn("⚠️ [SUPABASE STORAGE] No Supabase API key (SUPABASE_SECRET_KEY or SUPABASE_KEY) found.");
+      console.warn("⚠️ [SUPABASE STORAGE] No Supabase API key (SUPABASE_SECRET_KEY or SUPABASE_KEY) found. Using serverless scratch fallback.");
     }
   }
 
@@ -169,81 +173,136 @@ export class SupabaseStorageProvider implements StorageProvider {
     return key.replace(/^\/+/, "");
   }
 
+  private async ensureBucket(): Promise<void> {
+    if (this.bucketEnsured || !this.apiKey) return;
+    try {
+      const res = await fetch(`${this.supabaseUrl}/storage/v1/bucket`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          apikey: this.apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: this.bucket,
+          name: this.bucket,
+          public: false,
+        }),
+      });
+      this.bucketEnsured = true;
+    } catch {
+      this.bucketEnsured = true;
+    }
+  }
+
   async upload(key: string, buffer: Buffer, mimeType: string): Promise<string> {
     const cleaned = this.cleanKey(key);
-    const url = `${this.supabaseUrl}/storage/v1/object/${this.bucket}/${cleaned}`;
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        apikey: this.apiKey,
-        "Content-Type": mimeType || "application/octet-stream",
-        "x-upsert": "true",
-      },
-      body: new Uint8Array(buffer),
-    });
+    if (this.apiKey) {
+      try {
+        await this.ensureBucket();
+        const url = `${this.supabaseUrl}/storage/v1/object/${this.bucket}/${cleaned}`;
 
-    if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      throw new Error(`Supabase Storage upload failed (${res.status}): ${errText || res.statusText}`);
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            apikey: this.apiKey,
+            "Content-Type": mimeType || "application/octet-stream",
+            "x-upsert": "true",
+          },
+          body: new Uint8Array(buffer),
+        });
+
+        if (res.ok) {
+          return cleaned;
+        }
+
+        const errText = await res.text().catch(() => "");
+        console.warn(`[SUPABASE STORAGE] Cloud upload returned ${res.status}: ${errText}. Falling back to serverless scratch storage.`);
+      } catch (err) {
+        console.warn("[SUPABASE STORAGE] Cloud upload error, falling back to serverless scratch storage:", err);
+      }
     }
 
-    return cleaned;
+    // Serverless scratch storage fallback
+    return await this.fallback.upload(key, buffer, mimeType);
   }
 
   async download(key: string): Promise<Buffer> {
     const cleaned = this.cleanKey(key);
-    let url = `${this.supabaseUrl}/storage/v1/object/authenticated/${this.bucket}/${cleaned}`;
-    let res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        apikey: this.apiKey,
-      },
-    });
 
-    if (!res.ok) {
-      url = `${this.supabaseUrl}/storage/v1/object/${this.bucket}/${cleaned}`;
-      res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          apikey: this.apiKey,
-        },
-      });
+    if (this.apiKey) {
+      try {
+        let url = `${this.supabaseUrl}/storage/v1/object/authenticated/${this.bucket}/${cleaned}`;
+        let res = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            apikey: this.apiKey,
+          },
+        });
+
+        if (!res.ok) {
+          url = `${this.supabaseUrl}/storage/v1/object/${this.bucket}/${cleaned}`;
+          res = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${this.apiKey}`,
+              apikey: this.apiKey,
+            },
+          });
+        }
+
+        if (res.ok) {
+          const arrayBuffer = await res.arrayBuffer();
+          return Buffer.from(arrayBuffer);
+        }
+      } catch (err) {
+        console.warn("[SUPABASE STORAGE] Cloud download failed, checking scratch storage:", err);
+      }
     }
 
-    if (!res.ok) {
-      throw new Error(`Supabase Storage download failed (${res.status}): ${res.statusText}`);
-    }
-
-    const arrayBuffer = await res.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+    // Fallback to local / serverless scratch
+    return await this.fallback.download(key);
   }
 
   async delete(key: string): Promise<void> {
     const cleaned = this.cleanKey(key);
-    const url = `${this.supabaseUrl}/storage/v1/object/${this.bucket}`;
-    await fetch(url, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        apikey: this.apiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ prefixes: [cleaned] }),
-    });
+
+    if (this.apiKey) {
+      try {
+        const url = `${this.supabaseUrl}/storage/v1/object/${this.bucket}`;
+        await fetch(url, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            apikey: this.apiKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prefixes: [cleaned] }),
+        });
+      } catch {}
+    }
+
+    await this.fallback.delete(key);
   }
 
   async exists(key: string): Promise<boolean> {
     const cleaned = this.cleanKey(key);
-    const url = `${this.supabaseUrl}/storage/v1/object/info/${this.bucket}/${cleaned}`;
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        apikey: this.apiKey,
-      },
-    });
-    return res.ok;
+
+    if (this.apiKey) {
+      try {
+        const url = `${this.supabaseUrl}/storage/v1/object/info/${this.bucket}/${cleaned}`;
+        const res = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            apikey: this.apiKey,
+          },
+        });
+        if (res.ok) return true;
+      } catch {}
+    }
+
+    return await this.fallback.exists(key);
   }
 }
 
@@ -288,14 +347,15 @@ export function getStorageProvider(): StorageProvider {
 
   const configuredProvider = process.env.STORAGE_PROVIDER?.toLowerCase();
 
-  // 1. Supabase Storage (Preferred if configured or if key is provided)
+  // 1. Supabase Storage (Preferred if configured or if key is provided or in Vercel environment)
   if (
     configuredProvider === "supabase" ||
     Boolean(process.env.SUPABASE_SECRET_KEY) ||
     Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY) ||
     Boolean(process.env.SUPABASE_KEY) ||
     Boolean(process.env.SUPABASE_PUBLISHABLE_KEY) ||
-    Boolean(process.env.SUPABASE_ANON_KEY)
+    Boolean(process.env.SUPABASE_ANON_KEY) ||
+    Boolean(process.env.VERCEL)
   ) {
     try {
       activeStorageProvider = new SupabaseStorageProvider();
