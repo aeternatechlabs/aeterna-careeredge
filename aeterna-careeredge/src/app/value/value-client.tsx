@@ -186,7 +186,7 @@ export function ValueClient({ studentName }: ValueClientProps) {
                 You have generated {metrics.resumesCreated} profession-tailored resumes and {metrics.applicationPacksGenerated} complete 4-part application packs with custom cover notes and verified talking points.
               </p>
               <Link
-                href="/resume"
+                href="/resume/studio?tab=resumes"
                 className="text-xs font-bold text-[#7A0F1F] hover:underline inline-flex items-center gap-1 pt-1"
               >
                 Review Resumes &rarr;

@@ -48,6 +48,7 @@ import {
   HelpCircle,
   TrendingUp,
   Trash2,
+  Award,
   Calendar,
   AlertTriangle,
   ArrowUpRight,
@@ -641,19 +642,19 @@ export function DashboardClient({ user }: DashboardClientProps) {
             <StatCard
               label="Active Resumes"
               value={resumeCount}
-              subtext={resumeCount > 0 ? "Targeted & printable" : "No resume created yet"}
+              subtext={resumeCount > 0 ? "Tailored ATS versions" : "0 resumes created"}
               icon={FileText}
-              href="/resume"
-              emptyStateAction={{ label: "Create First Resume", href: "/resume" }}
+              href="/resume/studio?tab=resumes"
+              emptyStateAction={{ label: "Create in Studio", href: "/resume/studio" }}
             />
 
             <StatCard
-              label="Active Resumes"
-              value={resumeCount}
-              subtext={resumeCount > 0 ? "Tailored ATS versions" : "0 resumes created"}
-              icon={FileText}
-              href="/resume/studio"
-              emptyStateAction={{ label: "Create Resume", href: "/resume/studio" }}
+              label="Verified Skills & Projects"
+              value={(user._count?.skills ?? 0) + (user._count?.projects ?? 0)}
+              subtext="Audited student competencies"
+              icon={Award}
+              href="/role-fit-explorer"
+              emptyStateAction={{ label: "Explore Roles", href: "/role-fit-explorer" }}
             />
 
             <StatCard

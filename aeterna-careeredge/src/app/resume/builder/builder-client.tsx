@@ -7,6 +7,7 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { StudentLayout } from "@/components/layouts/student-layout";
 import { HowItWorksPanel } from "@/components/guidance/how-it-works-panel";
 import type {
@@ -115,6 +116,8 @@ export function BuilderClient({
       resume.styleData
     );
   }, [resume, user]);
+
+  const router = useRouter();
 
   // Document state
   const [resumeTitle, setResumeTitle] = useState(resume.title);
@@ -642,13 +645,27 @@ export function BuilderClient({
           <div className="w-full flex items-center justify-between gap-2.5 flex-nowrap">
             {/* Left: Back Link & Document Title & Saved Formats Switcher */}
             <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 min-w-0">
-              <Link
-                href="/resume"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition shadow-2xs"
-                title="Back to Resumes"
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (typeof window !== "undefined" && window.opener && !window.opener.closed) {
+                    try {
+                      window.opener.focus();
+                    } catch (_) {}
+                    window.close();
+                    setTimeout(() => {
+                      router.push("/resume/studio");
+                    }, 150);
+                    return;
+                  }
+                  router.push("/resume/studio");
+                }}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition shadow-2xs cursor-pointer"
+                title="Back to Resume Studio"
               >
                 <ArrowLeft size={16} />
-              </Link>
+              </button>
 
               <div className="min-w-0 max-w-[90px] xs:max-w-[130px] sm:max-w-[180px] md:max-w-[220px]">
                 <input

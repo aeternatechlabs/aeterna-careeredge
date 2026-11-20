@@ -199,10 +199,10 @@ export function TruthCheckClient({
                 <div className="text-center py-6">
                   <p className="text-xs text-[#765F5D]">No resumes created yet.</p>
                   <Link
-                    href="/resume"
+                    href="/resume/studio"
                     className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#7A0F1F] hover:underline"
                   >
-                    <span>Create a resume in Resume Builder</span>
+                    <span>Create a resume in Resume Studio</span>
                     <ArrowRight size={12} />
                   </Link>
                 </div>

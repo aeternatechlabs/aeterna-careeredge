@@ -1,5 +1,5 @@
 // src/app/resume/studio/page.tsx
-// AI Resume Studio: Multi-Strategy Resume Generation & Gap Analysis
+// AI Resume Studio: Multi-Strategy Resume Generation, Gap Analysis, & Saved Resumes Hub
 
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
@@ -26,12 +26,34 @@ export default async function ResumeStudioPage() {
           preferredJobRole: true,
         },
       },
+      resumes: {
+        orderBy: { updatedAt: "desc" },
+        select: {
+          id: true,
+          title: true,
+          targetRole: true,
+          templateId: true,
+          atsScore: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
     },
   });
 
   if (!user) {
     redirect("/login");
   }
+
+  const formattedResumes = user.resumes.map((r) => ({
+    id: r.id,
+    title: r.title,
+    targetRole: r.targetRole,
+    templateId: r.templateId,
+    atsScore: r.atsScore,
+    createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
+  }));
 
   return (
     <StudentLayout
@@ -40,7 +62,7 @@ export default async function ResumeStudioPage() {
       studentDomain={user.profile?.academicDomain || undefined}
       targetRole={user.profile?.preferredJobRole || undefined}
     >
-      <ResumeStudioClient />
+      <ResumeStudioClient initialResumes={formattedResumes} />
     </StudentLayout>
   );
 }

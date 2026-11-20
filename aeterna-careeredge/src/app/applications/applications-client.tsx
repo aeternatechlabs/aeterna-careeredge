@@ -677,7 +677,7 @@ export function ApplicationsClient({
               {/* Pack Footer */}
               <div className="p-5 border-t border-gray-100 bg-gray-50/70 rounded-b-3xl flex items-center justify-between">
                 <Link
-                  href="/resume"
+                  href="/resume/studio?tab=resumes"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#7A0F1F] hover:underline"
                 >
                   <FileText className="w-3.5 h-3.5" />

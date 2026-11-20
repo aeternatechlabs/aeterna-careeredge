@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Sparkles,
@@ -29,6 +29,10 @@ import {
   Download,
   Loader2,
   ExternalLink,
+  Copy,
+  Trash2,
+  Search,
+  Plus,
 } from "lucide-react";
 import {
   LoadingButton,
@@ -78,8 +82,51 @@ interface ChatMessage {
   changesSummary?: string;
 }
 
-export function ResumeStudioClient() {
+export interface SavedResumeSummary {
+  id: string;
+  title: string;
+  targetRole?: string | null;
+  templateId: string;
+  atsScore?: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ResumeStudioClientProps {
+  initialResumes?: SavedResumeSummary[];
+}
+
+export function ResumeStudioClient({ initialResumes = [] }: ResumeStudioClientProps) {
   const router = useRouter();
+
+  // Primary Studio Tab: "generator" | "all-resumes"
+  const [studioTab, setStudioTab] = useState<"generator" | "all-resumes">("generator");
+  const [savedResumesList, setSavedResumesList] = useState<SavedResumeSummary[]>(initialResumes);
+  const [resumeSearchQuery, setResumeSearchQuery] = useState("");
+  const [deletingResumeId, setDeletingResumeId] = useState<string | null>(null);
+  const [duplicatingResumeId, setDuplicatingResumeId] = useState<string | null>(null);
+  const [downloadingResumeId, setDownloadingResumeId] = useState<string | null>(null);
+
+  // Check URL query parameters for default tab
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("tab") === "resumes" || params.get("view") === "all") {
+        setStudioTab("all-resumes");
+      }
+    }
+  }, []);
+
+  const filteredSavedResumes = useMemo(() => {
+    if (!resumeSearchQuery.trim()) return savedResumesList;
+    const q = resumeSearchQuery.toLowerCase();
+    return savedResumesList.filter(
+      (r) =>
+        r.title.toLowerCase().includes(q) ||
+        (r.targetRole && r.targetRole.toLowerCase().includes(q)) ||
+        r.templateId.toLowerCase().includes(q)
+    );
+  }, [savedResumesList, resumeSearchQuery]);
 
   // Wizard state
   const [sourceType, setSourceType] = useState<"passport" | "upload">("passport");
@@ -337,11 +384,92 @@ export function ResumeStudioClient() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save active resume.");
 
+      const savedTitle = customTitle || `${targetRolePrompt} - ${option.strategyName}`;
+      setSavedResumesList((prev) => [
+        {
+          id: data.resumeId,
+          title: savedTitle,
+          targetRole: targetRolePrompt,
+          templateId: option.templateId,
+          atsScore: option.matchScore,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        ...prev.filter((r) => r.id !== data.resumeId),
+      ]);
+
       setIsSaving(false);
-      window.open(`/resume/builder?id=${data.resumeId}`, "_blank", "noopener,noreferrer");
+      window.open(`/resume/builder?id=${data.resumeId}`, "_blank");
     } catch (err: any) {
       setGenerationError(err.message || "Could not save resume.");
       setIsSaving(false);
+    }
+  };
+
+  // Saved Resumes Handlers
+  const handleDownloadSavedPdf = async (resumeId: string, resumeTitle: string) => {
+    setDownloadingResumeId(resumeId);
+    try {
+      const res = await fetch(`/api/resumes/${resumeId}/export-pdf?pageSize=A4`);
+      const contentType = res.headers.get("Content-Type") || "";
+
+      if (res.ok && contentType.includes("application/pdf")) {
+        const blob = await res.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const downloadLink = document.createElement("a");
+        downloadLink.href = blobUrl;
+        downloadLink.download = `${resumeTitle.replace(/\s+/g, "_")}.pdf`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+        window.URL.revokeObjectURL(blobUrl);
+      } else {
+        window.open(`/resume/${resumeId}/print?autoPrint=true&pageSize=A4`, "_blank");
+      }
+    } catch (err: any) {
+      console.warn("[StudioClient] Export failed, opening print view:", err);
+      window.open(`/resume/${resumeId}/print?autoPrint=true&pageSize=A4`, "_blank");
+    } finally {
+      setDownloadingResumeId(null);
+    }
+  };
+
+  const handleDuplicateSavedResume = async (resumeId: string) => {
+    setDuplicatingResumeId(resumeId);
+    try {
+      const res = await fetch(`/api/resumes/${resumeId}/duplicate`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to duplicate resume.");
+      setSavedResumesList((prev) => [
+        {
+          id: data.resume.id,
+          title: data.resume.title,
+          targetRole: data.resume.targetRole,
+          templateId: data.resume.templateId,
+          atsScore: data.resume.atsScore,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        ...prev,
+      ]);
+    } catch (err: any) {
+      alert(err.message || "Could not duplicate resume.");
+    } finally {
+      setDuplicatingResumeId(null);
+    }
+  };
+
+  const handleDeleteSavedResume = async (resumeId: string) => {
+    if (!confirm("Are you sure you want to delete this resume?")) return;
+    setDeletingResumeId(resumeId);
+    try {
+      const res = await fetch(`/api/resumes/${resumeId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Could not delete resume.");
+      setSavedResumesList((prev) => prev.filter((r) => r.id !== resumeId));
+    } catch (err: any) {
+      alert(err.message || "Failed to delete resume.");
+    } finally {
+      setDeletingResumeId(null);
     }
   };
 
@@ -469,28 +597,96 @@ export function ResumeStudioClient() {
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Strategic Multi-Option Resume Generator
+            {studioTab === "generator" ? "Strategic Multi-Option Resume Generator" : "Saved Resumes & Workstations"}
           </h1>
           <p className="text-sm text-slate-600 mt-1 max-w-2xl">
-            Give a target role prompt, optional JD, or existing resume. Our AI synthesizes 3 distinct strategies (ATS-First, Impact-First, Concise 1-Page) grounded solely in your verified records.
+            {studioTab === "generator"
+              ? "Give a target role prompt, optional JD, or existing resume. Our AI synthesizes 3 distinct strategies (ATS-First, Impact-First, Concise 1-Page) grounded solely in your verified records."
+              : "Review, manage, download vector PDFs, or open any saved resume in the Workstation builder in a dedicated tab."}
           </p>
         </div>
 
-        {studioResult && (
-          <button
-            type="button"
-            onClick={() => {
-              setStudioResult(null);
-              setGenerationError(null);
-              setRefineChatHistory([]);
-            }}
-            className="self-start md:self-auto inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-xs"
-          >
-            <RotateCcw className="h-3.5 w-3.5 text-[#7A0F1F]" />
-            Configure New Role
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* View Switcher Tabs */}
+          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setStudioTab("generator")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                studioTab === "generator"
+                  ? "bg-white text-[#7A0F1F] shadow-xs border border-[#E8D2CE]"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Sparkles size={13} className="text-[#7A0F1F]" />
+              <span>Generator</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStudioTab("all-resumes")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                studioTab === "all-resumes"
+                  ? "bg-white text-[#7A0F1F] shadow-xs border border-[#E8D2CE]"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <FileText size={13} className="text-[#7A0F1F]" />
+              <span>All Resumes</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[#F8E8EA] text-[#7A0F1F] border border-[#E8D2CE]">
+                {savedResumesList.length}
+              </span>
+            </button>
+          </div>
+
+          {studioTab === "generator" && studioResult && (
+            <button
+              type="button"
+              onClick={() => {
+                setStudioResult(null);
+                setGenerationError(null);
+                setRefineChatHistory([]);
+              }}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-xs cursor-pointer"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-[#7A0F1F]" />
+              Configure New Role
+            </button>
+          )}
+
+          {studioTab === "all-resumes" && (
+            <button
+              type="button"
+              onClick={() => setStudioTab("generator")}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#7A0F1F] text-white hover:bg-[#600C18] transition-colors shadow-xs cursor-pointer"
+            >
+              <Plus size={13} />
+              <span>Generate New Resume</span>
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* ── View A: Generator Tab ── */}
+      {studioTab === "generator" && (
+        <>
+          {savedResumesList.length > 0 && !studioResult && (
+            <div className="flex items-center justify-between p-3.5 rounded-2xl border border-[#F0E1DE] bg-[#FFF9F7] text-xs shadow-2xs">
+              <div className="flex items-center gap-2.5 text-slate-700">
+                <FileText size={15} className="text-[#7A0F1F]" />
+                <span>
+                  You have <strong className="text-slate-900 font-bold">{savedResumesList.length}</strong> saved resume{savedResumesList.length === 1 ? "" : "s"} in your portfolio.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStudioTab("all-resumes")}
+                className="inline-flex items-center gap-1 font-bold text-[#7A0F1F] hover:underline cursor-pointer"
+              >
+                <span>View All Resumes</span>
+                <ArrowRight size={12} />
+              </button>
+            </div>
+          )}
 
       {/* ── ChatGPT-Style Multiline Composer & Config Form ── */}
       {!studioResult && (
@@ -1309,6 +1505,173 @@ export function ResumeStudioClient() {
                   Save Handcrafted Mix & Edit
                 </LoadingButton>
               </div>
+            </div>
+          )}
+        </FadeIn>
+      )}
+        </>
+      )}
+
+      {/* ── View B: All Saved Resumes ── */}
+      {studioTab === "all-resumes" && (
+        <FadeIn className="space-y-6">
+          {/* Search bar and summary bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                value={resumeSearchQuery}
+                onChange={(e) => setResumeSearchQuery(e.target.value)}
+                placeholder="Search resumes by title or role..."
+                className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 text-xs focus:outline-hidden focus:border-[#7A0F1F] focus:ring-1 focus:ring-[#7A0F1F] bg-slate-50/50"
+              />
+              {resumeSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setResumeSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            <div className="text-xs text-slate-500 flex items-center gap-2">
+              <span>
+                Showing <strong>{filteredSavedResumes.length}</strong> of <strong>{savedResumesList.length}</strong> resume{savedResumesList.length === 1 ? "" : "s"}
+              </span>
+            </div>
+          </div>
+
+          {/* Resumes Grid */}
+          {filteredSavedResumes.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center space-y-4 shadow-sm">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F8E8EA] text-[#7A0F1F]">
+                <FileText className="h-7 w-7" />
+              </div>
+              <div className="space-y-1 max-w-sm mx-auto">
+                <h3 className="text-base font-bold text-slate-900">
+                  {resumeSearchQuery ? "No matching resumes found" : "No resumes generated yet"}
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  {resumeSearchQuery
+                    ? `No resumes match "${resumeSearchQuery}". Try clearing the search filter.`
+                    : "Use the AI Studio Generator to synthesize 3 ATS-calibrated options tailored to your target profession."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setResumeSearchQuery("");
+                  setStudioTab("generator");
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#7A0F1F] text-white hover:bg-[#600C18] transition shadow-xs cursor-pointer"
+              >
+                <Sparkles size={13} />
+                <span>{resumeSearchQuery ? "Clear Search & Generate" : "Launch AI Resume Generator"}</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredSavedResumes.map((resume) => {
+                const isDownloading = downloadingResumeId === resume.id;
+                const isDuplicating = duplicatingResumeId === resume.id;
+                const isDeleting = deletingResumeId === resume.id;
+
+                return (
+                  <div
+                    key={resume.id}
+                    className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs hover:border-[#E8D2CE] hover:shadow-md transition-all duration-200"
+                  >
+                    <div>
+                      {/* Card Header: Template badge & ATS match */}
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-slate-200 bg-slate-50 text-slate-700 capitalize">
+                          {resume.templateId.replace(/-/g, " ")}
+                        </span>
+                        {resume.atsScore ? (
+                          <span
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                              resume.atsScore >= 80
+                                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                : resume.atsScore >= 60
+                                ? "bg-amber-50 text-amber-800 border-amber-200"
+                                : "bg-rose-50 text-rose-800 border-rose-200"
+                            }`}
+                          >
+                            {resume.atsScore}% ATS Match
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                            ATS Calibrated
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Title & Target Role */}
+                      <h3 className="font-heading text-base font-bold text-slate-900 line-clamp-1" title={resume.title}>
+                        {resume.title}
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                        <Briefcase size={12} className="text-slate-400 shrink-0" />
+                        <span className="truncate">{resume.targetRole || "General Professional"}</span>
+                      </p>
+
+                      <p className="text-[11px] text-slate-400 mt-3 pt-3 border-t border-slate-100">
+                        Updated {new Date(resume.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </p>
+                    </div>
+
+                    {/* Card Actions */}
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          window.open(`/resume/builder?id=${resume.id}`, "_blank");
+                        }}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#7A0F1F] px-3.5 py-2 text-xs font-bold text-white hover:bg-[#600C18] transition shadow-2xs cursor-pointer"
+                        title="Open in Builder Workstation (New Tab)"
+                      >
+                        <span>Open in Builder</span>
+                        <ExternalLink size={12} />
+                      </button>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          disabled={isDownloading}
+                          onClick={() => handleDownloadSavedPdf(resume.id, resume.title)}
+                          className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition disabled:opacity-40 cursor-pointer"
+                          title="Download ATS Vector PDF"
+                        >
+                          {isDownloading ? <Loader2 size={13} className="animate-spin text-[#7A0F1F]" /> : <Download size={13} />}
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={isDuplicating}
+                          onClick={() => handleDuplicateSavedResume(resume.id)}
+                          className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition disabled:opacity-40 cursor-pointer"
+                          title="Duplicate Resume"
+                        >
+                          {isDuplicating ? <Loader2 size={13} className="animate-spin text-[#7A0F1F]" /> : <Copy size={13} />}
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={isDeleting}
+                          onClick={() => handleDeleteSavedResume(resume.id)}
+                          className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 transition disabled:opacity-40 cursor-pointer"
+                          title="Delete Resume"
+                        >
+                          {isDeleting ? <Loader2 size={13} className="animate-spin text-rose-600" /> : <Trash2 size={13} />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </FadeIn>
