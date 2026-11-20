@@ -7,7 +7,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "motion/react";
 import { BrandLogo } from "@/components/common/BrandLogo";
 import {
   LayoutDashboard,
@@ -105,13 +104,14 @@ export function StudentSidebar({
   onToggleCollapse,
   onLogout,
 }: StudentSidebarProps) {
-  const pathname = usePathname();
+  const currentPath = usePathname();
+  const pathname = currentPath || "";
   const [moreOpen, setMoreOpen] = useState(false);
   const [soonOpen, setSoonOpen] = useState(false);
 
   // Auto-expand "More" if current page is within it
   useEffect(() => {
-    if (MORE_SECTION.some((item) => pathname.startsWith(item.href))) {
+    if (pathname && MORE_SECTION.some((item) => pathname.startsWith(item.href))) {
       setMoreOpen(true);
     }
   }, [pathname]);
@@ -119,6 +119,7 @@ export function StudentSidebar({
   const renderNavItem = (item: NavItem, isMuted = false) => {
     const Icon = item.icon;
     const active = (() => {
+      if (!pathname) return false;
       if (item.href === "/dashboard") {
         return pathname === "/dashboard";
       }
@@ -148,35 +149,16 @@ export function StudentSidebar({
           "relative group flex items-center min-h-[44px] rounded-xl px-3 py-2 text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8]",
           isCollapsed ? "justify-center px-2" : "gap-3",
           active
-            ? "font-semibold text-white"
+            ? "font-semibold text-white bg-white/10 shadow-xs"
             : isComingSoon
               ? "text-slate-500 hover:bg-white/5 hover:text-slate-400"
               : "text-slate-400 hover:bg-slate-800/60 hover:text-white",
         ].join(" ")}
       >
-        {/* Animated active background pill that glides smoothly between tabs */}
+        {/* Distinctive Sky Blue Active Indicator Bar */}
         {active && (
-          <motion.div
-            layoutId="sidebar-active-pill"
-            className="absolute inset-0 rounded-xl bg-white/10 shadow-xs pointer-events-none"
-            transition={{
-              type: "spring",
-              stiffness: 380,
-              damping: 32,
-            }}
-          />
-        )}
-
-        {/* Distinctive Sky Blue Active Indicator Bar that glides smoothly */}
-        {active && (
-          <motion.span
-            layoutId="sidebar-active-indicator"
+          <span
             className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-[#38BDF8] shadow-sm shadow-[#38BDF8]/60 z-10 pointer-events-none"
-            transition={{
-              type: "spring",
-              stiffness: 380,
-              damping: 32,
-            }}
           />
         )}
 
@@ -208,7 +190,6 @@ export function StudentSidebar({
   return (
     <aside
       aria-label="Student Portal Navigation"
-      data-tour="sidebar"
       className={[
         "flex h-full flex-col bg-[#0B132B] text-white border-r border-[#1E293B] select-none transition-all duration-200 ease-in-out",
         isCollapsed ? "w-20" : "w-64",

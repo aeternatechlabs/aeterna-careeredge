@@ -29,7 +29,7 @@ export function ComingSoonPage({ studentName = "Student", feature }: ComingSoonP
 
   return (
     <StudentLayout userName={studentName}>
-      <main className="min-h-[calc(100vh-72px)] bg-[#FFF8F0]/40 p-6 md:p-10">
+      <div className="min-h-[calc(100vh-72px)] bg-[#FFF8F0]/40 p-6 md:p-10">
         <div className="mx-auto max-w-3xl space-y-6">
           {/* Breadcrumb / Back link */}
           <div className="flex items-center gap-2 text-xs font-semibold text-[#765F5D]">
@@ -97,7 +97,7 @@ export function ComingSoonPage({ studentName = "Student", feature }: ComingSoonP
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </StudentLayout>
   );
 }

@@ -26,10 +26,25 @@ if (typeof Uint8Array !== "undefined") {
 const SESSION_COOKIE = "ace_session";
 
 // Routes that require the user to be logged in
-const PROTECTED_PREFIXES = ["/dashboard", "/onboarding", "/resume", "/sop",
-  "/passport", "/career-discovery", "/job-matcher", "/interview-coach",
-  "/portfolio", "/applications", "/mentor", "/counselling", "/settings",
+const PROTECTED_PREFIXES = [
+  "/dashboard",
+  "/passport",
+  "/resume",
+  "/evidence-vault",
+  "/truth-check",
   "/linkedin",
+  "/jobs",
+  "/applications",
+  "/role-fit-explorer",
+  "/sprints",
+  "/interview-prep",
+  "/counselling",
+  "/pricing",
+  "/sop",
+  "/settings",
+  "/progress",
+  "/value",
+  "/onboarding",
 ];
 
 // Routes that logged-in users should not see (redirect to dashboard)

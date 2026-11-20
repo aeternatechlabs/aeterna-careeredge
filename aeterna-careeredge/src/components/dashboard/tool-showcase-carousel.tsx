@@ -176,7 +176,6 @@ export function ToolShowcaseCarousel() {
   return (
     <section
       aria-label="Flagship Tools Showcase"
-      data-tour="tool-showcase"
       className="space-y-3 w-full min-w-0 max-w-full overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}

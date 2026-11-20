@@ -1,6 +1,6 @@
 // src/config/features.ts
 // Single Source of Truth for Feature Availability, Status, and Tool Metadata
-// Used across Dashboard, Navigation Sidebar, Tour, and Coming Soon states.
+// Used across Dashboard, Navigation Sidebar, and Coming Soon states.
 
 export type FeatureStatus = "AVAILABLE" | "BETA" | "COMING_SOON";
 

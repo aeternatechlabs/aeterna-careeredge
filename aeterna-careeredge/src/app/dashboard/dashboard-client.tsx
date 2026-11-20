@@ -2,7 +2,7 @@
 
 // src/app/dashboard/dashboard-client.tsx
 // Restructured Dashboard following strict UI/UX visual hierarchy and F-pattern ordering:
-// 1. Greeting + one-line status + "Take Product Tour" button
+// 1. Greeting + one-line status bar
 // 2. Next Best Action (single most prominent card)
 // 3. Urgent / Attention items (shown ONLY when real items exist; hidden otherwise)
 // 4. Progress / Getting Started Checklist (real data, progress bar, collapsible)
@@ -25,7 +25,6 @@ import { StatCard } from "@/components/shared/stat-card";
 import { SectionCard } from "@/components/shared/section-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ComingSoonCard } from "@/components/ui/coming-soon-card";
-import { ProductTour } from "@/components/tour/product-tour";
 import { ToolShowcaseCarousel } from "@/components/dashboard/tool-showcase-carousel";
 import { UploadResumeButton } from "@/components/resume/upload-resume-button";
 import {
@@ -150,7 +149,6 @@ interface UrgentItem {
 
 export function DashboardClient({ user }: DashboardClientProps) {
   const router = useRouter();
-  const [tourOpen, setTourOpen] = useState(false);
   const [documents, setDocuments] = useState<StoredDoc[]>(user.storedDocuments || []);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -377,9 +375,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
         router.push("/login");
       }}
     >
-      {/* Product Tour Overlay (Auto-triggers on first signup; replayable anytime) */}
-      <ProductTour forceOpen={tourOpen} onClose={() => setTourOpen(false)} />
-
       <div className="mx-auto max-w-7xl space-y-6 sm:space-y-8 min-w-0 w-full">
         {/* ============================================================
             1. GREETING & STATUS BAR
@@ -412,15 +407,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
             {/* Quick Actions - Simplified and compact below md & sm */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => setTourOpen(true)}
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100 transition shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <Sparkles size={13} className="text-blue-500" aria-hidden="true" />
-                <span>Tour</span>
-              </button>
-
               <UploadResumeButton variant="outline" label="Upload Resume" />
 
               <Link
@@ -450,7 +436,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
         {/* ============================================================
             2. NEXT BEST ACTION (Single Most Important Action)
         ============================================================ */}
-        <section id="tour-next-best-action" data-tour="next-best-action" aria-label="Next Best Action">
+        <section aria-label="Next Best Action">
           <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-r from-[#0B132B] via-[#0F172A] to-[#1E3A8A] p-6 sm:p-7 text-white shadow-xl shadow-slate-950/20">
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-1.5 max-w-2xl">
@@ -538,14 +524,14 @@ export function DashboardClient({ user }: DashboardClientProps) {
         {/* ============================================================
             4. PROGRESS / GETTING STARTED CHECKLIST
         ============================================================ */}
-        <section id="tour-checklist" data-tour="checklist" aria-label="Getting Started Milestones">
+        <section aria-label="Getting Started Milestones">
           <GettingStartedChecklist items={checklistItems} />
         </section>
 
         {/* ============================================================
             5. QUICK ACTIONS (High-Contrast Action Cards)
         ============================================================ */}
-        <section id="tour-quick-actions" data-tour="quick-actions" aria-label="Quick Actions" className="space-y-3">
+        <section aria-label="Quick Actions" className="space-y-3">
           <h2 className="font-heading text-xs font-bold uppercase tracking-wider text-[#765F5D] px-1">
             Core Quick Actions
           </h2>
@@ -641,7 +627,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
         {/* ============================================================
             6. KEY METRICS (Real Database Records)
         ============================================================ */}
-        <section id="tour-metrics" data-tour="metrics" aria-label="Key Metrics" className="space-y-3">
+        <section aria-label="Key Metrics" className="space-y-3">
           <h2 className="font-heading text-xs font-bold uppercase tracking-wider text-[#765F5D] px-1">
             Career Readiness Metrics
           </h2>
@@ -839,7 +825,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
         {/* ============================================================
             8. ALL TOOLS OVERVIEW (Grouped by Purpose + Coming Soon items)
         ============================================================ */}
-        <section id="tour-all-tools" data-tour="all-tools" aria-label="All Tools Overview" className="space-y-6">
+        <section aria-label="All Tools Overview" className="space-y-6">
           <div className="flex items-center justify-between border-b border-[#EBDDD1] pb-3">
             <div>
               <h2 className="font-heading text-lg sm:text-xl font-bold tracking-tight text-[#2B1B1B]">
@@ -939,7 +925,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
         </section>
 
         {/* Guidance section */}
-        <section id="tour-career-guide" data-tour="career-guide" aria-label="How CareerEdge Works">
+        <section aria-label="How CareerEdge Works">
           <HowItWorksPanel sectionId="career-passport" />
         </section>
       </div>

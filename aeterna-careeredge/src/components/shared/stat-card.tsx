@@ -69,13 +69,20 @@ export function StatCard({
 
       {isZeroOrEmpty && emptyStateAction && (
         <div className="mt-3 pt-2.5 border-t border-border">
-          <Link
-            href={emptyStateAction.href}
-            className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary-dark transition"
-          >
-            <span>{emptyStateAction.label}</span>
-            <ArrowUpRight size={12} />
-          </Link>
+          {href ? (
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary group-hover:text-primary-dark transition">
+              <span>{emptyStateAction.label}</span>
+              <ArrowUpRight size={12} />
+            </span>
+          ) : (
+            <Link
+              href={emptyStateAction.href}
+              className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary-dark transition"
+            >
+              <span>{emptyStateAction.label}</span>
+              <ArrowUpRight size={12} />
+            </Link>
+          )}
         </div>
       )}
     </div>
