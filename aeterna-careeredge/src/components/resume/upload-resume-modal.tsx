@@ -1176,7 +1176,7 @@ export function UploadResumeModal({
                       key={idx}
                       className="inline-flex items-center gap-1 rounded-lg bg-white border border-stone-300 px-2 py-1 text-[11px] font-medium text-stone-800"
                     >
-                      <span>{skill.name}</span>
+                      <span>{typeof skill === "string" ? skill : skill?.name}</span>
                       <button
                         type="button"
                         onClick={() =>

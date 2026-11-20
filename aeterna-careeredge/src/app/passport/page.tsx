@@ -4,7 +4,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
-import { deduplicateUserPassport } from "@/lib/passport/deduplication";
 import { PassportClient } from "./passport-client";
 
 export default async function PassportPage() {
@@ -13,9 +12,6 @@ export default async function PassportPage() {
   if (!session) {
     redirect("/login");
   }
-
-  // Seamlessly deduplicate any redundant records prior to rendering
-  await deduplicateUserPassport(session.userId);
 
   const user = await db.user.findUnique({
     where: { id: session.userId },

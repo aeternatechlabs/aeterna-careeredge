@@ -325,9 +325,25 @@ export default function OnboardingPage() {
     const gradYear = extractGraduationYear(edu?.endYear);
     const gradingType = inferGradingType(edu?.score);
 
-    const extractedSkills = Array.isArray(parsed.skills)
-      ? parsed.skills.map((s) => s.name?.trim()).filter(Boolean)
-      : [];
+    let extractedSkills: string[] = [];
+    if (Array.isArray(parsed.skills)) {
+      extractedSkills = parsed.skills
+        .map((s: any) => (typeof s === "string" ? s : s?.name || s?.skill || "")?.trim())
+        .filter(Boolean);
+    }
+    // If skills are still empty, harvest from project subtitles
+    if (extractedSkills.length === 0 && Array.isArray(parsed.projects)) {
+      for (const p of parsed.projects) {
+        if (p.subtitle) {
+          p.subtitle
+            .split(/[,|•/]/)
+            .map((s) => s.trim())
+            .filter((s) => s.length > 1 && s.length < 35)
+            .forEach((s) => extractedSkills.push(s));
+        }
+      }
+      extractedSkills = Array.from(new Set(extractedSkills));
+    }
 
     const extractedProjects: OnboardingProject[] = Array.isArray(parsed.projects)
       ? parsed.projects.map((p, idx) => ({
@@ -341,7 +357,7 @@ export default function OnboardingPage() {
           technologies:
             Array.isArray(p.techStack) && p.techStack.length > 0
               ? p.techStack.join(", ")
-              : "",
+              : p.subtitle || "",
           url: p.url || "",
         }))
       : [];

@@ -23,7 +23,12 @@ if (typeof Uint8Array !== "undefined") {
 const SESSION_COOKIE = "ace_session";
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
+let cachedNormSecret = "";
+let cachedPrimarySecret: Uint8Array | null = null;
+let cachedCandidateSecrets: Uint8Array[] | null = null;
+
 function getNormalizedSecret(): string {
+  if (cachedNormSecret) return cachedNormSecret;
   let secret = process.env.AUTH_SECRET;
   if (!secret) {
     try {
@@ -38,33 +43,40 @@ function getNormalizedSecret(): string {
       }
     } catch {}
   }
-  return (secret || "xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM=").trim().replace(/^["']|["']$/g, "");
+  cachedNormSecret = (secret || "xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM=").trim().replace(/^["']|["']$/g, "");
+  return cachedNormSecret;
 }
 
 function getSecret(): Uint8Array {
-  return new TextEncoder().encode(getNormalizedSecret());
+  const norm = getNormalizedSecret();
+  if (!cachedPrimarySecret) {
+    cachedPrimarySecret = new TextEncoder().encode(norm);
+  }
+  return cachedPrimarySecret;
 }
 
 function getSecretCandidates(): Uint8Array[] {
   const norm = getNormalizedSecret();
-  const seen = new Set<string>();
-  const candidates = [
-    norm,
-    "xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM=",
-    `"${norm}"`,
-    '"xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM="',
-    "default_dev_secret_careeredge",
-    "test-secret-key-for-unit-testing-32chars",
-  ];
-
-  const result: Uint8Array[] = [];
-  for (const c of candidates) {
-    if (!seen.has(c)) {
-      seen.add(c);
-      result.push(new TextEncoder().encode(c));
+  if (!cachedCandidateSecrets) {
+    const list = [
+      norm,
+      "xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM=",
+      `"${norm}"`,
+      '"xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM="',
+      "default_dev_secret_careeredge",
+      "test-secret-key-for-unit-testing-32chars",
+    ];
+    const seen = new Set<string>();
+    const result: Uint8Array[] = [];
+    for (const c of list) {
+      if (!seen.has(c)) {
+        seen.add(c);
+        result.push(new TextEncoder().encode(c));
+      }
     }
+    cachedCandidateSecrets = result;
   }
-  return result;
+  return cachedCandidateSecrets;
 }
 
 // ── Payload stored inside the JWT ────────────────────────────────────────────
@@ -111,14 +123,21 @@ export async function verifySession(
       cleanToken = jwtMatch[1];
     }
 
-    const secrets = getSecretCandidates();
     let payload: Record<string, unknown> | null = null;
-    for (const secret of secrets) {
-      try {
-        const res = await jwtVerify(cleanToken, secret);
-        payload = res.payload as Record<string, unknown>;
-        break;
-      } catch {}
+    // Fast path: verify with primary secret first
+    try {
+      const res = await jwtVerify(cleanToken, getSecret());
+      payload = res.payload as Record<string, unknown>;
+    } catch {
+      // Fallback path: iterate through candidates
+      const secrets = getSecretCandidates();
+      for (const secret of secrets) {
+        try {
+          const res = await jwtVerify(cleanToken, secret);
+          payload = res.payload as Record<string, unknown>;
+          break;
+        } catch {}
+      }
     }
 
     if (!payload) {
