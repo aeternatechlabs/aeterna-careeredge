@@ -47,7 +47,7 @@ export function StatCard({
         <span className="text-xs font-bold text-secondary-text tracking-wide truncate">{label}</span>
         <div
           className={`flex h-9 w-9 items-center justify-center rounded-xl shrink-0 ${
-            highlight ? "bg-blue-600 text-white shadow-xs" : "bg-blue-50 text-blue-600 border border-blue-200"
+            highlight ? "bg-[#7A0F1F] text-white shadow-xs" : "bg-[#F8E8EA] text-[#7A0F1F] border border-[#F0E1DE]"
           }`}
         >
           <Icon size={18} aria-hidden="true" />

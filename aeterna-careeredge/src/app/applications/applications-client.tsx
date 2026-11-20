@@ -52,7 +52,7 @@ interface ApplicationsClientProps {
 
 const STAGES: { key: ApplicationStatus; label: string; color: string }[] = [
   { key: "SAVED", label: "Saved", color: "bg-gray-100 text-gray-700 border-gray-300" },
-  { key: "VISITED", label: "Visited Portal", color: "bg-blue-50 text-blue-700 border-blue-200" },
+  { key: "VISITED", label: "Visited Portal", color: "bg-[#F8E8EA] text-[#7A0F1F] border-[#E8D2CE]" },
   { key: "APPLIED", label: "Applied", color: "bg-amber-50 text-amber-700 border-amber-200" },
   { key: "INTERVIEWING", label: "Interviewing", color: "bg-purple-50 text-purple-700 border-purple-200" },
   { key: "OFFER", label: "Offer Received", color: "bg-emerald-50 text-emerald-800 border-emerald-300" },

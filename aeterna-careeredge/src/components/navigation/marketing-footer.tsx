@@ -25,13 +25,15 @@ const linkClass =
   "w-fit rounded-sm text-sm text-white/75 transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-primary-dark";
 function HoysalaBorder() {
   return (
-    <Image
-      src={"/assets/images/landing-footer/hoysala-border.svg"}
-      alt={""}
-      width={40}
-      height={5}
-      className="w-full h-11"
-    />
+    <div className="w-full h-5 sm:h-6 overflow-hidden leading-none select-none bg-primary-dark">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/assets/images/landing-footer/hoysala-border.svg"
+        alt=""
+        aria-hidden="true"
+        className="w-full h-full object-cover object-center block"
+      />
+    </div>
   );
 }
 

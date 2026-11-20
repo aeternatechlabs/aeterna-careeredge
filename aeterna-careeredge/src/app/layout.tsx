@@ -41,7 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body
-        className={`${plusJakarta.variable} ${inter.variable} ${notoKannada.variable} min-h-dvh antialiased selection:bg-blue-600 selection:text-white`}
+        className={`${plusJakarta.variable} ${inter.variable} ${notoKannada.variable} min-h-dvh antialiased selection:bg-[#7A0F1F] selection:text-white`}
       >
         {children}
       </body>

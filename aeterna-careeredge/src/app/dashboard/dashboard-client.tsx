@@ -386,7 +386,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
             <div className="space-y-1.5 sm:space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-2.5 sm:px-3 py-0.5 sm:py-1 text-[11px] sm:text-xs font-bold text-white shadow-xs">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#7A0F1F] px-2.5 sm:px-3 py-0.5 sm:py-1 text-[11px] sm:text-xs font-bold text-white shadow-xs">
                   <GraduationCap size={12} aria-hidden="true" />
                   <span>Tier 1 Verified Student</span>
                 </span>
@@ -437,23 +437,23 @@ export function DashboardClient({ user }: DashboardClientProps) {
             2. NEXT BEST ACTION (Single Most Important Action)
         ============================================================ */}
         <section aria-label="Next Best Action">
-          <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-r from-[#0B132B] via-[#0F172A] to-[#1E3A8A] p-6 sm:p-7 text-white shadow-xl shadow-slate-950/20">
+          <div className="relative overflow-hidden rounded-3xl border border-[#F0E1DE] bg-white p-6 sm:p-7 text-[#2B1B1B] shadow-card">
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-1.5 max-w-2xl">
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-blue-500 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-xs">
+                  <span className="rounded-full bg-[#F8E8EA] border border-[#F0E1DE] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#7A0F1F] shadow-2xs">
                     {nextAction.badgeText || "Recommended Action"}
                   </span>
-                  <span className="text-[11px] font-semibold text-slate-400">
+                  <span className="text-[11px] font-semibold text-[#907D79]">
                     Highest Priority Step
                   </span>
                 </div>
 
-                <h2 className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-white">
+                <h2 className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-[#2B1B1B]">
                   {nextAction.title}
                 </h2>
 
-                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                <p className="text-xs sm:text-sm text-[#604B49] leading-relaxed">
                   {nextAction.description}
                 </p>
               </div>
@@ -461,7 +461,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
               <div className="shrink-0">
                 <Link
                   href={nextAction.actionRoute}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-6 py-3.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-950/40 hover:bg-blue-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-[#7A0F1F] px-6 py-3.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-[#650B19] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A0F1F]"
                 >
                   <span>{nextAction.actionLabel}</span>
                   <ArrowRight size={15} aria-hidden="true" />
@@ -554,8 +554,8 @@ export function DashboardClient({ user }: DashboardClientProps) {
               </div>
             </Link>
 
-            <div className="group flex flex-col justify-between rounded-2xl border border-blue-200 bg-surface p-4 transition-all hover:border-primary hover:shadow-card shadow-2xs">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white group-hover:scale-105 transition-transform">
+            <div className="group flex flex-col justify-between rounded-2xl border border-border bg-surface p-4 transition-all hover:border-primary hover:shadow-card shadow-2xs">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white group-hover:scale-105 transition-transform">
                 <Upload size={17} aria-hidden="true" />
               </div>
               <div className="mt-3">

@@ -314,7 +314,7 @@ export function JobsClient({ studentName: _studentName }: JobsClientProps) {
                           Verified Demo
                         </span>
                       ) : (
-                        <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-[#F8E8EA] text-[#7A0F1F] border border-[#E8D2CE]">
                           Partner Feed
                         </span>
                       )}
@@ -603,20 +603,20 @@ export function JobsClient({ studentName: _studentName }: JobsClientProps) {
 
                     {/* Evidence Needed */}
                     {matchResult.evidenceNeeded.length > 0 && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
+                      <div className="bg-[#FFF9F7] border border-[#F0E1DE] rounded-xl p-4 space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
-                            <ShieldCheck className="w-4 h-4 text-blue-700" />
+                          <span className="text-xs font-bold text-[#2B1B1B] flex items-center gap-1.5">
+                            <ShieldCheck className="w-4 h-4 text-[#7A0F1F]" />
                             Proof Bank Evidence Needed
                           </span>
                           <Link
                             href="/evidence-vault"
-                            className="text-xs font-semibold text-blue-700 underline hover:text-blue-900"
+                            className="text-xs font-semibold text-[#7A0F1F] underline hover:text-[#650B19]"
                           >
                             Upload to Vault &rarr;
                           </Link>
                         </div>
-                        <ul className="text-xs text-blue-900/90 list-disc pl-4 space-y-1">
+                        <ul className="text-xs text-[#604B49] list-disc pl-4 space-y-1">
                           {matchResult.evidenceNeeded.map((ev, i) => (
                             <li key={i}>{ev}</li>
                           ))}

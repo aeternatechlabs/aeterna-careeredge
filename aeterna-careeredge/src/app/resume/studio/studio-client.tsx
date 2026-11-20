@@ -426,7 +426,7 @@ export function ResumeStudioClient() {
       strategyName: "Custom Mixed Strategy",
       tagline: "Tailored combination of your selected Summary, Experience, and Skills.",
       badgeLabel: "Handcrafted Mix",
-      badgeColor: "bg-blue-50 text-blue-800 border-blue-200",
+      badgeColor: "bg-[#F8E8EA] text-[#7A0F1F] border-[#E8D2CE]",
       templateId: "standard-modern",
       matchScore: Math.round(
         ((optSummary?.matchScore || 85) +
@@ -457,8 +457,8 @@ export function ResumeStudioClient() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 border border-blue-200 text-blue-700">
-              <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F8E8EA] border border-[#E8D2CE] text-[#7A0F1F]">
+              <Sparkles className="h-3.5 w-3.5 text-[#7A0F1F]" />
               AI Resume Studio
             </span>
             <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
@@ -484,7 +484,7 @@ export function ResumeStudioClient() {
             }}
             className="self-start md:self-auto inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-xs"
           >
-            <RotateCcw className="h-3.5 w-3.5 text-blue-600" />
+            <RotateCcw className="h-3.5 w-3.5 text-[#7A0F1F]" />
             Configure New Role
           </button>
         )}
@@ -505,11 +505,11 @@ export function ResumeStudioClient() {
                   onClick={() => setSourceType("passport")}
                   className={`flex items-start gap-3.5 p-4 rounded-xl border text-left transition-all ${
                     sourceType === "passport"
-                      ? "border-blue-600 bg-blue-50/50 ring-2 ring-blue-600/10 shadow-xs"
+                      ? "border-[#7A0F1F] bg-[#FFF9F7] ring-2 ring-[#7A0F1F]/10 shadow-xs"
                       : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#F8E8EA] text-[#7A0F1F] border border-[#E8D2CE]">
                     <Fingerprint className="h-5 w-5" />
                   </div>
                   <div>
@@ -530,7 +530,7 @@ export function ResumeStudioClient() {
                   }}
                   className={`flex items-start gap-3.5 p-4 rounded-xl border text-left transition-all ${
                     sourceType === "upload"
-                      ? "border-blue-600 bg-blue-50/50 ring-2 ring-blue-600/10 shadow-xs"
+                      ? "border-[#7A0F1F] bg-[#FFF9F7] ring-2 ring-[#7A0F1F]/10 shadow-xs"
                       : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
@@ -568,20 +568,20 @@ export function ResumeStudioClient() {
                 </span>
               </div>
 
-              <div className="relative rounded-2xl border border-slate-300 bg-white shadow-sm focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-600/10 transition-all p-3">
+              <div className="relative rounded-2xl border border-slate-300 bg-white shadow-sm focus-within:border-[#7A0F1F] focus-within:ring-2 focus-within:ring-[#7A0F1F]/10 transition-all p-3">
                 {/* Active attached file chip if present */}
                 {uploadedFile && (
-                  <div className="mb-2.5 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-900 font-medium animate-fadeIn">
-                    <FileCheck className="h-4 w-4 text-blue-600" />
+                  <div className="mb-2.5 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#F8E8EA] border border-[#E8D2CE] text-xs text-[#7A0F1F] font-medium animate-fadeIn">
+                    <FileCheck className="h-4 w-4 text-[#7A0F1F]" />
                     <span className="max-w-xs truncate">{uploadedFile.name}</span>
-                    <span className="text-[10px] text-blue-600 font-mono">
+                    <span className="text-[10px] text-[#7A0F1F] font-mono">
                       ({Math.round(uploadedFile.size / 1024)} KB)
                     </span>
                     <button
                       type="button"
                       onClick={handleClearFile}
                       aria-label="Remove attached resume"
-                      className="ml-1 text-blue-500 hover:text-red-600"
+                      className="ml-1 text-[#7A0F1F] hover:text-red-600"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -610,7 +610,7 @@ export function ResumeStudioClient() {
                       className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                       title="Attach existing resume PDF or DOCX"
                     >
-                      <Paperclip className="h-3.5 w-3.5 text-blue-600" />
+                      <Paperclip className="h-3.5 w-3.5 text-[#7A0F1F]" />
                       <span>Attach Resume</span>
                     </button>
 
@@ -619,7 +619,7 @@ export function ResumeStudioClient() {
                       onClick={() => setShowJdInput(!showJdInput)}
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                         showJdInput
-                          ? "bg-blue-50 text-blue-700 border border-blue-200"
+                          ? "bg-[#F8E8EA] text-[#7A0F1F] border border-[#E8D2CE]"
                           : "text-slate-600 hover:bg-slate-100"
                       }`}
                     >
@@ -632,7 +632,7 @@ export function ResumeStudioClient() {
                     <select
                       value={professionDomain}
                       onChange={(e) => setProfessionDomain(e.target.value)}
-                      className="h-8 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs font-medium text-slate-700 focus:outline-none focus:border-blue-600 max-w-[140px] sm:max-w-none flex-1 sm:flex-none"
+                      className="h-8 px-2 rounded-lg border border-slate-200 bg-slate-50 text-xs font-medium text-slate-700 focus:outline-none focus:border-[#7A0F1F] max-w-[140px] sm:max-w-none flex-1 sm:flex-none"
                     >
                       <option value="it">IT & Software</option>
                       <option value="healthcare">Healthcare & Nursing</option>
@@ -675,8 +675,8 @@ export function ResumeStudioClient() {
                       }}
                       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs transition-colors ${
                         targetRolePrompt === chip.label
-                          ? "bg-blue-600 text-white font-medium shadow-xs"
-                          : "bg-slate-100 border border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50/50"
+                          ? "bg-[#7A0F1F] text-white font-medium shadow-xs"
+                          : "bg-slate-100 border border-slate-200 text-slate-700 hover:border-[#E8D2CE] hover:bg-[#F8E8EA]"
                       }`}
                     >
                       <span>{chip.icon}</span>
@@ -698,7 +698,7 @@ export function ResumeStudioClient() {
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
                   placeholder="Paste target job responsibilities, skills, or requirements. CareerEdge extracts high-priority keywords and performs honest ATS gap analysis without fabricating experience."
-                  className="w-full p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 leading-relaxed"
+                  className="w-full p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#7A0F1F] focus:ring-1 focus:ring-[#7A0F1F] leading-relaxed"
                 />
               </FadeIn>
             )}
@@ -741,7 +741,7 @@ export function ResumeStudioClient() {
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0B132B] to-[#1E3A8A] text-white shadow-md">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7A0F1F] text-white shadow-md">
                   <AnimatedScore value={studioResult.gapAnalysis.matchScore} className="text-lg text-white" />
                 </div>
                 <div>
@@ -765,7 +765,7 @@ export function ResumeStudioClient() {
                   onClick={() => setActiveTab("options")}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                     activeTab === "options"
-                      ? "bg-blue-600 text-white shadow-xs"
+                      ? "bg-[#7A0F1F] text-white shadow-xs"
                       : "bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100"
                   }`}
                 >
@@ -777,7 +777,7 @@ export function ResumeStudioClient() {
                   onClick={() => setActiveTab("mixer")}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                     activeTab === "mixer"
-                      ? "bg-blue-600 text-white shadow-xs"
+                      ? "bg-[#7A0F1F] text-white shadow-xs"
                       : "bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100"
                   }`}
                 >
@@ -845,8 +845,8 @@ export function ResumeStudioClient() {
                       onClick={() => setSelectedOptionId(option.id)}
                       className={`cursor-pointer rounded-2xl border transition-all duration-200 bg-white p-5 flex flex-col justify-between ${
                         isSelected
-                          ? "border-blue-600 ring-2 ring-blue-600/15 shadow-md -translate-y-0.5"
-                          : "border-slate-200 hover:border-blue-400 hover:shadow-sm"
+                          ? "border-[#7A0F1F] ring-2 ring-[#7A0F1F]/15 shadow-md -translate-y-0.5"
+                          : "border-slate-200 hover:border-[#E8D2CE] hover:shadow-sm"
                       }`}
                     >
                       <div>
@@ -857,13 +857,13 @@ export function ResumeStudioClient() {
                               option.badgeColor.includes("purple")
                                 ? "bg-purple-50 text-purple-700 border-purple-200"
                                 : isSelected
-                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                ? "bg-[#F8E8EA] text-[#7A0F1F] border-[#E8D2CE]"
                                 : "bg-slate-100 text-slate-700 border-slate-200"
                             }`}
                           >
                             {option.badgeLabel}
                           </span>
-                          <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">
+                          <span className="text-xs font-bold text-[#7A0F1F] bg-[#F8E8EA] px-2 py-0.5 rounded-md border border-[#E8D2CE]">
                             {option.matchScore}% Match
                           </span>
                         </div>
@@ -963,7 +963,7 @@ export function ResumeStudioClient() {
                         type="button"
                         disabled={isExportingPdf}
                         onClick={() => handleExportPdf(selectedOption)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition shadow-xs disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#F8E8EA] text-[#7A0F1F] hover:bg-[#F5DCDD] border border-[#E8D2CE] transition shadow-xs disabled:opacity-50"
                         title="Download ATS-Friendly Vector PDF directly"
                       >
                         {isExportingPdf ? (
@@ -979,7 +979,7 @@ export function ResumeStudioClient() {
                         type="button"
                         disabled={isSaving}
                         onClick={() => handleSaveOption(selectedOption)}
-                        className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition shadow-xs disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold bg-[#7A0F1F] text-white hover:bg-[#650B19] transition shadow-xs disabled:opacity-50"
                       >
                         {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                         <span>Open in Builder →</span>
@@ -1010,7 +1010,7 @@ export function ResumeStudioClient() {
                   >
                     {/* Header */}
                     <div className={`text-center border-b border-slate-200 ${fitToOnePage ? "pb-2 mb-2" : "pb-4 mb-4"}`}>
-                      <h2 className={`${fitToOnePage ? "text-lg" : "text-xl"} font-bold tracking-tight text-blue-700`}>
+                      <h2 className={`${fitToOnePage ? "text-lg" : "text-xl"} font-bold tracking-tight text-[#7A0F1F]`}>
                         {studioResult.contactInfo.name}
                       </h2>
                       <p className="text-xs text-slate-600 mt-0.5">
@@ -1020,7 +1020,7 @@ export function ResumeStudioClient() {
 
                     {/* Summary */}
                     <div>
-                      <h4 className="text-[11px] font-bold uppercase tracking-wider text-blue-700 border-b border-slate-200 pb-0.5 mb-1.5">
+                      <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#7A0F1F] border-b border-slate-200 pb-0.5 mb-1.5">
                         Professional Summary
                       </h4>
                       <p className="text-xs text-slate-800 leading-relaxed">{cleanMojibake(selectedOption.summary)}</p>
@@ -1029,7 +1029,7 @@ export function ResumeStudioClient() {
                     {/* Sections */}
                     {selectedOption.sections.map((sec) => (
                       <div key={sec.id}>
-                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-blue-700 border-b border-slate-200 pb-0.5 mb-1.5">
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#7A0F1F] border-b border-slate-200 pb-0.5 mb-1.5">
                           {cleanMojibake(sec.customTitle)}
                         </h4>
                         <div className={fitToOnePage ? "space-y-1.5" : "space-y-3"}>
@@ -1095,7 +1095,7 @@ export function ResumeStudioClient() {
                   <div className="border-t border-slate-200 pt-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#F8E8EA] text-[#7A0F1F]">
                           <MessageSquare className="h-4 w-4" />
                         </div>
                         <h4 className="text-sm font-bold text-slate-900">
@@ -1116,7 +1116,7 @@ export function ResumeStudioClient() {
                           type="button"
                           disabled={isRefining}
                           onClick={() => handleRefine(prompt)}
-                          className="px-2.5 py-1 rounded-lg text-[11px] bg-slate-100 hover:bg-blue-50 hover:text-blue-700 border border-slate-200 text-slate-700 transition-colors disabled:opacity-50"
+                          className="px-2.5 py-1 rounded-lg text-[11px] bg-slate-100 hover:bg-[#F8E8EA] hover:text-[#7A0F1F] border border-slate-200 text-slate-700 transition-colors disabled:opacity-50"
                         >
                           {prompt}
                         </button>
@@ -1136,12 +1136,12 @@ export function ResumeStudioClient() {
                             <div
                               className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
                                 msg.sender === "user"
-                                  ? "bg-blue-600 text-white rounded-br-xs"
+                                  ? "bg-[#7A0F1F] text-white rounded-br-xs"
                                   : "bg-white text-slate-900 border border-slate-200 rounded-bl-xs shadow-xs"
                               }`}
                             >
                               {msg.sender === "assistant" && (
-                                <div className="flex items-center gap-1 font-bold text-[10px] text-blue-600 mb-0.5">
+                                <div className="flex items-center gap-1 font-bold text-[10px] text-[#7A0F1F] mb-0.5">
                                   <Bot className="h-3 w-3" />
                                   <span>CareerEdge Studio AI</span>
                                 </div>
@@ -1171,7 +1171,7 @@ export function ResumeStudioClient() {
                         onChange={(e) => setRefineInput(e.target.value)}
                         placeholder="e.g. 'Make the experience bullets sound more leadership-driven' or 'Add Docker and Kubernetes keywords'..."
                         disabled={isRefining}
-                        className="flex-1 h-11 px-4 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                        className="flex-1 h-11 px-4 rounded-xl border border-slate-200 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#7A0F1F] focus:ring-1 focus:ring-[#7A0F1F]"
                       />
                       <LoadingButton
                         type="submit"
@@ -1195,7 +1195,7 @@ export function ResumeStudioClient() {
             <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
               <div className="border-b border-slate-100 pb-4">
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Sliders className="h-4 w-4 text-blue-600" />
+                  <Sliders className="h-4 w-4 text-[#7A0F1F]" />
                   Section Mixer: Combine Best Parts from Each Strategy
                 </h3>
                 <p className="text-xs text-slate-600 mt-1">
@@ -1207,7 +1207,7 @@ export function ResumeStudioClient() {
                 {/* 1. Summary Picker */}
                 <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
                   <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                    <FileText className="h-3.5 w-3.5 text-blue-600" />
+                    <FileText className="h-3.5 w-3.5 text-[#7A0F1F]" />
                     Summary Strategy
                   </label>
                   <select
@@ -1229,7 +1229,7 @@ export function ResumeStudioClient() {
                 {/* 2. Experience Picker */}
                 <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
                   <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                    <Briefcase className="h-3.5 w-3.5 text-blue-600" />
+                    <Briefcase className="h-3.5 w-3.5 text-[#7A0F1F]" />
                     Experience Bullets Strategy
                   </label>
                   <select
@@ -1252,7 +1252,7 @@ export function ResumeStudioClient() {
                 {/* 3. Projects Picker */}
                 <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
                   <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                    <FolderGit2 className="h-3.5 w-3.5 text-blue-600" />
+                    <FolderGit2 className="h-3.5 w-3.5 text-[#7A0F1F]" />
                     Projects Strategy
                   </label>
                   <select
@@ -1274,7 +1274,7 @@ export function ResumeStudioClient() {
                 {/* 4. Skills Picker */}
                 <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
                   <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                    <Wrench className="h-3.5 w-3.5 text-blue-600" />
+                    <Wrench className="h-3.5 w-3.5 text-[#7A0F1F]" />
                     Skills Grouping Strategy
                   </label>
                   <select

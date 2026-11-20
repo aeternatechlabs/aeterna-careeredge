@@ -101,7 +101,7 @@ export function StudentLayout({
   return (
     <div
       data-app-theme="careeredge-premium"
-      className="app-theme-careeredge min-h-screen bg-background text-foreground overflow-x-hidden max-w-full"
+      className="app-theme-careeredge min-h-screen bg-[#FFF9F7] text-[#2B1B1B] overflow-x-hidden max-w-full"
     >
       {/* Desktop & Tablet sidebar */}
       <div
@@ -142,7 +142,7 @@ export function StudentLayout({
                   type="button"
                   onClick={closeMobileMenu}
                   aria-label="Close navigation menu"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F5DCDD] text-[#7A0F1F] hover:bg-[#F8E8EA] transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -179,7 +179,7 @@ export function StudentLayout({
             animate={{ scaleX: 1, opacity: 0 }}
             style={{ transformOrigin: "left" }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="h-full bg-gradient-to-r from-blue-600 via-sky-400 to-indigo-500 shadow-sm shadow-sky-400/50"
+            className="h-full bg-gradient-to-r from-[#7A0F1F] via-[#F2B63D] to-[#650B19] shadow-xs shadow-[#7A0F1F]/30"
           />
         </div>
 

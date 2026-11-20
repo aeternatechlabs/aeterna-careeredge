@@ -37,11 +37,11 @@ export function PageHeader({
     <header className={`space-y-2 pb-5 border-b border-slate-200 ${className}`}>
       {/* Category / Breadcrumbs / Back Link */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-blue-600">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#7A0F1F]">
           {backHref && (
             <Link
               href={backHref}
-              className="inline-flex items-center gap-1 font-bold text-slate-500 hover:text-blue-600 transition-colors mr-2"
+              className="inline-flex items-center gap-1 font-bold text-slate-500 hover:text-[#7A0F1F] transition-colors mr-2"
             >
               <ArrowLeft size={13} aria-hidden="true" />
               <span>{backLabel}</span>
@@ -55,11 +55,11 @@ export function PageHeader({
           <button
             type="button"
             onClick={onOpenGuide}
-            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-[#7A0F1F] transition shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A0F1F]"
             title="How this tool works"
             aria-label="Open tool guide"
           >
-            <HelpCircle size={13} className="text-amber-500" />
+            <HelpCircle size={13} className="text-[#F2B63D]" />
             <span className="hidden sm:inline">How this works</span>
           </button>
         )}

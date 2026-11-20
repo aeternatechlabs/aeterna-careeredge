@@ -598,14 +598,14 @@ export function SectionEditor({
                           ? "bg-blue-100 text-blue-800 border border-blue-300"
                           : sectionAnalysis
                           ? "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
-                          : "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"
+                          : "bg-blue-50 text-[#7A0F1F] border border-blue-200 hover:bg-blue-100"
                       }`}
                       title={`Run AI analysis for ${sec.customTitle} section`}
                     >
                       {analyzingSectionId === sec.id ? (
-                        <Loader2 size={12} className="animate-spin text-blue-600" />
+                        <Loader2 size={12} className="animate-spin text-[#7A0F1F]" />
                       ) : (
-                        <Sparkles size={12} className={sectionAnalysis ? "text-emerald-600" : "text-blue-600"} />
+                        <Sparkles size={12} className={sectionAnalysis ? "text-emerald-600" : "text-[#7A0F1F]"} />
                       )}
                       <span>
                         {analyzingSectionId === sec.id
@@ -760,7 +760,7 @@ export function SectionEditor({
                   <div className="flex flex-col gap-2.5 p-3.5 rounded-xl bg-gradient-to-r from-blue-50/90 via-slate-50 to-indigo-50/50 border border-blue-200/80 shadow-2xs">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white shrink-0 shadow-2xs">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#7A0F1F] text-white shrink-0 shadow-2xs">
                           <Sparkles size={13} />
                         </div>
                         <span className="text-xs font-bold text-slate-900 truncate">
@@ -785,7 +785,7 @@ export function SectionEditor({
                         <button
                           type="button"
                           onClick={() => onOpenAiReview(sec.id)}
-                          className="flex-1 inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-blue-700 bg-white border border-blue-200 hover:bg-blue-50 transition shadow-2xs"
+                          className="flex-1 inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-[#7A0F1F] bg-white border border-blue-200 hover:bg-blue-50 transition shadow-2xs"
                           title="Open AI Review Drawer with full side-by-side comparisons"
                         >
                           <span>View Fixes ({sectionAnalysis.suggestions.length})</span>
@@ -796,7 +796,7 @@ export function SectionEditor({
                           type="button"
                           disabled={analyzingSectionId === sec.id}
                           onClick={() => onAnalyzeSection(sec.id)}
-                          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow-xs disabled:opacity-50"
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#7A0F1F] hover:bg-[#650B19] transition shadow-xs disabled:opacity-50"
                         >
                           {analyzingSectionId === sec.id ? (
                             <>
@@ -825,7 +825,7 @@ export function SectionEditor({
                           <button
                             type="button"
                             onClick={() => onOpenAiReview(sec.id)}
-                            className="text-[11px] font-semibold text-blue-600 hover:underline flex items-center gap-1"
+                            className="text-[11px] font-semibold text-[#7A0F1F] hover:underline flex items-center gap-1"
                           >
                             <span>Open in AI Drawer</span>
                             <ArrowRight size={11} />
@@ -1279,10 +1279,10 @@ export function SectionEditor({
                                             <button
                                               type="button"
                                               onClick={() => triggerBulletImprovement(entIdx, bIdx, b.text, "strengthen")}
-                                              className="p-1 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                                              className="p-1 rounded-lg border border-blue-200 bg-blue-50 text-[#7A0F1F] hover:bg-blue-100"
                                               title="AI: Strengthen with metric verbs"
                                             >
-                                              <Wand2 size={12} className="text-blue-600" />
+                                              <Wand2 size={12} className="text-[#7A0F1F]" />
                                             </button>
                                             <button
                                               type="button"
@@ -1445,7 +1445,7 @@ export function SectionEditor({
           <div className="w-full max-w-xl rounded-2xl border border-border bg-surface p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <h4 className="font-heading text-sm font-bold text-foreground flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-blue-600" />
+                <Sparkles className="h-4 w-4 text-[#7A0F1F]" />
                 AI Bullet Improvement ({activeBulletDiff.action.replace("_", " ")})
               </h4>
               <button

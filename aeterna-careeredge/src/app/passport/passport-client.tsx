@@ -270,37 +270,37 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Status notification toast */}
         {statusMessage && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-xs font-semibold text-white shadow-xl border border-slate-700 transition-all animate-in fade-in slide-in-from-bottom-2">
-            <Sparkles size={15} className="text-amber-400" />
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-[#2B1B1B] px-4 py-3 text-xs font-semibold text-white shadow-xl border border-[#443030] transition-all animate-in fade-in slide-in-from-bottom-2">
+            <Sparkles size={15} className="text-[#F2B63D]" />
             <span>{statusMessage}</span>
           </div>
         )}
 
         {/* Header Banner */}
-        <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 p-4 sm:p-6 md:p-8 text-white shadow-card border border-slate-800/80">
+        <div className="rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-6 md:p-8 text-[#2B1B1B] shadow-card border border-[#F0E1DE]">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 sm:gap-6">
             <div className="space-y-1.5 sm:space-y-2">
-              <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-amber-400 text-slate-950 shadow-xs">
+              <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-[#F8E8EA] text-[#7A0F1F] border border-[#E8D2CE] shadow-xs">
                 <Fingerprint className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span className="hidden sm:inline">Universal Career Passport • Verified Source of Truth</span>
                 <span className="sm:hidden">Career Passport • Verified</span>
               </div>
-              <h1 className="text-xl sm:text-2xl md:text-3.5xl font-extrabold tracking-tight">
+              <h1 className="text-xl sm:text-2xl md:text-3.5xl font-extrabold tracking-tight text-[#2B1B1B]">
                 {userName}&apos;s Career Passport
               </h1>
               {/* Simplified: Hidden on mobile (<md) to keep card simple and focused */}
-              <p className="hidden md:block text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+              <p className="hidden md:block text-xs sm:text-sm text-[#604B49] max-w-xl leading-relaxed">
                 Centralized, tamper-resistant career record aggregating your academic history, competencies, and proof-backed achievements.
               </p>
 
               {profile?.institution && (
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs text-slate-300 pt-0.5 sm:pt-1">
-                  <MapPin size={13} className="text-amber-400 shrink-0" />
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs text-[#765653] pt-0.5 sm:pt-1">
+                  <MapPin size={13} className="text-[#7A0F1F] shrink-0" />
                   <span className="truncate">
                     {profile.institution} • {profile.course || profile.academicDomain}
                   </span>
                   {profile.gradeValue && (
-                    <span className="bg-white/15 px-2 py-0.5 rounded-md font-semibold text-white text-[11px]">
+                    <span className="bg-[#F8E8EA] border border-[#E8D2CE] px-2 py-0.5 rounded-md font-semibold text-[#7A0F1F] text-[11px]">
                       {profile.gradingType || "Grade"}: {profile.gradeValue}
                     </span>
                   )}
@@ -310,14 +310,14 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
 
             {/* Score Card & Edit Master Profile Button - Streamlined for below md */}
             <div className="flex flex-col sm:flex-row md:flex-col items-center justify-between gap-2.5 sm:gap-3 w-full md:w-auto shrink-0">
-              <div className="bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 border border-white/15 text-center flex md:flex-col items-center justify-between md:justify-center gap-3 w-full md:min-w-[190px]">
+              <div className="bg-[#FFF9F7] rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 border border-[#F0E1DE] text-center flex md:flex-col items-center justify-between md:justify-center gap-3 w-full md:min-w-[190px]">
                 <div className="flex items-center gap-2 md:flex-col md:gap-0">
-                  <div className="text-2xl sm:text-3xl md:text-4xl font-black text-amber-400">{score}%</div>
-                  <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-200 md:mt-1">
+                  <div className="text-2xl sm:text-3xl md:text-4xl font-black text-[#7A0F1F]">{score}%</div>
+                  <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#59413F] md:mt-1">
                     Passport Readiness
                   </div>
                 </div>
-                <div className="text-[10px] sm:text-[11px] text-slate-300 md:mt-0.5">
+                <div className="text-[10px] sm:text-[11px] text-[#907D79] md:mt-0.5">
                   {score >= 75 ? "Strongly Proofed" : "Getting Started"}
                 </div>
               </div>
@@ -325,7 +325,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
               <button
                 type="button"
                 onClick={() => setProfileModalOpen(true)}
-                className="w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold bg-white/15 hover:bg-white/25 text-white border border-white/20 shadow-xs transition"
+                className="w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold bg-[#F8E8EA] hover:bg-[#F5DCDD] text-[#7A0F1F] border border-[#E8D2CE] shadow-xs transition"
               >
                 <Pencil size={13} />
                 <span>Edit Master Profile</span>
@@ -334,11 +334,11 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
           </div>
 
           {/* Quick Action Buttons - Simple layout on mobile */}
-          <div className="mt-4 sm:mt-6 pt-3.5 sm:pt-5 border-t border-white/10 flex flex-wrap items-center justify-between gap-2.5">
+          <div className="mt-4 sm:mt-6 pt-3.5 sm:pt-5 border-t border-[#F0E1DE] flex flex-wrap items-center justify-between gap-2.5">
             <div className="flex flex-wrap gap-2 sm:gap-2.5 w-full sm:w-auto">
               <Link
                 href="/resume"
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-sm transition"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold bg-[#7A0F1F] text-white hover:bg-[#650B19] shadow-sm transition"
               >
                 <FileText size={13} />
                 <span className="hidden sm:inline">Create Tailored Resume</span>
@@ -346,7 +346,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
               </Link>
               <Link
                 href="/evidence-vault"
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold bg-white/15 text-white hover:bg-white/25 border border-white/20 transition truncate"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold bg-[#F8E8EA] text-[#7A0F1F] hover:bg-[#F5DCDD] border border-[#E8D2CE] transition truncate"
               >
                 <ShieldCheck size={13} />
                 <span className="hidden sm:inline">Upload Evidence ({initialUser.documentCount} Files)</span>
@@ -356,10 +356,10 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                 type="button"
                 onClick={handleDeduplicate}
                 disabled={deduplicating}
-                className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold bg-white/15 text-white hover:bg-white/25 border border-white/20 transition disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold bg-[#FFF9F7] text-[#59413F] hover:bg-[#F8E8EA] hover:text-[#7A0F1F] border border-[#F0E1DE] transition disabled:opacity-50"
                 title="Deduplicate and consolidate redundant passport entries"
               >
-                <Sparkles size={13} className="text-amber-300" />
+                <Sparkles size={13} className="text-[#F2B63D]" />
                 <span className="hidden sm:inline">{deduplicating ? "Consolidating..." : "Clean Duplicates"}</span>
                 <span className="sm:hidden">{deduplicating ? "Cleaning..." : "Clean"}</span>
               </button>
@@ -368,7 +368,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
             {/* Direct Link to Onboarding Form Editor */}
             <Link
               href="/onboarding?from=dashboard"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-300 hover:text-amber-200 hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#7A0F1F] hover:underline"
             >
               <span>Full Onboarding Wizard Edit &rarr;</span>
             </Link>
@@ -452,12 +452,12 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
             {/* ============================================================
                 1. EDUCATION HISTORY
             ============================================================ */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 space-y-4 shadow-card">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2 font-bold text-slate-900">
-                  <GraduationCap className="text-blue-600 w-5 h-5" />
+            <div className="bg-white rounded-2xl border border-[#F0E1DE] p-4 sm:p-6 space-y-4 shadow-card">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F0E1DE] pb-3">
+                <div className="flex items-center gap-2 font-bold text-[#2B1B1B]">
+                  <GraduationCap className="text-[#7A0F1F] w-5 h-5" />
                   <h2>Education History</h2>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">
+                  <span className="rounded-full bg-[#F8E8EA] border border-[#E8D2CE] px-2.5 py-0.5 text-[11px] font-bold text-[#7A0F1F]">
                     {educations.length}
                   </span>
                 </div>
@@ -468,7 +468,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                     setActiveEducation(null);
                     setEducationModalOpen(true);
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-xs transition"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#7A0F1F] text-white hover:bg-[#650B19] shadow-xs transition"
                 >
                   <Plus size={13} />
                   <span>Add Degree</span>
@@ -480,13 +480,13 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                   {educations.map((edu) => (
                     <div
                       key={edu.id}
-                      className="group relative p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-1 hover:border-blue-400/50 transition"
+                      className="group relative p-3.5 rounded-xl bg-[#FFF9F7] border border-[#F0E1DE] space-y-1 hover:border-[#E8D2CE] transition"
                     >
-                      <div className="flex items-start justify-between text-xs font-bold text-slate-900 pr-16">
+                      <div className="flex items-start justify-between text-xs font-bold text-[#2B1B1B] pr-16">
                         <div>
                           <span>{cleanBulletText(edu.degree)}</span>
                           {edu.fieldOfStudy && (
-                            <span className="text-slate-500 font-normal">
+                            <span className="text-[#907D79] font-normal">
                               {" "}• {cleanBulletText(edu.fieldOfStudy)}
                             </span>
                           )}
@@ -498,11 +498,11 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                         )}
                       </div>
 
-                      <div className="text-xs text-slate-600 font-medium">
+                      <div className="text-xs text-[#604B49] font-medium">
                         {cleanBulletText(edu.institution)}
                       </div>
 
-                      <div className="text-[11px] text-slate-400">
+                      <div className="text-[11px] text-[#907D79]">
                         {edu.startDate} — {edu.endDate || "Present"}
                       </div>
 
@@ -515,7 +515,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                             setEducationModalOpen(true);
                           }}
                           aria-label={`Edit ${edu.degree}`}
-                          className="p-1 rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-900 transition"
+                          className="p-1 rounded-lg text-[#907D79] hover:bg-[#F8E8EA] hover:text-[#2B1B1B] transition"
                         >
                           <Pencil size={13} />
                         </button>
@@ -533,7 +533,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                   ))}
                 </div>
               ) : (
-                <div className="p-6 rounded-xl bg-slate-50 text-center text-xs text-slate-500 space-y-2">
+                <div className="p-6 rounded-xl bg-[#FFF9F7] border border-dashed border-[#F0E1DE] text-center text-xs text-[#907D79] space-y-2">
                   <p>No education records logged yet.</p>
                   <button
                     type="button"
@@ -541,7 +541,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                       setActiveEducation(null);
                       setEducationModalOpen(true);
                     }}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-[#7A0F1F] hover:underline"
                   >
                     <Plus size={13} />
                     <span>Add your degree or diploma</span>
@@ -553,12 +553,12 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
             {/* ============================================================
                 2. SKILLS & COMPETENCIES
             ============================================================ */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 space-y-4 shadow-card">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2 font-bold text-slate-900">
-                  <Code className="text-blue-600 w-5 h-5" />
+            <div className="bg-white rounded-2xl border border-[#F0E1DE] p-4 sm:p-6 space-y-4 shadow-card">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F0E1DE] pb-3">
+                <div className="flex items-center gap-2 font-bold text-[#2B1B1B]">
+                  <Code className="text-[#7A0F1F] w-5 h-5" />
                   <h2>Skills &amp; Competencies</h2>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">
+                  <span className="rounded-full bg-[#F8E8EA] border border-[#E8D2CE] px-2.5 py-0.5 text-[11px] font-bold text-[#7A0F1F]">
                     {skills.length}
                   </span>
                 </div>
@@ -566,7 +566,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                 <button
                   type="button"
                   onClick={() => setSkillModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-xs transition"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#7A0F1F] text-white hover:bg-[#650B19] shadow-xs transition"
                 >
                   <Plus size={13} />
                   <span>Add Skill</span>
@@ -578,11 +578,11 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                   {skills.map((skill) => (
                     <div
                       key={skill.id || skill.name}
-                      className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold bg-slate-100/90 hover:bg-slate-200/80 text-slate-800 border border-slate-200/80 hover:border-blue-400 transition"
+                      className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold bg-[#FFF9F7] hover:bg-[#F8E8EA] text-[#2B1B1B] border border-[#F0E1DE] hover:border-[#E8D2CE] transition"
                     >
                       <span>{skill.name}</span>
                       {skill.level && (
-                        <span className="text-[10px] text-blue-600 uppercase font-bold">
+                        <span className="text-[10px] text-[#7A0F1F] uppercase font-bold">
                           • {skill.level.slice(0, 3)}
                         </span>
                       )}
@@ -590,7 +590,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                         type="button"
                         onClick={() => skill.id && handleDeleteSkill(skill.id)}
                         aria-label={`Remove skill ${skill.name}`}
-                        className="ml-1 text-slate-400 hover:text-red-600 transition"
+                        className="ml-1 text-[#907D79] hover:text-red-600 transition"
                       >
                         &times;
                       </button>
@@ -598,12 +598,12 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                   ))}
                 </div>
               ) : (
-                <div className="p-6 rounded-xl bg-slate-50 text-center text-xs text-slate-500 space-y-2">
+                <div className="p-6 rounded-xl bg-[#FFF9F7] border border-dashed border-[#F0E1DE] text-center text-xs text-[#907D79] space-y-2">
                   <p>No skills recorded yet.</p>
                   <button
                     type="button"
                     onClick={() => setSkillModalOpen(true)}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-[#7A0F1F] hover:underline"
                   >
                     <Plus size={13} />
                     <span>Add your first technical or domain skill</span>
@@ -615,12 +615,12 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
             {/* ============================================================
                 3. PRACTICAL PROJECTS & PORTFOLIO
             ============================================================ */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 space-y-4 shadow-card">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2 font-bold text-slate-900">
-                  <FolderGit2 className="text-blue-600 w-5 h-5" />
+            <div className="bg-white rounded-2xl border border-[#F0E1DE] p-4 sm:p-6 space-y-4 shadow-card">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F0E1DE] pb-3">
+                <div className="flex items-center gap-2 font-bold text-[#2B1B1B]">
+                  <FolderGit2 className="text-[#7A0F1F] w-5 h-5" />
                   <h2>Practical Projects</h2>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">
+                  <span className="rounded-full bg-[#F8E8EA] border border-[#E8D2CE] px-2.5 py-0.5 text-[11px] font-bold text-[#7A0F1F]">
                     {projects.length}
                   </span>
                 </div>
@@ -631,7 +631,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                     setActiveProject(null);
                     setProjectModalOpen(true);
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-xs transition"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#7A0F1F] text-white hover:bg-[#650B19] shadow-xs transition"
                 >
                   <Plus size={13} />
                   <span>Add Project</span>
@@ -643,13 +643,13 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                   {projects.map((proj) => (
                     <div
                       key={proj.id}
-                      className="group relative p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-1.5 hover:border-blue-400/50 transition"
+                      className="group relative p-3.5 rounded-xl bg-[#FFF9F7] border border-[#F0E1DE] space-y-1.5 hover:border-[#E8D2CE] transition"
                     >
-                      <div className="flex items-start justify-between text-xs font-bold text-slate-900 pr-16">
+                      <div className="flex items-start justify-between text-xs font-bold text-[#2B1B1B] pr-16">
                         <div>
                           <span>{cleanBulletText(proj.title)}</span>
                           {proj.role && (
-                            <span className="text-slate-500 font-normal">
+                            <span className="text-[#907D79] font-normal">
                               {" "}• {proj.role}
                             </span>
                           )}
@@ -660,7 +660,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                             href={proj.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline inline-flex items-center gap-1 font-semibold"
+                            className="text-[#7A0F1F] hover:underline inline-flex items-center gap-1 font-semibold"
                           >
                             <span>Live</span>
                             <ExternalLink size={11} />
@@ -669,13 +669,13 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                       </div>
 
                       {proj.technologies && (
-                        <div className="text-[11px] font-semibold text-blue-600">
+                        <div className="text-[11px] font-semibold text-[#7A0F1F]">
                           {proj.technologies}
                         </div>
                       )}
 
                       {proj.description && (
-                        <div className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                        <div className="text-xs text-[#604B49] line-clamp-2 leading-relaxed">
                           {cleanBulletText(proj.description)}
                         </div>
                       )}
@@ -689,7 +689,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                             setProjectModalOpen(true);
                           }}
                           aria-label={`Edit ${proj.title}`}
-                          className="p-1 rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-900 transition"
+                          className="p-1 rounded-lg text-[#907D79] hover:bg-[#F8E8EA] hover:text-[#2B1B1B] transition"
                         >
                           <Pencil size={13} />
                         </button>
@@ -707,7 +707,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                   ))}
                 </div>
               ) : (
-                <div className="p-6 rounded-xl bg-slate-50 text-center text-xs text-slate-500 space-y-2">
+                <div className="p-6 rounded-xl bg-[#FFF9F7] border border-dashed border-[#F0E1DE] text-center text-xs text-[#907D79] space-y-2">
                   <p>No practical projects logged yet.</p>
                   <button
                     type="button"
@@ -715,7 +715,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                       setActiveProject(null);
                       setProjectModalOpen(true);
                     }}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-[#7A0F1F] hover:underline"
                   >
                     <Plus size={13} />
                     <span>Add your capstone, software, or case study project</span>
@@ -727,12 +727,12 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
             {/* ============================================================
                 4. WORK EXPERIENCE & INTERNSHIPS
             ============================================================ */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 space-y-4 shadow-card">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2 font-bold text-slate-900">
-                  <Briefcase className="text-blue-600 w-5 h-5" />
+            <div className="bg-white rounded-2xl border border-[#F0E1DE] p-4 sm:p-6 space-y-4 shadow-card">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F0E1DE] pb-3">
+                <div className="flex items-center gap-2 font-bold text-[#2B1B1B]">
+                  <Briefcase className="text-[#7A0F1F] w-5 h-5" />
                   <h2>Experiences &amp; Internships</h2>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">
+                  <span className="rounded-full bg-[#F8E8EA] border border-[#E8D2CE] px-2.5 py-0.5 text-[11px] font-bold text-[#7A0F1F]">
                     {experiences.length}
                   </span>
                 </div>
@@ -743,7 +743,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                     setActiveExperience(null);
                     setExperienceModalOpen(true);
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-xs transition"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#7A0F1F] text-white hover:bg-[#650B19] shadow-xs transition"
                 >
                   <Plus size={13} />
                   <span>Add Experience</span>
@@ -755,24 +755,24 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                   {experiences.map((exp) => (
                     <div
                       key={exp.id}
-                      className="group relative p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-1 hover:border-blue-400/50 transition"
+                      className="group relative p-3.5 rounded-xl bg-[#FFF9F7] border border-[#F0E1DE] space-y-1 hover:border-[#E8D2CE] transition"
                     >
-                      <div className="text-xs font-bold text-slate-900 pr-16">
+                      <div className="text-xs font-bold text-[#2B1B1B] pr-16">
                         {cleanBulletText(exp.jobTitle)}
                       </div>
-                      <div className="text-xs text-slate-600 font-medium">
+                      <div className="text-xs text-[#604B49] font-medium">
                         {cleanBulletText(exp.companyName)}
                         {exp.employmentType && (
-                          <span className="text-slate-400 font-normal">
+                          <span className="text-[#907D79] font-normal">
                             {" "}• {exp.employmentType.replace("_", " ")}
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-slate-400">
+                      <div className="text-[11px] text-[#907D79]">
                         {exp.startDate} — {exp.endDate || "Present"}
                       </div>
                       {exp.description && (
-                        <div className="text-xs text-slate-600 pt-1 line-clamp-2 leading-relaxed">
+                        <div className="text-xs text-[#604B49] pt-1 line-clamp-2 leading-relaxed">
                           {cleanBulletText(exp.description)}
                         </div>
                       )}
@@ -786,7 +786,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                             setExperienceModalOpen(true);
                           }}
                           aria-label={`Edit ${exp.jobTitle}`}
-                          className="p-1 rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-900 transition"
+                          className="p-1 rounded-lg text-[#907D79] hover:bg-[#F8E8EA] hover:text-[#2B1B1B] transition"
                         >
                           <Pencil size={13} />
                         </button>
@@ -804,7 +804,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                   ))}
                 </div>
               ) : (
-                <div className="p-6 rounded-xl bg-slate-50 text-center text-xs text-slate-500 space-y-2">
+                <div className="p-6 rounded-xl bg-[#FFF9F7] border border-dashed border-[#F0E1DE] text-center text-xs text-[#907D79] space-y-2">
                   <p>No work experiences logged yet.</p>
                   <button
                     type="button"
@@ -812,7 +812,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                       setActiveExperience(null);
                       setExperienceModalOpen(true);
                     }}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-[#7A0F1F] hover:underline"
                   >
                     <Plus size={13} />
                     <span>Add internship, articleship, or job experience</span>
@@ -824,12 +824,12 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
             {/* ============================================================
                 5. CERTIFICATIONS & CREDENTIALS
             ============================================================ */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 space-y-4 shadow-card md:col-span-2">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2 font-bold text-slate-900">
-                  <Award className="text-blue-600 w-5 h-5" />
+            <div className="bg-white rounded-2xl border border-[#F0E1DE] p-4 sm:p-6 space-y-4 shadow-card md:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F0E1DE] pb-3">
+                <div className="flex items-center gap-2 font-bold text-[#2B1B1B]">
+                  <Award className="text-[#7A0F1F] w-5 h-5" />
                   <h2>Certifications &amp; Professional Credentials</h2>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">
+                  <span className="rounded-full bg-[#F8E8EA] border border-[#E8D2CE] px-2.5 py-0.5 text-[11px] font-bold text-[#7A0F1F]">
                     {certifications.length}
                   </span>
                 </div>
@@ -840,7 +840,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                     setActiveCertification(null);
                     setCertificationModalOpen(true);
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-xs transition"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#7A0F1F] text-white hover:bg-[#650B19] shadow-xs transition"
                 >
                   <Plus size={13} />
                   <span>Add Certification</span>
@@ -852,16 +852,16 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                   {certifications.map((cert) => (
                     <div
                       key={cert.id}
-                      className="group relative p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-1 hover:border-blue-400/50 transition"
+                      className="group relative p-3.5 rounded-xl bg-[#FFF9F7] border border-[#F0E1DE] space-y-1 hover:border-[#E8D2CE] transition"
                     >
-                      <div className="text-xs font-bold text-slate-900 pr-14">
+                      <div className="text-xs font-bold text-[#2B1B1B] pr-14">
                         {cleanBulletText(cert.name)}
                       </div>
-                      <div className="text-xs text-slate-600 font-medium">
+                      <div className="text-xs text-[#604B49] font-medium">
                         {cleanBulletText(cert.issuingOrg)}
                       </div>
                       {cert.issueDate && (
-                        <div className="text-[11px] text-slate-400">
+                        <div className="text-[11px] text-[#907D79]">
                           Issued: {cert.issueDate}
                         </div>
                       )}
@@ -870,7 +870,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                           href={cert.credentialUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline inline-flex items-center gap-1 text-[11px] font-semibold pt-1"
+                          className="text-[#7A0F1F] hover:underline inline-flex items-center gap-1 text-[11px] font-semibold pt-1"
                         >
                           <span>Verify Credential</span>
                           <ExternalLink size={10} />
@@ -886,7 +886,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                             setCertificationModalOpen(true);
                           }}
                           aria-label={`Edit ${cert.name}`}
-                          className="p-1 rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-900 transition"
+                          className="p-1 rounded-lg text-[#907D79] hover:bg-[#F8E8EA] hover:text-[#2B1B1B] transition"
                         >
                           <Pencil size={13} />
                         </button>
@@ -904,7 +904,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                   ))}
                 </div>
               ) : (
-                <div className="p-6 rounded-xl bg-slate-50 text-center text-xs text-slate-500 space-y-2">
+                <div className="p-6 rounded-xl bg-[#FFF9F7] border border-dashed border-[#F0E1DE] text-center text-xs text-[#907D79] space-y-2">
                   <p>No verified certifications added yet.</p>
                   <button
                     type="button"
@@ -912,7 +912,7 @@ export function PassportClient({ user: initialUser, stagedLinkedIn }: PassportCl
                       setActiveCertification(null);
                       setCertificationModalOpen(true);
                     }}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-[#7A0F1F] hover:underline"
                   >
                     <Plus size={13} />
                     <span>Add your NPTEL, AWS, Coursera, or professional license</span>

@@ -112,16 +112,16 @@ export function ProjectModal({
         className="relative w-full max-w-lg max-h-[90dvh] overflow-y-auto ce-scrollbar my-auto rounded-2xl bg-white p-6 shadow-2xl border border-slate-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="flex items-center justify-between border-b border-[#F0E1DE] pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F8E8EA] text-[#7A0F1F]">
               <FolderGit2 size={18} />
             </div>
             <div>
-              <h2 id="project-modal-title" className="text-lg font-bold text-slate-900">
+              <h2 id="project-modal-title" className="text-lg font-bold text-[#2B1B1B]">
                 {isEditing ? "Edit Practical Project" : "Add Practical Project"}
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#907D79]">
                 Showcase deliverables, tools used, and live artifact links.
               </p>
             </div>
@@ -130,7 +130,7 @@ export function ProjectModal({
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-[#59413F] transition"
           >
             <X size={18} />
           </button>
@@ -145,7 +145,7 @@ export function ProjectModal({
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700">
+            <label className="block text-xs font-semibold text-[#59413F]">
               Project Title *
             </label>
             <input
@@ -154,13 +154,13 @@ export function ProjectModal({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Healthcare Clinical Records Ledger"
               required
-              className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600/20"
+              className="mt-1 w-full rounded-xl border border-[#F0E1DE] px-3 py-2 text-xs focus:border-[#7A0F1F] focus:outline-none focus:ring-1 focus:ring-[#7A0F1F]/20"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700">
+              <label className="block text-xs font-semibold text-[#59413F]">
                 Your Role in Project
               </label>
               <input
@@ -168,18 +168,18 @@ export function ProjectModal({
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 placeholder="e.g. Lead Developer, Analyst, Sole Contributor"
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600/20"
+                className="mt-1 w-full rounded-xl border border-[#F0E1DE] px-3 py-2 text-xs focus:border-[#7A0F1F] focus:outline-none focus:ring-1 focus:ring-[#7A0F1F]/20"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700">
+              <label className="block text-xs font-semibold text-[#59413F]">
                 Project Type
               </label>
               <select
                 value={projectType}
                 onChange={(e) => setProjectType(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs bg-white focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600/20"
+                className="mt-1 w-full rounded-xl border border-[#F0E1DE] px-3 py-2 text-xs bg-white focus:border-[#7A0F1F] focus:outline-none focus:ring-1 focus:ring-[#7A0F1F]/20"
               >
                 {PROJECT_TYPES.map((pt) => (
                   <option key={pt.value} value={pt.value}>
@@ -191,7 +191,7 @@ export function ProjectModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700">
+            <label className="block text-xs font-semibold text-[#59413F]">
               Tools &amp; Technologies Used
             </label>
             <input
@@ -199,13 +199,13 @@ export function ProjectModal({
               value={technologies}
               onChange={(e) => setTechnologies(e.target.value)}
               placeholder="e.g. Next.js, TypeScript, SQLite, Tailwind (comma-separated)"
-              className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600/20"
+              className="mt-1 w-full rounded-xl border border-[#F0E1DE] px-3 py-2 text-xs focus:border-[#7A0F1F] focus:outline-none focus:ring-1 focus:ring-[#7A0F1F]/20"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700">
+              <label className="block text-xs font-semibold text-[#59413F]">
                 Live URL or Repository Link
               </label>
               <input
@@ -213,12 +213,12 @@ export function ProjectModal({
                 value={projectUrl}
                 onChange={(e) => setProjectUrl(e.target.value)}
                 placeholder="https://github.com/... or https://..."
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600/20"
+                className="mt-1 w-full rounded-xl border border-[#F0E1DE] px-3 py-2 text-xs focus:border-[#7A0F1F] focus:outline-none focus:ring-1 focus:ring-[#7A0F1F]/20"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700">
+              <label className="block text-xs font-semibold text-[#59413F]">
                 Artifact / Demo Link
               </label>
               <input
@@ -226,13 +226,13 @@ export function ProjectModal({
                 value={artifactUrl}
                 onChange={(e) => setArtifactUrl(e.target.value)}
                 placeholder="https://drive.google.com/... or demo link"
-                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600/20"
+                className="mt-1 w-full rounded-xl border border-[#F0E1DE] px-3 py-2 text-xs focus:border-[#7A0F1F] focus:outline-none focus:ring-1 focus:ring-[#7A0F1F]/20"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700">
+            <label className="block text-xs font-semibold text-[#59413F]">
               Project Description &amp; Deliverables
             </label>
             <textarea
@@ -240,23 +240,23 @@ export function ProjectModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe key responsibilities, problem statement solved, and measurable outcomes..."
-              className="mt-1 w-full rounded-xl border border-slate-300 p-3 text-xs focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600/20"
+              className="mt-1 w-full rounded-xl border border-[#F0E1DE] p-3 text-xs focus:border-[#7A0F1F] focus:outline-none focus:ring-1 focus:ring-[#7A0F1F]/20"
             />
           </div>
 
-          <div className="mt-6 flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
+          <div className="mt-6 flex items-center justify-end gap-3 border-t border-[#F0E1DE] pt-4">
             <button
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
+              className="rounded-xl border border-[#F0E1DE] px-4 py-2 text-xs font-medium text-[#59413F] hover:bg-slate-50 transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50 shadow-xs transition"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#7A0F1F] px-5 py-2 text-xs font-bold text-white hover:bg-[#650B19] disabled:opacity-50 shadow-xs transition"
             >
               <Save size={14} />
               <span>{saving ? "Saving…" : isEditing ? "Update Project" : "Add Project"}</span>
