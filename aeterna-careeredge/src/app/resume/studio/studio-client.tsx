@@ -348,6 +348,7 @@ export function ResumeStudioClient() {
     if (!studioResult) return;
     setIsExportingPdf(true);
     setGenerationError(null);
+    let exportedResumeId: string | null = null;
 
     try {
       // 1. Save option to DB to generate resume record with fitToOnePage style
@@ -366,25 +367,32 @@ export function ResumeStudioClient() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to prepare resume for export.");
+      exportedResumeId = data.resumeId;
 
       // 2. Download generated ATS PDF
       const pdfRes = await fetch(`/api/resumes/${data.resumeId}/export-pdf?pageSize=A4`);
-      if (!pdfRes.ok) {
-        window.open(`/resume/${data.resumeId}/print`, "_blank");
-        return;
-      }
+      const contentType = pdfRes.headers.get("Content-Type") || "";
 
-      const blob = await pdfRes.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const downloadLink = document.createElement("a");
-      downloadLink.href = blobUrl;
-      downloadLink.download = `${(targetRolePrompt || "Resume").replace(/\s+/g, "_")}_${option.strategyName.replace(/\s+/g, "_")}.pdf`;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      downloadLink.remove();
-      window.URL.revokeObjectURL(blobUrl);
+      if (pdfRes.ok && contentType.includes("application/pdf")) {
+        const blob = await pdfRes.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const downloadLink = document.createElement("a");
+        downloadLink.href = blobUrl;
+        downloadLink.download = `${(targetRolePrompt || "Resume").replace(/\s+/g, "_")}_${option.strategyName.replace(/\s+/g, "_")}.pdf`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+        window.URL.revokeObjectURL(blobUrl);
+      } else {
+        window.open(`/resume/${data.resumeId}/print?autoPrint=true&pageSize=A4`, "_blank");
+      }
     } catch (err: any) {
-      setGenerationError(err.message || "Failed to export PDF.");
+      console.warn("[StudioClient] Export failed, opening print view:", err);
+      if (exportedResumeId) {
+        window.open(`/resume/${exportedResumeId}/print?autoPrint=true&pageSize=A4`, "_blank");
+      } else {
+        setGenerationError(err.message || "Failed to export PDF.");
+      }
     } finally {
       setIsExportingPdf(false);
     }

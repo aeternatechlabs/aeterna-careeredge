@@ -583,34 +583,38 @@ export function BuilderClient({
   async function handleExportPdf() {
     setExportingPdf(true);
     setExportError(null);
+    const pageSize = data.style.layout?.pageSize || "A4";
     try {
       await handleSave("Auto-save before PDF export");
-      const pageSize = data.style.layout?.pageSize || "A4";
       const res = await fetch(`/api/resumes/${resume.id}/export-pdf?pageSize=${pageSize}`);
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to generate PDF resume.");
-      }
+      const contentType = res.headers.get("Content-Type") || "";
 
-      const blob = await res.blob();
-      const contentDisposition = res.headers.get("Content-Disposition");
-      let filename = `${(user.name || "Resume").replace(/\s+/g, "-")}-Resume.pdf`;
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (match && match[1]) filename = match[1];
-      }
+      if (res.ok && contentType.includes("application/pdf")) {
+        const blob = await res.blob();
+        const contentDisposition = res.headers.get("Content-Disposition");
+        let filename = `${(user.name || "Resume").replace(/\s+/g, "-")}-Resume.pdf`;
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename="?([^"]+)"?/);
+          if (match && match[1]) filename = match[1];
+        }
 
-      const blobUrl = window.URL.createObjectURL(blob);
-      const downloadLink = document.createElement("a");
-      downloadLink.href = blobUrl;
-      downloadLink.download = filename;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      downloadLink.remove();
-      window.URL.revokeObjectURL(blobUrl);
+        const blobUrl = window.URL.createObjectURL(blob);
+        const downloadLink = document.createElement("a");
+        downloadLink.href = blobUrl;
+        downloadLink.download = filename;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+        window.URL.revokeObjectURL(blobUrl);
+      } else {
+        // Fallback on Vercel/serverless: open print preview with autoPrint=true
+        const json = await res.json().catch(() => ({}));
+        const printUrl = json.printUrl || `/resume/${resume.id}/print?autoPrint=true&pageSize=${pageSize}`;
+        window.open(printUrl, "_blank");
+      }
     } catch (err: unknown) {
-      console.error("[ExportPdf] Failed:", err);
-      setExportError((err as Error).message || "Export failed. You can also use Print View.");
+      console.warn("[ExportPdf] Direct export failed, opening print view:", err);
+      window.open(`/resume/${resume.id}/print?autoPrint=true&pageSize=${pageSize}`, "_blank");
     } finally {
       setExportingPdf(false);
     }

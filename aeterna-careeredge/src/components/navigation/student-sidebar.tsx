@@ -106,35 +106,44 @@ export function StudentSidebar({
 }: StudentSidebarProps) {
   const currentPath = usePathname();
   const pathname = currentPath || "";
+  const [pendingPath, setPendingPath] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const [soonOpen, setSoonOpen] = useState(false);
 
+  // Clear optimistic navigation once pathname updates
+  useEffect(() => {
+    setPendingPath(null);
+  }, [pathname]);
+
   // Auto-expand "More" if current page is within it
   useEffect(() => {
-    if (pathname && MORE_SECTION.some((item) => pathname.startsWith(item.href))) {
+    const activeRoute = pendingPath || pathname;
+    if (activeRoute && MORE_SECTION.some((item) => activeRoute.startsWith(item.href))) {
       setMoreOpen(true);
     }
-  }, [pathname]);
+  }, [pathname, pendingPath]);
 
   const renderNavItem = (item: NavItem, isMuted = false) => {
     const Icon = item.icon;
+    const activePath = pendingPath || pathname;
     const active = (() => {
-      if (!pathname) return false;
+      if (!activePath) return false;
       if (item.href === "/dashboard") {
-        return pathname === "/dashboard";
+        return activePath === "/dashboard";
       }
       if (item.href === "/resume") {
         return (
-          pathname === "/resume" ||
-          (pathname.startsWith("/resume/") && !pathname.startsWith("/resume/studio"))
+          activePath === "/resume" ||
+          (activePath.startsWith("/resume/") && !activePath.startsWith("/resume/studio"))
         );
       }
       if (item.href === "/resume/studio") {
-        return pathname === "/resume/studio" || pathname.startsWith("/resume/studio/");
+        return activePath === "/resume/studio" || activePath.startsWith("/resume/studio/");
       }
-      return pathname === item.href || pathname.startsWith(`${item.href}/`);
+      return activePath === item.href || activePath.startsWith(`${item.href}/`);
     })();
 
+    const isPending = pendingPath === item.href && pathname !== item.href;
     const feat = item.featureId ? FEATURE_REGISTRY[item.featureId] : undefined;
     const isComingSoon = isMuted || feat?.status === "COMING_SOON";
 
@@ -142,7 +151,13 @@ export function StudentSidebar({
       <Link
         key={item.href}
         href={item.href}
-        onClick={onNavigate}
+        prefetch={true}
+        onClick={() => {
+          if (pathname !== item.href) {
+            setPendingPath(item.href);
+          }
+          onNavigate?.();
+        }}
         title={isCollapsed ? item.label : undefined}
         aria-current={active ? "page" : undefined}
         className={[
@@ -153,12 +168,15 @@ export function StudentSidebar({
             : isComingSoon
               ? "text-slate-500 hover:bg-white/5 hover:text-slate-400"
               : "text-slate-400 hover:bg-slate-800/60 hover:text-white",
+          isPending ? "opacity-90" : "",
         ].join(" ")}
       >
         {/* Distinctive Sky Blue Active Indicator Bar */}
         {active && (
           <span
-            className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-[#38BDF8] shadow-sm shadow-[#38BDF8]/60 z-10 pointer-events-none"
+            className={`absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-[#38BDF8] shadow-sm shadow-[#38BDF8]/60 z-10 pointer-events-none ${
+              isPending ? "animate-pulse" : ""
+            }`}
           />
         )}
 
@@ -172,6 +190,7 @@ export function StudentSidebar({
               : isComingSoon
                 ? "text-slate-600"
                 : "text-slate-400 group-hover:text-slate-200",
+            isPending ? "animate-pulse" : "",
           ].join(" ")}
           aria-hidden="true"
         />
@@ -298,6 +317,7 @@ export function StudentSidebar({
       <div className="p-2.5 border-t border-[#1E293B] bg-[#080E1E] shrink-0 space-y-1">
         <Link
           href="/settings"
+          prefetch={true}
           onClick={onNavigate}
           title={isCollapsed ? "Settings" : undefined}
           className={[

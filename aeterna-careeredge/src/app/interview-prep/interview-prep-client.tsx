@@ -18,6 +18,8 @@ import type { PreparedInterviewKit, InterviewPrepTheme } from "@/lib/interview/s
 
 interface InterviewPrepClientProps {
   studentName: string;
+  initialKits?: Array<{ id: string; jobTitle: string; companyName: string | null; themesCount: number; questionsCount: number; createdAt: string }>;
+  initialActiveKit?: PreparedInterviewKit | null;
   initialJobTitle?: string;
   initialCompany?: string;
   initialDomain?: string;
@@ -25,13 +27,15 @@ interface InterviewPrepClientProps {
 
 export function InterviewPrepClient({
   studentName,
+  initialKits,
+  initialActiveKit,
   initialJobTitle,
   initialCompany,
   initialDomain,
 }: InterviewPrepClientProps) {
-  const [kits, setKits] = useState<Array<{ id: string; jobTitle: string; companyName: string | null; themesCount: number; questionsCount: number; createdAt: string }>>([]);
-  const [activeKit, setActiveKit] = useState<PreparedInterviewKit | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [kits, setKits] = useState<Array<{ id: string; jobTitle: string; companyName: string | null; themesCount: number; questionsCount: number; createdAt: string }>>(initialKits || []);
+  const [activeKit, setActiveKit] = useState<PreparedInterviewKit | null>(initialActiveKit || null);
+  const [loading, setLoading] = useState(initialKits === undefined);
   const [kitLoading, setKitLoading] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set(["q-tech-1", "q-health-1", "q-comm-1"]));
@@ -77,6 +81,7 @@ export function InterviewPrepClient({
   }, [activeKit, loadKitDetails]);
 
   useEffect(() => {
+    if (initialKits !== undefined) return;
     let ignore = false;
     fetch("/api/interview-prep")
       .then((res) => (res.ok ? res.json() : null))
@@ -99,7 +104,7 @@ export function InterviewPrepClient({
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [initialKits]);
 
   const handleCreateKit = async (e: React.FormEvent) => {
     e.preventDefault();

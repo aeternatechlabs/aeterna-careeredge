@@ -44,6 +44,7 @@ interface ApplicationRecord {
 
 interface ApplicationsClientProps {
   studentName: string;
+  initialApplications?: ApplicationRecord[];
   initialJobTitle?: string;
   initialCompany?: string;
   initialRefId?: string;
@@ -60,12 +61,13 @@ const STAGES: { key: ApplicationStatus; label: string; color: string }[] = [
 
 export function ApplicationsClient({
   studentName,
+  initialApplications,
   initialJobTitle,
   initialCompany,
   initialRefId,
 }: ApplicationsClientProps) {
-  const [applications, setApplications] = useState<ApplicationRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [applications, setApplications] = useState<ApplicationRecord[]>(initialApplications || []);
+  const [loading, setLoading] = useState(initialApplications === undefined);
   const [activeTab, setActiveTab] = useState<string>("ALL");
 
   // Pack Modal state
@@ -104,6 +106,7 @@ export function ApplicationsClient({
   }, []);
 
   useEffect(() => {
+    if (initialApplications !== undefined) return;
     let ignore = false;
     fetch("/api/applications")
       .then((res) => (res.ok ? res.json() : null))
@@ -119,7 +122,7 @@ export function ApplicationsClient({
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [initialApplications]);
 
   const handleCreateApplication = async (e: React.FormEvent) => {
     e.preventDefault();

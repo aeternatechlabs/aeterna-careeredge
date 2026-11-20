@@ -138,21 +138,26 @@ export function ResumeListClient({ user, initialResumes }: ResumeListClientProps
     setExportingId(resumeId);
     try {
       const res = await fetch(`/api/resumes/${resumeId}/export-pdf?pageSize=A4`);
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to export PDF.");
+      const contentType = res.headers.get("Content-Type") || "";
+
+      if (res.ok && contentType.includes("application/pdf")) {
+        const blob = await res.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const downloadLink = document.createElement("a");
+        downloadLink.href = blobUrl;
+        downloadLink.download = `${resumeTitle.replace(/\s+/g, "-")}.pdf`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+        window.URL.revokeObjectURL(blobUrl);
+      } else {
+        const json = await res.json().catch(() => ({}));
+        const printUrl = json.printUrl || `/resume/${resumeId}/print?autoPrint=true&pageSize=A4`;
+        window.open(printUrl, "_blank");
       }
-      const blob = await res.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const downloadLink = document.createElement("a");
-      downloadLink.href = blobUrl;
-      downloadLink.download = `${resumeTitle.replace(/\s+/g, "-")}.pdf`;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      downloadLink.remove();
-      window.URL.revokeObjectURL(blobUrl);
     } catch (err: unknown) {
-      alert((err as Error).message || "Failed to download PDF.");
+      console.warn("[ResumeList] Export failed, opening print view:", err);
+      window.open(`/resume/${resumeId}/print?autoPrint=true&pageSize=A4`, "_blank");
     } finally {
       setExportingId(null);
     }

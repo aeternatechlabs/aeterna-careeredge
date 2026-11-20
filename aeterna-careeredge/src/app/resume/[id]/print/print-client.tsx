@@ -98,29 +98,36 @@ export function PrintClient({
     setDownloadSuccess(false);
     try {
       const res = await fetch(`/api/resumes/${resumeId}/export-pdf?pageSize=${pageSize}`);
-      if (!res.ok) throw new Error("Failed to download PDF.");
+      const contentType = res.headers.get("Content-Type") || "";
 
-      const blob = await res.blob();
-      const contentDisposition = res.headers.get("Content-Disposition");
-      let filename = "Resume.pdf";
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (match && match[1]) filename = match[1];
+      if (res.ok && contentType.includes("application/pdf")) {
+        const blob = await res.blob();
+        const contentDisposition = res.headers.get("Content-Disposition");
+        let filename = "Resume.pdf";
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename="?([^"]+)"?/);
+          if (match && match[1]) filename = match[1];
+        }
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        setDownloadSuccess(true);
+        setTimeout(() => setDownloadSuccess(false), 3000);
+      } else {
+        // Fallback on serverless: directly trigger client print
+        window.print();
+        setDownloadSuccess(true);
+        setTimeout(() => setDownloadSuccess(false), 3000);
       }
-
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      setDownloadSuccess(true);
-      setTimeout(() => setDownloadSuccess(false), 3000);
     } catch (err) {
-      console.error(err);
-      alert("Failed to export PDF. You can also use the 'Print / Save as PDF' button.");
+      console.warn("Direct download failed, triggering print:", err);
+      window.print();
     } finally {
       setDownloading(false);
     }
