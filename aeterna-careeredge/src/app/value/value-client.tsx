@@ -198,15 +198,15 @@ export function ValueClient({ studentName }: ValueClientProps) {
               <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center">
                 <ShieldCheck className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-bold text-gray-900">Evidence Vault Integrity</h3>
+              <h3 className="text-base font-bold text-gray-900">Verified Profile Integrity</h3>
               <p className="text-xs text-gray-700 leading-relaxed">
-                {metrics.evidenceItemsInVault} verified proof items link to {metrics.verifiedSkills} of your {metrics.totalSkillsRecorded} recorded skills, protecting you from embarrassing recruiter screening dropouts.
+                {metrics.evidenceItemsInVault} verified items link to {metrics.verifiedSkills} of your {metrics.totalSkillsRecorded} recorded skills, protecting you from embarrassing recruiter screening dropouts.
               </p>
               <Link
-                href="/evidence-vault"
+                href="/dashboard"
                 className="text-xs font-bold text-[#7A0F1F] hover:underline inline-flex items-center gap-1 pt-1"
               >
-                Inspect Vault &rarr;
+                View Dashboard &rarr;
               </Link>
             </div>
 

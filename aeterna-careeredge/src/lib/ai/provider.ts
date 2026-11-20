@@ -663,10 +663,10 @@ IMPORTANT PRODUCT INVARIANTS:
 
       case "CAREER_GUIDE":
         mockData = {
-          answer: `For your background in ${domain}, your strongest next milestone is to add practical evidence to your Evidence Vault and verify your top competencies.`,
-          nextBestStep: "Upload proof of your latest project or certificate.",
-          actionRoute: "/evidence-vault",
-          citedSources: ["Career Passport", `${domain} Professional Reference Standards`],
+          answer: `For your background in ${domain}, your strongest next milestone is to generate tailored resumes in Resume Studio and verify your competencies with real-world applications.`,
+          nextBestStep: "Open Resume Studio to generate ATS-optimized resumes.",
+          actionRoute: "/resume/studio",
+          citedSources: ["Student Profile", `${domain} Professional Reference Standards`],
         };
         break;
 

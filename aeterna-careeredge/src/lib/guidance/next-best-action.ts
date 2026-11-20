@@ -86,11 +86,11 @@ export const NEXT_ACTION_RULES: Array<{
     buildAction: (ctx) => ({
       id: "UPLOAD_EVIDENCE",
       priority: 5,
-      title: "Add proof for resume claims",
-      description: `You have ${ctx.unsupportedClaimsCount} skill claims without attached evidence. Upload proof to your Evidence Vault.`,
-      actionLabel: "Upload Evidence",
-      actionRoute: "/evidence-vault",
-      badgeText: "Evidence",
+      title: "Review resume claims in Resume Studio",
+      description: `You have ${ctx.unsupportedClaimsCount} skill claims needing review. Refine and tailor them in Resume Studio.`,
+      actionLabel: "Open Resume Studio",
+      actionRoute: "/resume/studio",
+      badgeText: "Resume",
     }),
   },
   {

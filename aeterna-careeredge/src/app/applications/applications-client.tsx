@@ -617,16 +617,10 @@ export function ApplicationsClient({
                     {/* Tab 3: Proof Bank Talking Points */}
                     {packActiveTab === "proof" && (
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between">
+                        <div>
                           <p className="text-xs text-gray-700">
-                            Use these 3 talking points in recruiter screenings to back your claims with verified evidence.
+                            Use these 3 talking points in recruiter screenings to back your claims with verified achievements.
                           </p>
-                          <Link
-                            href="/evidence-vault"
-                            className="text-xs font-semibold text-[#7A0F1F] underline hover:text-[#600C18]"
-                          >
-                            Manage Vault &rarr;
-                          </Link>
                         </div>
                         <div className="space-y-3">
                           {packData.talkingPoints.map((tp, idx) => (

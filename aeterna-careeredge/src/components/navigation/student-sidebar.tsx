@@ -53,15 +53,7 @@ const PRIMARY_SECTIONS: NavSection[] = [
   {
     title: "Build",
     items: [
-      { label: "Career Passport", href: "/passport", icon: Fingerprint, featureId: "career-passport" },
       { label: "Resume Studio", href: "/resume/studio", icon: Sparkles, featureId: "resume-studio" },
-      { label: "Resume Builder", href: "/resume", icon: FileText, featureId: "resume-builder" },
-    ],
-  },
-  {
-    title: "Improve",
-    items: [
-      { label: "Evidence Vault", href: "/evidence-vault", icon: ShieldCheck, featureId: "evidence-vault" },
       { label: "LinkedIn Builder", href: "/linkedin", icon: Network, featureId: "linkedin-optimizer" },
     ],
   },

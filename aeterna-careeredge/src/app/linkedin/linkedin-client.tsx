@@ -847,19 +847,11 @@ export function LinkedInClient({
                   Review &amp; Save to Career Passport
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Select verified skills, experience, and degrees to merge into your permanent Career Passport.
+                  Select verified skills, experience, and degrees to merge into your permanent student profile.
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <Link
-                  href="/passport"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-[#7A0F1F] hover:underline"
-                >
-                  <span>View Career Passport</span>
-                  <ExternalLink size={12} />
-                </Link>
-
                 <button
                   type="button"
                   disabled={
@@ -878,7 +870,7 @@ export function LinkedInClient({
                     <>
                       <ShieldCheck size={14} />
                       <span>
-                        Save & Merge to Career Passport (
+                        Save & Merge to Profile (
                         {selectedSkills.size + selectedEducations.size + selectedExperiences.size} Records)
                       </span>
                     </>
@@ -895,10 +887,10 @@ export function LinkedInClient({
                   <span>{passportMergedSuccess}</span>
                 </div>
                 <Link
-                  href="/passport"
+                  href="/dashboard"
                   className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 hover:underline"
                 >
-                  <span>Open Career Passport &rarr;</span>
+                  <span>Go to Dashboard &rarr;</span>
                 </Link>
               </div>
             )}

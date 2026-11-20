@@ -1226,7 +1226,7 @@ export function UploadResumeModal({
                     />
                     <div className="text-xs">
                       <p className="font-bold text-stone-900">
-                        Save & merge into my Career Passport
+                        Save & merge into my Student Profile
                       </p>
                       <p className="text-[11px] text-stone-600">
                         Populates your verified education, skills, and projects without overwriting existing entries.
@@ -1355,11 +1355,11 @@ export function UploadResumeModal({
                       type="button"
                       onClick={() => {
                         onClose();
-                        router.push("/passport");
+                        router.push("/dashboard");
                       }}
                       className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition"
                     >
-                      <span>View Career Passport</span>
+                      <span>Return to Dashboard</span>
                     </button>
                   </>
                 )}

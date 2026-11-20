@@ -37,34 +37,19 @@ export interface ToolSlide {
 
 export const SHOWCASE_SLIDES: ToolSlide[] = [
   {
-    id: "resume-builder",
-    toolName: "Resume Studio & ATS Builder",
-    headline: "Craft Multi-Domain, ATS-Proof Resumes",
+    id: "resume-studio",
+    toolName: "AI Resume Studio",
+    headline: "Deploy Recruiter-Tested, Tailored Resumes",
     description:
-      "Choose domain-tailored templates, enhance bullets with AI guidance, and export print-perfect ATS-compliant PDFs with selectable text.",
+      "Synthesize ATS-calibrated multi-strategy resumes with one-page auto density, truthful claim preservation, and direct vector PDF export.",
     badge: "Core Flagship • 98% Interview Callback Rate",
     badgeIcon: Sparkles,
-    icon: FileText,
-    href: "/resume",
+    icon: Sparkles,
+    href: "/resume/studio",
     ctaText: "Open Resume Studio",
     accentColor: "#7A0F1F",
     gradient: "from-white via-[#FFF9F7] to-[#FFF5F2]",
     stats: "Multi-Domain Templates • Instant ATS Score",
-  },
-  {
-    id: "career-passport",
-    toolName: "Universal Career Passport",
-    headline: "Verified Academic & Professional Source of Truth",
-    description:
-      "Curate and manage your education records, competency matrices, practical projects, and certifications in one tamper-resistant profile.",
-    badge: "Master Profile • Shareable Credentials",
-    badgeIcon: Fingerprint,
-    icon: Fingerprint,
-    href: "/passport",
-    ctaText: "Manage Career Passport",
-    accentColor: "#7A0F1F",
-    gradient: "from-white via-[#FFF9F7] to-[#FFF5F2]",
-    stats: "Full CRUD Control • Real-Time Readiness Score",
   },
   {
     id: "linkedin-intelligence",
@@ -232,13 +217,6 @@ export function ToolShowcaseCarousel() {
               >
                 <span>{activeSlide.ctaText}</span>
                 <ArrowRight size={14} />
-              </Link>
-
-              <Link
-                href="/passport"
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-semibold bg-white text-[#7A0F1F] hover:bg-[#F8E8EA] border border-[#F0E1DE] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A0F1F]"
-              >
-                <span>View Career Passport</span>
               </Link>
             </div>
           </div>

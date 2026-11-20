@@ -196,10 +196,10 @@ export function DashboardClient({ user }: DashboardClientProps) {
       list.push({
         id: "missing-education",
         title: "Complete Academic Institution & Degree",
-        description: "Your college and degree program are required to unlock verified Karnataka employer matching.",
+        description: "Your college and degree program are required to unlock verified employer matching.",
         icon: AlertTriangle,
-        actionLabel: "Update Passport",
-        actionHref: "/passport",
+        actionLabel: "Update Profile",
+        actionHref: "/onboarding?from=dashboard",
         severity: "high",
       });
     }
@@ -208,7 +208,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
       list.push({
         id: "missing-role",
         title: "Define Target Career Role",
-        description: "Setting a target role calibrates your Resume Builder and Job Matches to official NOS standards.",
+        description: "Setting a target role calibrates your Resume Studio and Job Matches to official industry standards.",
         icon: AlertCircle,
         actionLabel: "Set Target Role",
         actionHref: "/role-fit-explorer",
@@ -232,15 +232,15 @@ export function DashboardClient({ user }: DashboardClientProps) {
       });
     }
 
-    // Check resume with 0 evidence
-    if (resumeCount > 0 && evidenceCount === 0) {
+    // Suggest Resume Studio if no resumes yet
+    if (resumeCount === 0) {
       list.push({
-        id: "unverified-resume",
-        title: "Resume Claims Lack Documented Proof",
-        description: "You have active resumes without backed evidence. Upload proof to pass recruiter verification.",
-        icon: ShieldCheck,
-        actionLabel: "Add Proof to Vault",
-        actionHref: "/evidence-vault",
+        id: "create-resume",
+        title: "Generate ATS-Optimized Resume",
+        description: "Synthesize ATS-calibrated multi-strategy resumes with one-page density and direct PDF export.",
+        icon: Sparkles,
+        actionLabel: "Open Resume Studio",
+        actionHref: "/resume/studio",
         severity: "medium",
       });
     }
@@ -253,11 +253,11 @@ export function DashboardClient({ user }: DashboardClientProps) {
     return [
       {
         id: "profile",
-        label: "Complete Career Passport basics",
+        label: "Complete student profile basics",
         description: "Add your institution, domain, and current degree details.",
         isComplete: Boolean(user.profile?.institution && user.profile?.course),
-        route: "/passport",
-        actionText: "Update Passport",
+        route: "/onboarding?from=dashboard",
+        actionText: "Edit Profile",
       },
       {
         id: "role",
@@ -268,20 +268,12 @@ export function DashboardClient({ user }: DashboardClientProps) {
         actionText: "Explore Roles",
       },
       {
-        id: "proof",
-        label: "Upload academic credentials & projects",
-        description: "Add your mark sheets, certificates, or project repositories.",
-        isComplete: evidenceCount > 0,
-        route: "/evidence-vault",
-        actionText: "Open Vault",
-      },
-      {
         id: "resume",
-        label: "Upload your resume or build one",
-        description: "Upload an existing resume or generate a targeted ATS draft from your passport.",
+        label: "Create or upload tailored resume",
+        description: "Generate an ATS-ready multi-strategy resume with direct export.",
         isComplete: resumeCount > 0,
-        route: "/resume",
-        actionText: "Upload or Build",
+        route: "/resume/studio",
+        actionText: "Resume Studio",
       },
       {
         id: "linkedin",
@@ -400,7 +392,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
               </h1>
 
               <p className="text-xs sm:text-sm text-secondary-text leading-relaxed max-w-2xl">
-                Target Role: <strong className="text-foreground font-semibold">{preferredJobRole}</strong> • Verified Passport:{" "}
+                Target Role: <strong className="text-foreground font-semibold">{preferredJobRole}</strong> • Verified Profile:{" "}
                 <strong className="text-primary font-bold">{score}% complete</strong>.
               </p>
             </div>
@@ -418,10 +410,10 @@ export function DashboardClient({ user }: DashboardClientProps) {
               </Link>
 
               <Link
-                href="/passport"
+                href="/resume/studio"
                 className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl bg-primary px-3.5 sm:px-4 py-2 text-xs font-bold text-white hover:bg-primary-dark transition shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
-                <span>Career Passport</span>
+                <span>Resume Studio</span>
                 <ArrowRight size={13} aria-hidden="true" />
               </Link>
             </div>
@@ -538,18 +530,18 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
           <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <Link
-              href={user.resumes && user.resumes.length > 0 ? `/resume/builder?id=${user.resumes[0].id}` : "/resume"}
+              href="/resume/studio"
               className="group flex flex-col justify-between rounded-2xl border border-border bg-surface p-4 transition-all hover:border-primary hover:shadow-card shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-muted text-primary border border-border group-hover:scale-105 transition-transform">
-                <FileText size={17} aria-hidden="true" />
+                <Sparkles size={17} aria-hidden="true" />
               </div>
               <div className="mt-3">
                 <h3 className="font-heading text-xs sm:text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                  {user.resumes && user.resumes.length > 0 ? "Edit Active Resume" : "Build New Resume"}
+                  AI Resume Studio
                 </h3>
                 <p className="mt-0.5 text-[11px] text-secondary-text">
-                  ATS-calibrated templates
+                  Multi-strategy generation
                 </p>
               </div>
             </Link>
@@ -589,18 +581,18 @@ export function DashboardClient({ user }: DashboardClientProps) {
             </Link>
 
             <Link
-              href="/evidence-vault"
+              href="/linkedin"
               className="group flex flex-col justify-between rounded-2xl border border-border bg-surface p-4 transition-all hover:border-primary hover:shadow-card shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-muted text-primary border border-border group-hover:scale-105 transition-transform">
-                <Upload size={17} aria-hidden="true" />
+                <Network size={17} aria-hidden="true" />
               </div>
               <div className="mt-3">
                 <h3 className="font-heading text-xs sm:text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                  Deposit Evidence
+                  LinkedIn Optimizer
                 </h3>
                 <p className="mt-0.5 text-[11px] text-secondary-text">
-                  Certificates &amp; repos
+                  Recruiter search boost
                 </p>
               </div>
             </Link>
@@ -634,7 +626,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
           <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3 sm:grid-cols-4">
             <StatCard
-              label="Passport Readiness"
+              label="Profile Readiness"
               value={`${score}%`}
               subtext="Calibrated to VTU/Autonomous criteria"
               icon={TrendingUp}
@@ -656,12 +648,12 @@ export function DashboardClient({ user }: DashboardClientProps) {
             />
 
             <StatCard
-              label="Evidence Items"
-              value={evidenceCount}
-              subtext={evidenceCount > 0 ? "Documented proof records" : "0 credentials uploaded"}
-              icon={ShieldCheck}
-              href="/evidence-vault"
-              emptyStateAction={{ label: "Upload Credentials", href: "/evidence-vault" }}
+              label="Active Resumes"
+              value={resumeCount}
+              subtext={resumeCount > 0 ? "Tailored ATS versions" : "0 resumes created"}
+              icon={FileText}
+              href="/resume/studio"
+              emptyStateAction={{ label: "Create Resume", href: "/resume/studio" }}
             />
 
             <StatCard
@@ -686,10 +678,10 @@ export function DashboardClient({ user }: DashboardClientProps) {
               subtitle="Latest verified milestones and updates on your profile."
               action={
                 <Link
-                  href="/passport"
+                  href="/resume/studio"
                   className="inline-flex items-center gap-1 text-xs font-bold text-[#7A0F1F] hover:text-[#4C0915] transition"
                 >
-                  <span>View Career Passport</span>
+                  <span>Resume Studio</span>
                   <ArrowUpRight size={13} aria-hidden="true" />
                 </Link>
               }
@@ -698,9 +690,9 @@ export function DashboardClient({ user }: DashboardClientProps) {
                 <EmptyState
                   icon={Clock}
                   title="No activity recorded yet"
-                  description="Your recent resume drafts, document deposits, and milestone updates will appear here."
-                  actionLabel="Complete Career Passport"
-                  actionHref="/passport"
+                  description="Your recent resume drafts, job applications, and milestone updates will appear here."
+                  actionLabel="Open Resume Studio"
+                  actionHref="/resume/studio"
                 />
               ) : (
                 <div className="divide-y divide-[#EBDDD1]/60">
@@ -926,7 +918,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
         {/* Guidance section */}
         <section aria-label="How CareerEdge Works">
-          <HowItWorksPanel sectionId="career-passport" />
+          <HowItWorksPanel toolKey="resume-studio" />
         </section>
       </div>
     </StudentLayout>

@@ -28,6 +28,7 @@ import {
   Bot,
   Download,
   Loader2,
+  ExternalLink,
 } from "lucide-react";
 import {
   LoadingButton,
@@ -336,7 +337,8 @@ export function ResumeStudioClient() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save active resume.");
 
-      router.push(`/resume/builder?id=${data.resumeId}`);
+      setIsSaving(false);
+      window.open(`/resume/builder?id=${data.resumeId}`, "_blank", "noopener,noreferrer");
     } catch (err: any) {
       setGenerationError(err.message || "Could not save resume.");
       setIsSaving(false);
@@ -513,9 +515,9 @@ export function ResumeStudioClient() {
                     <Fingerprint className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">Career Passport Records</h3>
+                    <h3 className="text-sm font-bold text-slate-900">Student Profile Records</h3>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Uses verified education, skills, projects, and experiences saved in your profile.
+                      Uses education, skills, projects, and experiences saved in your profile.
                     </p>
                   </div>
                 </button>
@@ -892,7 +894,7 @@ export function ResumeStudioClient() {
                         <LoadingButton
                           type="button"
                           loading={isSaving && selectedOptionId === option.id}
-                          loadingText="Activating…"
+                          loadingText="Opening…"
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedOptionId(option.id);
@@ -901,9 +903,9 @@ export function ResumeStudioClient() {
                           variant={isSelected ? "primary" : "secondary"}
                           size="sm"
                           className="w-full"
-                          icon={<ArrowRight className="h-3.5 w-3.5" />}
+                          icon={<ExternalLink className="h-3.5 w-3.5" />}
                         >
-                          Save as Active Resume
+                          Open in Builder ↗
                         </LoadingButton>
                       </div>
                     </div>
@@ -980,9 +982,10 @@ export function ResumeStudioClient() {
                         disabled={isSaving}
                         onClick={() => handleSaveOption(selectedOption)}
                         className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold bg-[#7A0F1F] text-white hover:bg-[#650B19] transition shadow-xs disabled:opacity-50"
+                        title="Open in Builder in a new browser tab"
                       >
-                        {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                        <span>Open in Builder →</span>
+                        {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5" />}
+                        <span>Open in Builder ↗</span>
                       </button>
                     </div>
                   </div>

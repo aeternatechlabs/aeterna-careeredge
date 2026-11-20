@@ -178,11 +178,11 @@ export function JobsClient({ studentName: _studentName }: JobsClientProps) {
               Application Tracker
             </Link>
             <Link
-              href="/evidence-vault"
+              href="/resume/studio"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-[#7A0F1F] text-white hover:bg-[#600C18] shadow-sm transition"
             >
-              <ShieldCheck className="w-4 h-4 text-[#F2B63D]" />
-              Evidence Vault
+              <Sparkles className="w-4 h-4 text-[#F2B63D]" />
+              Resume Studio
             </Link>
           </div>
         </div>
@@ -610,10 +610,10 @@ export function JobsClient({ studentName: _studentName }: JobsClientProps) {
                             Proof Bank Evidence Needed
                           </span>
                           <Link
-                            href="/evidence-vault"
+                            href="/resume/studio"
                             className="text-xs font-semibold text-[#7A0F1F] underline hover:text-[#650B19]"
                           >
-                            Upload to Vault &rarr;
+                            Tailor in Studio &rarr;
                           </Link>
                         </div>
                         <ul className="text-xs text-[#604B49] list-disc pl-4 space-y-1">

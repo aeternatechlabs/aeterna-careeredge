@@ -49,7 +49,7 @@ export function CareerGuideDrawer({
       id: "initial-welcome",
       sender: "GUIDE",
       text: `Hello! I am your Career Guide. I know you are in ${studentDomain}${targetRole ? ` aiming for ${targetRole}` : ""}. How can I help you today?`,
-      citations: ["Career Passport Verified Context"],
+      citations: ["Profile Verified Context"],
     },
   ]);
   const [errorNote, setErrorNote] = useState<string | null>(null);
@@ -247,7 +247,7 @@ export function CareerGuideDrawer({
           {loading && (
             <div className="flex items-center gap-2 rounded-2xl bg-white p-3 text-xs text-[#604B49] border border-[#F0E1DE] w-fit shadow-2xs">
               <Loader2 size={14} className="animate-spin text-[#7A0F1F]" />
-              <span>Analyzing against your verified Career Passport…</span>
+              <span>Analyzing your student profile details…</span>
             </div>
           )}
 

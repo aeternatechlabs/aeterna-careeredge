@@ -176,11 +176,11 @@ export function InterviewPrepClient({
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <Link
-              href="/evidence-vault"
+              href="/resume/studio"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"
             >
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              Evidence Vault
+              <Sparkles className="w-4 h-4 text-[#7A0F1F]" />
+              Resume Studio
             </Link>
             <button
               onClick={() => setShowGenerateModal(true)}
