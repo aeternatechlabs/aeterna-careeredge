@@ -28,11 +28,11 @@ export function NextStepCard({ action }: NextStepCardProps) {
   return (
     <section aria-label="Do this next" className="w-full">
       <div className="relative overflow-hidden rounded-2xl sm:rounded-[22px] bg-[#650B19] text-white shadow-md border border-[#520914] min-h-[140px] sm:min-h-[156px] flex items-center">
-        {/* Background Hero Banner Illustration (Student + Vidhana Soudha)
-            Desktop & Tablet (md, lg): Scaled cleanly to left so the boy's face and head are fully shown */}
-        <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[240px] md:w-[270px] lg:w-[310px] pointer-events-none select-none overflow-hidden z-0">
+        {/* Background Hero Banner Student Photo (Real student on campus matching maroon brand)
+            Desktop & Tablet (md, lg): Scaled cleanly to left so the student's face, smile and maroon jacket are prominently shown */}
+        <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[220px] md:w-[250px] lg:w-[280px] pointer-events-none select-none overflow-hidden z-0">
           <Image
-            src="/illustrations/hero-banner-student.png"
+            src="/illustrations/hero-student-photo.png"
             alt=""
             fill
             priority
@@ -48,14 +48,14 @@ export function NextStepCard({ action }: NextStepCardProps) {
         {/* Mobile Background Illustration (< md): Atmospheric backdrop with gradient vignette for high text contrast */}
         <div className="md:hidden absolute inset-0 z-0 pointer-events-none select-none overflow-hidden">
           <Image
-            src="/illustrations/hero-banner-student.png"
+            src="/illustrations/hero-student-photo.png"
             alt=""
             fill
             priority
-            className="object-cover object-left opacity-35"
+            className="object-cover object-center opacity-30"
           />
           <div
-            className="absolute inset-0 bg-gradient-to-t from-[#650B19] via-[#650B19]/70 to-[#650B19]/40"
+            className="absolute inset-0 bg-gradient-to-t from-[#650B19] via-[#650B19]/75 to-[#650B19]/45"
             aria-hidden="true"
           />
         </div>
