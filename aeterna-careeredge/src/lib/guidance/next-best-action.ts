@@ -41,7 +41,7 @@ export const NEXT_ACTION_RULES: Array<{
     buildAction: () => ({
       id: "COMPLETE_ONBOARDING",
       priority: 1,
-      title: "Set up your Career Passport",
+      title: "Complete your profile",
       description: "Pick your academic field and education level so CareerEdge can tailor your tools.",
       actionLabel: "Complete Profile",
       actionRoute: "/onboarding?from=dashboard",
@@ -69,13 +69,13 @@ export const NEXT_ACTION_RULES: Array<{
     buildAction: (ctx) => ({
       id: "CREATE_FIRST_RESUME",
       priority: 3,
-      title: ctx.passportScore < 30 ? "Upload your resume or build one" : "Draft your profession resume",
+      title: ctx.passportScore < 30 ? "Upload your resume or build one" : "Draft your tailored resume",
       description:
         ctx.passportScore < 30
-          ? "Upload your existing resume to instantly fill your Career Passport, or build a clean ATS draft from scratch."
-          : "Generate a clean, targeted resume built directly from your verified Career Passport.",
+          ? "Upload your existing resume or build a clean ATS draft from scratch in Resume Studio."
+          : "Generate a clean, targeted resume built directly for your target role in Resume Studio.",
       actionLabel: ctx.passportScore < 30 ? "Upload or Build" : "Build Resume",
-      actionRoute: "/resume",
+      actionRoute: "/resume/studio",
       badgeText: "Resume Studio",
     }),
   },
@@ -86,9 +86,9 @@ export const NEXT_ACTION_RULES: Array<{
     buildAction: (ctx) => ({
       id: "UPLOAD_EVIDENCE",
       priority: 5,
-      title: "Review resume claims in Resume Studio",
-      description: `You have ${ctx.unsupportedClaimsCount} skill claims needing review. Refine and tailor them in Resume Studio.`,
-      actionLabel: "Open Resume Studio",
+      title: ctx.unsupportedClaimsCount === 1 ? "Review 1 skill claim" : `Review ${ctx.unsupportedClaimsCount} skill claims`,
+      description: "Refine and tailor your skills in Resume Studio to improve your profile strength.",
+      actionLabel: "Review Now",
       actionRoute: "/resume/studio",
       badgeText: "Resume",
     }),
@@ -117,7 +117,7 @@ export const NEXT_ACTION_RULES: Array<{
       title: "Complete today's sprint task",
       description: `You have ${ctx.activeSprintTasksDue} task ready in your 30-day Gap-to-Action Sprint.`,
       actionLabel: "Open Sprint",
-      actionRoute: "/sprint",
+      actionRoute: "/sprints",
       badgeText: "30-Day Sprint",
     }),
   },
@@ -128,10 +128,10 @@ export const NEXT_ACTION_RULES: Array<{
     buildAction: () => ({
       id: "DISCOVER_JOBS",
       priority: 8,
-      title: "Explore matching job vacancies",
-      description: "Find real vacancies from authorized employers matching your verified skills.",
+      title: "Explore matching job opportunities",
+      description: "Find real opportunities from authorized employers matching your verified skills.",
       actionLabel: "Explore Jobs",
-      actionRoute: "/job-matcher",
+      actionRoute: "/jobs",
       badgeText: "Verified Jobs",
     }),
   },
