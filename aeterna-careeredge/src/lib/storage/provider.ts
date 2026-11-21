@@ -149,7 +149,7 @@ export class SupabaseStorageProvider implements StorageProvider {
     this.supabaseUrl = (
       process.env.SUPABASE_URL ||
       process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      "https://bifjznuuhigmpayefswf.supabase.co"
+      ""
     ).replace(/\/$/, "");
 
     this.apiKey =

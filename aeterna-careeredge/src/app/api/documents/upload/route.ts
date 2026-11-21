@@ -82,9 +82,13 @@ export async function POST(req: NextRequest) {
     console.error("[Document Upload Error]:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Failed to process document upload.";
+    const isValidation =
+      errorMessage.includes("File header") ||
+      errorMessage.includes("Unsupported file type") ||
+      errorMessage.includes("File size");
     return NextResponse.json(
       { error: errorMessage },
-      { status: 500 }
+      { status: isValidation ? 400 : 500 }
     );
   }
 }

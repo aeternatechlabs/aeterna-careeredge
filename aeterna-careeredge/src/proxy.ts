@@ -136,15 +136,7 @@ async function getSessionFromRequest(
       }
     }
 
-    if (!payload) {
-      try {
-        const decoded = decodeJwt(cleanToken) as Record<string, unknown>;
-        if (decoded && (decoded.userId || decoded.sub || decoded.email || decoded.id)) {
-          payload = decoded;
-        }
-      } catch {}
-    }
-
+    // Strictly require cryptographic signature verification with secrets
     if (!payload) return null;
 
     const rawPayload = payload as Record<string, unknown>;

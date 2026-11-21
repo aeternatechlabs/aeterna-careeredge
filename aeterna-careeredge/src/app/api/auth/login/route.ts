@@ -5,12 +5,22 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { setSessionCookie } from "@/lib/session";
+import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
 import type { LoginInput } from "@/types/auth";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
+    const ip = getClientIp(req);
+    const rateCheck = checkRateLimit(`login:${ip}`, 10, 60 * 1000);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Please wait a minute before trying again." },
+        { status: 429 }
+      );
+    }
+
     const body = (await req.json()) as Partial<LoginInput>;
     const { identifier, password } = body;
 

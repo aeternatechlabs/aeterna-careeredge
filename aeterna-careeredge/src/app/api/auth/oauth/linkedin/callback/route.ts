@@ -29,11 +29,11 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Verify State Cookie (with soft fallback if state param exists)
+  // Verify CSRF State Cookie strictly
   const savedState = req.cookies.get("linkedin_oauth_state")?.value;
-  if (savedState && savedState !== state) {
+  if (!savedState || savedState !== state) {
     return NextResponse.redirect(
-      new URL("/linkedin?error=Invalid+state+parameter+detected", req.url)
+      new URL("/linkedin?error=Invalid+or+expired+state+parameter+detected", req.url)
     );
   }
 

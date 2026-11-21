@@ -19,7 +19,17 @@ export async function POST(request: Request) {
 
     const keySecret = (process.env.RAZORPAY_KEY_SECRET || process.env["RAZORPAY_KEY_SECRET "] || "").trim();
 
-    // If dev upgrade requested or no signature (in test mode)
+    const isProd = process.env.NODE_ENV === "production" || process.env.APP_ENV === "production";
+
+    // In production, strictly reject dev upgrades and require verified Razorpay signatures
+    if (isProd && (isDevUpgrade || !razorpay_signature)) {
+      return NextResponse.json(
+        { error: "Payment verification requires a valid payment signature in production." },
+        { status: 400 }
+      );
+    }
+
+    // In development/test mode, allow simulated upgrade for local verification
     if (isDevUpgrade || !razorpay_signature) {
       const sub = await grantDevSubscription(
         session.userId,

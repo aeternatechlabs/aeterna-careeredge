@@ -140,15 +140,7 @@ export async function verifySession(
       }
     }
 
-    if (!payload) {
-      try {
-        const decoded = decodeJwt(cleanToken) as Record<string, unknown>;
-        if (decoded && (decoded.userId || decoded.sub || decoded.email || decoded.id)) {
-          payload = decoded;
-        }
-      } catch {}
-    }
-
+    // Strictly require cryptographic signature verification with secrets
     if (!payload) {
       return null;
     }
@@ -173,6 +165,10 @@ export async function verifySession(
 export function isSecureCookie(): boolean {
   if (process.env.COOKIE_SECURE === "true") return true;
   if (process.env.COOKIE_SECURE === "false") return false;
+  // In production, default to true unless running on local development host
+  if (process.env.NODE_ENV === "production" && !process.env.NEXT_PUBLIC_APP_URL?.includes("localhost")) {
+    return true;
+  }
   // If explicitly hosted on HTTPS, use secure
   if (process.env.NEXT_PUBLIC_APP_URL?.startsWith("https://")) return true;
   // Over local HTTP (e.g. localhost:3000 or 10.31.248.221:3000), do NOT set secure so browsers accept the cookie

@@ -23,6 +23,7 @@
     "pdf-parse": "^1.1.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "resend": "^6.39.0",
     "unpdf": "^2.2.1"
   },
   "devDependencies": {

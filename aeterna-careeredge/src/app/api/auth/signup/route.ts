@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { setSessionCookie } from "@/lib/session";
+import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
 import type { SignupInput } from "@/types/auth";
 
 // Indian mobile: 10 digits, starts with 6-9
@@ -13,6 +14,15 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
+    const ip = getClientIp(req);
+    const rateCheck = checkRateLimit(`signup:${ip}`, 5, 60 * 1000);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { error: "Too many registration attempts. Please wait a minute before trying again." },
+        { status: 429 }
+      );
+    }
+
     const body = (await req.json()) as Partial<SignupInput>;
 
     const { name, email, mobile, password, counsellorConsent } = body;

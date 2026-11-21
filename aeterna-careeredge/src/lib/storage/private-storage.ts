@@ -27,6 +27,47 @@ export const ALLOWED_MIME_TYPES = [
 export const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 /**
+ * Validates buffer magic bytes against declared MIME type to prevent file-spoofing attacks.
+ */
+export function validateBufferMagicBytes(buffer: Buffer, declaredMimeType: string): boolean {
+  if (!buffer || buffer.length < 4) return false;
+
+  // PDF: %PDF- (0x25 0x50 0x44 0x46)
+  if (declaredMimeType === "application/pdf") {
+    return (
+      buffer[0] === 0x25 &&
+      buffer[1] === 0x50 &&
+      buffer[2] === 0x44 &&
+      buffer[3] === 0x46
+    );
+  }
+
+  // DOCX / ZIP: PK\x03\x04 or legacy DOC OLE compound
+  if (
+    declaredMimeType ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    declaredMimeType === "application/msword"
+  ) {
+    return (
+      (buffer[0] === 0x50 && buffer[1] === 0x4b && buffer[2] === 0x03 && buffer[3] === 0x04) ||
+      (buffer[0] === 0xd0 && buffer[1] === 0xcf && buffer[2] === 0x11 && buffer[3] === 0xe0)
+    );
+  }
+
+  // PNG: 0x89 0x50 0x4E 0x47
+  if (declaredMimeType === "image/png") {
+    return buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47;
+  }
+
+  // JPEG: 0xFF 0xD8 0xFF
+  if (declaredMimeType === "image/jpeg") {
+    return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+  }
+
+  return true;
+}
+
+/**
  * Validates ownership before granting access to a stored file.
  * Returns null if the authenticated user does not own the document.
  */
@@ -100,6 +141,12 @@ export async function storeStudentDocument({
   if (buffer.length > MAX_FILE_SIZE_BYTES) {
     throw new Error(
       `File size (${(buffer.length / (1024 * 1024)).toFixed(2)} MB) exceeds maximum allowed limit of 5 MB.`
+    );
+  }
+
+  if (!validateBufferMagicBytes(buffer, mimeType)) {
+    throw new Error(
+      "File header contents do not match the declared file format. Upload rejected."
     );
   }
 

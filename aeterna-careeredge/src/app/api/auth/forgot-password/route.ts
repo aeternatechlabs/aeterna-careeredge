@@ -1,9 +1,19 @@
 // src/app/api/auth/forgot-password/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createPasswordResetToken } from "@/lib/auth/password-reset";
+import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const rateCheck = checkRateLimit(`forgot-password:${ip}`, 5, 60 * 1000);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { error: "Too many reset attempts. Please wait a minute before requesting another link." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { email } = body;
 
