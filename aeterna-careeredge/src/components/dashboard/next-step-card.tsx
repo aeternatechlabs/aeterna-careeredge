@@ -29,18 +29,22 @@ export function NextStepCard({ action }: NextStepCardProps) {
     <section aria-label="Do this next" className="w-full">
       <div className="relative overflow-hidden rounded-2xl sm:rounded-[22px] bg-[#650B19] text-white shadow-md border border-[#520914] min-h-[140px] sm:min-h-[156px] flex items-center">
         {/* Background Hero Banner Student Photo (Real student on campus matching maroon brand)
-            Desktop & Tablet (md, lg): Scaled cleanly to left so the student's face, smile and maroon jacket are prominently shown */}
+            Desktop & Tablet (md, lg): Placed subtly under the maroon background canvas */}
         <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[220px] md:w-[250px] lg:w-[280px] pointer-events-none select-none overflow-hidden z-0">
           <Image
             src="/illustrations/hero-student-photo.png"
             alt=""
             fill
             priority
-            className="object-contain object-left"
+            className="object-contain object-left opacity-80"
           />
-          {/* Smooth gradient blend on the right edge into solid maroon #650B19 */}
+          {/* Maroon tint washes so the image blends harmoniously under the card canvas */}
           <div
-            className="absolute inset-y-0 right-0 w-24 bg-gradient-to-r from-transparent to-[#650B19]"
+            className="absolute inset-0 bg-gradient-to-r from-[#650B19]/35 via-transparent to-[#650B19]"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute inset-0 bg-gradient-to-t from-[#650B19]/40 via-transparent to-[#650B19]/20"
             aria-hidden="true"
           />
         </div>
