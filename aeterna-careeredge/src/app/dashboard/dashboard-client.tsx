@@ -228,9 +228,63 @@ export function DashboardClient({ user }: DashboardClientProps) {
         ============================================================ */}
         <section
           aria-label="Student Overview"
-          className="rounded-2xl sm:rounded-[20px] border border-[#F0DFDC] bg-white p-4 sm:p-6 shadow-xs"
+          className="relative overflow-hidden rounded-2xl sm:rounded-[20px] border border-[#F0DFDC] bg-white p-4 sm:p-6 shadow-xs"
         >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Decorative Background Shapes & Accents: Soft pastel glow, wave curves & gold sparkles */}
+          <div className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
+            {/* Soft Ambient Pastel Glow Orbs */}
+            <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-[#F9E8E8]/70 blur-2xl" />
+            <div className="absolute -bottom-10 left-1/4 w-52 h-28 rounded-full bg-[#F2B33D]/10 blur-xl" />
+
+            {/* Subtle Flowing Wave Curves */}
+            <svg
+              className="absolute inset-0 w-full h-full opacity-[0.08]"
+              viewBox="0 0 900 120"
+              preserveAspectRatio="none"
+              fill="none"
+            >
+              <path
+                d="M 0 90 C 250 20, 500 100, 900 30"
+                stroke="#7A1A2B"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M 0 110 C 300 40, 600 110, 900 60"
+                stroke="#F2B33D"
+                strokeWidth="1"
+                strokeDasharray="4 4"
+              />
+            </svg>
+
+            {/* Subtle Concentric Rings (Right side behind action buttons) */}
+            <svg
+              className="absolute -right-6 top-1/2 -translate-y-1/2 w-48 h-48 opacity-[0.07]"
+              viewBox="0 0 160 160"
+              fill="none"
+            >
+              <circle cx="80" cy="80" r="35" stroke="#7A1A2B" strokeWidth="1" />
+              <circle cx="80" cy="80" r="60" stroke="#F2B33D" strokeWidth="1" strokeDasharray="3 4" />
+              <circle cx="80" cy="80" r="85" stroke="#7A1A2B" strokeWidth="0.75" />
+            </svg>
+
+            {/* Delicate 4-Point Gold & Blush Sparkles */}
+            <svg
+              className="absolute top-3.5 right-1/3 w-3 h-3 text-[#F2B33D] opacity-45 animate-pulse"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" />
+            </svg>
+            <svg
+              className="absolute bottom-3 left-1/3 w-2 h-2 text-[#7A1A2B] opacity-25"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" />
+            </svg>
+          </div>
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Left: Greeting, target role */}
             <div className="space-y-1.5 min-w-0">
               <h1 className="font-heading text-xl sm:text-2xl font-extrabold tracking-tight text-[#2A1417]">
