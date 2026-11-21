@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, type FormEvent } from "react";
 import { Eye, EyeOff, Mail, Phone, Lock } from "lucide-react";
-import { useRouter } from "next/navigation";
 import {
-  AnimatePresence,
   MotionConfig,
   motion,
   type Variants,
@@ -36,8 +34,6 @@ const formVariants: Variants = {
 type IdentifierMode = "email" | "mobile";
 
 export default function LoginPage() {
-  const router = useRouter();
-
   const [identifierMode, setIdentifierMode] = useState<IdentifierMode>("email");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -50,9 +46,14 @@ export default function LoginPage() {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const urlError = params.get("error");
-      if (urlError) setError(decodeURIComponent(urlError));
       const urlEmail = params.get("email");
-      if (urlEmail) setIdentifier(decodeURIComponent(urlEmail));
+      if (urlError || urlEmail) {
+        const timer = setTimeout(() => {
+          if (urlError) setError(decodeURIComponent(urlError));
+          if (urlEmail) setIdentifier(decodeURIComponent(urlEmail));
+        }, 0);
+        return () => clearTimeout(timer);
+      }
     }
   }, []);
 
