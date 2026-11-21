@@ -1,24 +1,17 @@
 "use client";
 
 // src/components/dashboard/tools-carousel.tsx
-// Section 5: "Tools for you" Carousel matching the reference screenshot:
-// 1. Resume Studio (Build, "Create a professional resume.", Resume with sparkle)
-// 2. Resume ATS Checker (Improve, "Check your ATS compatibility.", Document with maroon checkmark badge)
-// 3. LinkedIn Optimizer (Improve, "Boost your profile.", "in" badge with growth trend arrow)
-// 4. Job Match (Jobs, "Find the right jobs.", Briefcase with gold clasp & target)
-// 5. 30-Day Sprint (Get ready, "Build skills in 30 days.", Calendar with lightning bolt)
-// Controls: "< 1 / 5 >" in header + side chevrons + wider active pill pagination dots.
+// Section 5: "Tools for your career" Carousel with 3D-meets-editorial AI visual assets:
+// 1. Resume Studio (/illustrations/resume-studio.png)
+// 2. Resume ATS Checker (/illustrations/ats-checker.png)
+// 3. LinkedIn Optimizer (/illustrations/linkedin-optimizer.png)
+// 4. Job Match (/illustrations/job-match.png)
+// 5. 30-Day Sprint (/illustrations/sprint.png)
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
-import {
-  ResumeStudioIllustration,
-  ATSCheckerIllustration,
-  LinkedInIllustration,
-  JobMatchIllustration,
-  SprintIllustration,
-} from "./dashboard-illustrations";
 
 export interface CarouselSlide {
   id: string;
@@ -27,7 +20,7 @@ export interface CarouselSlide {
   description: string;
   actionText: string;
   href: string;
-  Illustration: React.ComponentType<{ className?: string }>;
+  imageSrc: string;
 }
 
 export const CAROUSEL_SLIDES: CarouselSlide[] = [
@@ -35,19 +28,19 @@ export const CAROUSEL_SLIDES: CarouselSlide[] = [
     id: "resume-studio",
     category: "Build",
     title: "Resume Studio",
-    description: "Create a professional resume.",
+    description: "Create a standout resume.",
     actionText: "Open Tool",
     href: "/resume/studio",
-    Illustration: ResumeStudioIllustration,
+    imageSrc: "/illustrations/resume-studio.png",
   },
   {
     id: "ats-checker",
     category: "Improve",
     title: "Resume ATS Checker",
-    description: "Check your ATS compatibility.",
+    description: "Check ATS compatibility.",
     actionText: "Check Now",
     href: "/resume/check",
-    Illustration: ATSCheckerIllustration,
+    imageSrc: "/illustrations/ats-checker.png",
   },
   {
     id: "linkedin-optimizer",
@@ -56,7 +49,7 @@ export const CAROUSEL_SLIDES: CarouselSlide[] = [
     description: "Boost your profile.",
     actionText: "Optimize",
     href: "/linkedin",
-    Illustration: LinkedInIllustration,
+    imageSrc: "/illustrations/linkedin-optimizer.png",
   },
   {
     id: "job-match",
@@ -65,7 +58,7 @@ export const CAROUSEL_SLIDES: CarouselSlide[] = [
     description: "Find the right jobs.",
     actionText: "View Matches",
     href: "/jobs",
-    Illustration: JobMatchIllustration,
+    imageSrc: "/illustrations/job-match.png",
   },
   {
     id: "sprint",
@@ -74,7 +67,7 @@ export const CAROUSEL_SLIDES: CarouselSlide[] = [
     description: "Build skills in 30 days.",
     actionText: "Start Sprint",
     href: "/sprints",
-    Illustration: SprintIllustration,
+    imageSrc: "/illustrations/sprint.png",
   },
 ];
 
@@ -85,7 +78,6 @@ export function ToolsCarousel() {
 
   const totalSlides = CAROUSEL_SLIDES.length;
 
-  // Scroll to slide index
   const scrollToSlide = useCallback(
     (index: number) => {
       const container = scrollContainerRef.current;
@@ -114,7 +106,6 @@ export function ToolsCarousel() {
     scrollToSlide(newIdx);
   }, [activeIndex, totalSlides, scrollToSlide]);
 
-  // Sync activeIndex on scroll
   const handleScroll = () => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -127,7 +118,6 @@ export function ToolsCarousel() {
     }
   };
 
-  // Auto-advance timer (6s)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -147,7 +137,7 @@ export function ToolsCarousel() {
     <section
       role="region"
       aria-roledescription="carousel"
-      aria-label="Tools for you"
+      aria-label="Tools for your career"
       className="relative w-full space-y-3"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -159,10 +149,10 @@ export function ToolsCarousel() {
       {/* Header with Title & "< 1 / 5 >" Controls */}
       <div className="flex items-center justify-between px-1">
         <h2 className="font-heading text-base sm:text-lg font-bold text-[#2A1417] tracking-tight">
-          Tools for you
+          Tools for your career
         </h2>
 
-        {/* Previous / Next Controls and Counter in Header */}
+        {/* Counter and Arrows in Header */}
         <div className="flex items-center gap-1.5 text-xs text-[#6F5A5D]">
           <button
             type="button"
@@ -190,7 +180,7 @@ export function ToolsCarousel() {
 
       {/* Carousel Track Container */}
       <div className="relative group/track">
-        {/* Subtle Side Floating Chevrons (matching screenshot side arrows) */}
+        {/* Subtle Side Floating Chevrons */}
         <button
           type="button"
           onClick={handlePrev}
@@ -216,7 +206,6 @@ export function ToolsCarousel() {
           className="flex gap-3 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory pt-0.5"
         >
           {CAROUSEL_SLIDES.map((slide, idx) => {
-            const { Illustration } = slide;
             return (
               <div
                 key={slide.id}
@@ -229,7 +218,7 @@ export function ToolsCarousel() {
                   {/* Left: Text & Action Button */}
                   <div className="flex flex-col justify-between h-full space-y-3 min-w-0 pr-2">
                     <div className="space-y-1.5">
-                      {/* Category Chip (soft pink pill) */}
+                      {/* Category Chip (soft blush pill) */}
                       <span className="inline-block rounded-full bg-[#F9E8E8] px-2.5 py-0.5 text-[10px] font-bold text-[#7A1A2B]">
                         {slide.category}
                       </span>
@@ -257,9 +246,15 @@ export function ToolsCarousel() {
                     </div>
                   </div>
 
-                  {/* Right: Bespoke SVG Illustration */}
-                  <div className="shrink-0 flex items-center justify-center pl-1">
-                    <Illustration className="w-20 h-20 sm:w-22 sm:h-22" />
+                  {/* Right: AI-Generated 3D Visual Asset */}
+                  <div className="shrink-0 relative w-20 h-20 sm:w-22 sm:h-22 flex items-center justify-center pl-1">
+                    <Image
+                      src={slide.imageSrc}
+                      alt=""
+                      width={88}
+                      height={88}
+                      className="w-full h-full object-contain drop-shadow-xs group-hover:scale-105 transition-transform duration-200"
+                    />
                   </div>
                 </div>
               </div>
@@ -268,7 +263,7 @@ export function ToolsCarousel() {
         </div>
       </div>
 
-      {/* Pagination Dot Indicators (Current slide indicated by wider rounded pill) */}
+      {/* Pagination Dot Indicators */}
       <div className="flex justify-center items-center gap-1.5 pt-1">
         {CAROUSEL_SLIDES.map((slide, idx) => (
           <button

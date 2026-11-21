@@ -33,66 +33,79 @@ export function GettingStartedStepper({ milestones }: GettingStartedStepperProps
 
   return (
     <section aria-label="Getting started milestones" className="w-full space-y-3">
-      {/* Header with single progress badge: "Getting started • 3 of 6 done" */}
-      <div className="flex items-center gap-2 px-1">
+      {/* Header with single progress badge: "Getting started" + "3 of 6 done ✓" */}
+      <div className="flex items-center justify-between px-1">
         <h2 className="font-heading text-base sm:text-lg font-bold text-[#2A1417] tracking-tight">
           Getting started
         </h2>
-        <span className="text-[#907D79] font-bold">•</span>
-        <span className="inline-flex items-center rounded-full bg-[#F9E8E8] px-2.5 py-0.5 text-xs font-bold text-[#7A1A2B]">
-          {completedCount} of {totalCount} done
+
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EBF7F0] border border-[#1F8A5B]/20 px-3 py-1 text-xs font-bold text-[#1F8A5B]">
+          <span>
+            {completedCount} of {totalCount} done
+          </span>
+          <div className="flex h-4 w-4 items-center justify-center rounded-full bg-[#1F8A5B] text-white">
+            <Check size={10} className="stroke-[3]" aria-hidden="true" />
+          </div>
         </span>
       </div>
 
       {/* ============================================================
-          DESKTOP & TABLET VIEW (>= 640px): 6 Equal-Width Cards in a Row
+          DESKTOP & TABLET VIEW (>= 640px): 6 Equal-Width Cards with Chevrons
       ============================================================ */}
-      <div className="hidden sm:grid sm:grid-cols-6 gap-2 lg:gap-3">
+      <div className="hidden sm:flex sm:items-center sm:gap-1.5 lg:gap-2.5 w-full">
         {milestones.map((milestone, idx) => {
           const isDone = milestone.isComplete;
           const isCurrent = idx === activeIndex;
 
           return (
-            <Link
-              key={milestone.id}
-              href={milestone.route}
-              aria-current={isCurrent ? "step" : undefined}
-              className={`group relative flex flex-col items-center justify-center rounded-2xl p-2.5 sm:p-3 lg:p-4 text-center transition-all duration-200 min-h-[108px] sm:min-h-[116px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1A2B] ${
-                isDone
-                  ? "bg-white border border-[#F0DFDC] hover:border-[#1F8A5B]/40 hover:shadow-xs shadow-2xs"
-                  : isCurrent
-                    ? "bg-[#FFF9EC] border-2 border-[#F2B33D] shadow-xs"
-                    : "bg-white border border-[#F0DFDC] hover:border-[#7A1A2B]/30 hover:shadow-xs shadow-2xs"
-              }`}
-            >
-              {/* Step State Icon */}
-              <div className="mb-2 flex items-center justify-center">
-                {isDone ? (
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1F8A5B] text-white shadow-xs">
-                    <Check size={14} className="stroke-[3]" aria-hidden="true" />
-                  </div>
-                ) : isCurrent ? (
-                  <StepperActiveGoldIcon className="w-7 h-7" />
-                ) : (
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#D8C7C4] bg-white text-[#907D79]">
-                    <span className="sr-only">Step {milestone.stepNumber}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Step Title */}
-              <span
-                className={`text-[11px] sm:text-xs lg:text-[13px] font-bold leading-tight line-clamp-2 transition-colors ${
+            <React.Fragment key={milestone.id}>
+              <Link
+                href={milestone.route}
+                aria-current={isCurrent ? "step" : undefined}
+                className={`group relative flex-1 flex flex-col items-center justify-center rounded-2xl p-2.5 sm:p-3 lg:p-4 text-center transition-all duration-200 min-h-[108px] sm:min-h-[116px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1A2B] ${
                   isDone
-                    ? "text-[#2A1417]"
+                    ? "bg-white border border-[#F0DFDC] hover:border-[#1F8A5B]/40 hover:shadow-xs shadow-2xs"
                     : isCurrent
-                      ? "text-[#2A1417]"
-                      : "text-[#6F5A5D] group-hover:text-[#2A1417]"
+                      ? "bg-[#FFF9EC] border-2 border-[#F2B33D] shadow-xs"
+                      : "bg-white border border-[#F0DFDC] hover:border-[#7A1A2B]/30 hover:shadow-xs shadow-2xs"
                 }`}
               >
-                {milestone.title}
-              </span>
-            </Link>
+                {/* Step State Icon */}
+                <div className="mb-2 flex items-center justify-center">
+                  {isDone ? (
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1F8A5B] text-white shadow-xs">
+                      <Check size={14} className="stroke-[3]" aria-hidden="true" />
+                    </div>
+                  ) : isCurrent ? (
+                    <StepperActiveGoldIcon className="w-7 h-7" />
+                  ) : (
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#D8C7C4] bg-white text-[#907D79]">
+                      <span className="sr-only">Step {milestone.stepNumber}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Step Title */}
+                <span
+                  className={`text-[11px] sm:text-xs lg:text-[13px] font-bold leading-tight line-clamp-2 transition-colors ${
+                    isDone
+                      ? "text-[#2A1417]"
+                      : isCurrent
+                        ? "text-[#2A1417]"
+                        : "text-[#6F5A5D] group-hover:text-[#2A1417]"
+                  }`}
+                >
+                  {milestone.title}
+                </span>
+              </Link>
+
+              {/* Connecting Chevron '>' between cards on desktop */}
+              {idx < milestones.length - 1 && (
+                <div className="text-[#D8C7C4] shrink-0" aria-hidden="true">
+                  <ChevronRight size={14} className="opacity-70" />
+                </div>
+              )}
+            </React.Fragment>
           );
         })}
       </div>

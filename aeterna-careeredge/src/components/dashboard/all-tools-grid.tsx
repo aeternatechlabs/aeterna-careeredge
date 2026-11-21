@@ -60,14 +60,14 @@ export function AllToolsGrid({ onOpenUploadModal }: AllToolsGridProps) {
       {
         id: "ats-check",
         name: "ATS Resume Check",
-        description: "Check ATS score",
+        description: "Check score",
         icon: ShieldCheck,
         href: "/resume/check",
       },
       {
         id: "linkedin",
         name: "LinkedIn Optimizer",
-        description: "Improve your profile",
+        description: "Improve profile",
         icon: Network,
         href: "/linkedin",
       },
@@ -81,16 +81,9 @@ export function AllToolsGrid({ onOpenUploadModal }: AllToolsGridProps) {
       {
         id: "role-fit",
         name: "Role Fit Explorer",
-        description: "Browse opportunities",
+        description: "Explore opportunities",
         icon: Compass,
         href: "/role-fit-explorer",
-      },
-      {
-        id: "applications",
-        name: "Applications",
-        description: "Track your progress",
-        icon: ClipboardList,
-        href: "/applications",
       },
       {
         id: "sprints",
@@ -102,7 +95,7 @@ export function AllToolsGrid({ onOpenUploadModal }: AllToolsGridProps) {
       {
         id: "interview-prep",
         name: "Interview Prep",
-        description: "Practice mock Q&A",
+        description: "Ace your interviews",
         icon: GraduationCap,
         href: "/interview-prep",
       },

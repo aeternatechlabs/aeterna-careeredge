@@ -236,11 +236,11 @@ export function DashboardClient({ user }: DashboardClientProps) {
             {/* Left: Greeting, verification badges, target role & score */}
             <div className="space-y-1.5 min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#7A1A2B] px-2.5 py-0.5 text-[11px] font-bold text-white shadow-2xs">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#7A1A2B] px-3 py-1 text-[11px] font-bold text-white shadow-2xs">
                   <GraduationCap size={12} aria-hidden="true" />
-                  <span>Tier 1 Verified Student</span>
+                  <span>Tier 1 Verified</span>
                 </span>
-                <span className="rounded-full bg-[#FDF6F3] border border-[#F0DFDC] px-2.5 py-0.5 text-[11px] font-semibold text-[#6F5A5D]">
+                <span className="rounded-full bg-[#F9E8E8] border border-[#F0DFDC] px-3 py-1 text-[11px] font-bold text-[#7A1A2B]">
                   {academicDomain}
                 </span>
               </div>
@@ -251,10 +251,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
               <p className="text-xs sm:text-sm text-[#6F5A5D] leading-relaxed">
                 Target Role:{" "}
-                <strong className="text-[#2A1417] font-semibold">{preferredJobRole}</strong>
-                {" • "}
-                Verified Profile:{" "}
-                <strong className="text-[#7A1A2B] font-bold">{score}% complete</strong>.
+                <strong className="text-[#2A1417] font-bold">{preferredJobRole}</strong>
               </p>
             </div>
 
@@ -263,15 +260,15 @@ export function DashboardClient({ user }: DashboardClientProps) {
               <button
                 type="button"
                 onClick={() => setIsUploadModalOpen(true)}
-                className="inline-flex flex-1 md:flex-initial items-center justify-center gap-1.5 rounded-xl border border-[#F0DFDC] bg-white px-3.5 py-2 text-xs font-bold text-[#2A1417] shadow-2xs hover:bg-[#FFF9F7] active:bg-[#F9E8E8] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1A2B]"
+                className="inline-flex flex-1 md:flex-initial items-center justify-center gap-1.5 rounded-full bg-[#7A1A2B] px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#650B19] active:bg-[#4C0915] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1A2B]"
               >
-                <Upload size={13} className="text-[#7A1A2B]" aria-hidden="true" />
+                <Upload size={13} className="text-white" aria-hidden="true" />
                 <span>Upload Resume</span>
               </button>
 
               <Link
                 href="/onboarding?from=dashboard"
-                className="inline-flex flex-1 md:flex-initial items-center justify-center gap-1.5 rounded-xl border border-[#F0DFDC] bg-white px-3.5 py-2 text-xs font-bold text-[#2A1417] shadow-2xs hover:bg-[#FFF9F7] active:bg-[#F9E8E8] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1A2B]"
+                className="inline-flex flex-1 md:flex-initial items-center justify-center gap-1.5 rounded-full border border-[#2B1B1B]/20 bg-white px-5 py-2 text-xs font-bold text-[#2A1417] shadow-2xs hover:bg-[#FFF9F7] active:bg-[#F9E8E8] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1A2B]"
               >
                 <Pencil size={13} className="text-[#6F5A5D]" aria-hidden="true" />
                 <span>Edit Profile</span>

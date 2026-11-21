@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { BrandLogo } from "@/components/common/BrandLogo";
 import {
@@ -304,6 +305,19 @@ export function StudentSidebar({
           )}
         </div>
       </nav>
+
+      {/* Subtle Bengaluru Architectural Watermark Illustration near bottom */}
+      {!isCollapsed && (
+        <div className="px-3 pt-2 pb-0.5 shrink-0 opacity-40 pointer-events-none select-none">
+          <Image
+            src="/illustrations/bengaluru-architecture.png"
+            alt=""
+            width={240}
+            height={70}
+            className="w-full h-auto object-contain"
+          />
+        </div>
+      )}
 
       {/* Bottom Footer: Settings & Sign Out */}
       <div className="p-2.5 border-t border-[#F0DEDA] bg-[#F9EAE6] shrink-0 space-y-1">
