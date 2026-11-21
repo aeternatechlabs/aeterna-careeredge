@@ -355,6 +355,30 @@ export default function LoginPage() {
               Create one here
             </Link>
           </motion.p>
+
+          {/* Legal navigation links */}
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            animate="show"
+            className="mt-6 border-t border-[#EBDDD1]/60 pt-4 text-center text-xs text-[#9A8580]"
+          >
+            By signing in, you agree to our{" "}
+            <Link
+              href="/terms-and-conditions"
+              className="text-[#7A0F1F] underline hover:text-[#520914]"
+            >
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link
+              href="/privacy-policy"
+              className="text-[#7A0F1F] underline hover:text-[#520914]"
+            >
+              Privacy Policy
+            </Link>
+            .
+          </motion.div>
         </div>
       </MotionConfig>
     </AuthLayout>

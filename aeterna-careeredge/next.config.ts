@@ -5,6 +5,25 @@ const nextConfig: NextConfig = {
   experimental: {
     agentFeedback: true,
   },
+  async redirects() {
+    return [
+      {
+        source: "/privacy",
+        destination: "/privacy-policy",
+        permanent: true,
+      },
+      {
+        source: "/terms",
+        destination: "/terms-and-conditions",
+        permanent: true,
+      },
+      {
+        source: "/terms-of-use",
+        destination: "/terms-and-conditions",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

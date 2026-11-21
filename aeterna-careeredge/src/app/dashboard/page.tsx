@@ -1,9 +1,15 @@
 // src/app/dashboard/page.tsx
 
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { DashboardClient } from "./dashboard-client";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  robots: { index: false, follow: false },
+};
 
 export default async function DashboardPage() {
   const session = await getSession();

@@ -114,6 +114,7 @@ export function LeadCaptureSection() {
       interest: formData.get("interest") as string,
       counsellorConsent: requiredConsent,
       marketingConsent: marketingConsent,
+      hp_company: (formData.get("hp_company") as string) || "",
     };
 
     try {
@@ -196,9 +197,9 @@ export function LeadCaptureSection() {
                   className="mt-0.5 shrink-0 text-primary"
                 />
                 <p className="text-xs leading-5 text-secondary-text">
-                  Your information should be handled responsibly. We will
-                  connect this form to the platform&apos;s privacy and data
-                  handling process before collecting real submissions.
+                  Your data is protected under India DPDP Act 2023 standards.
+                  We use your details strictly to provide career guidance and
+                  never share your personal contact without consent.
                 </p>
               </div>
             </motion.div>
@@ -243,12 +244,12 @@ export function LeadCaptureSection() {
                     </motion.div>
 
                     <h3 className="mt-6 font-heading text-xl font-bold text-foreground sm:text-2xl">
-                      Form demo completed
+                      Thank You! Request Received
                     </h3>
 
                     <p className="mt-3 max-w-sm text-sm leading-6 text-secondary-text">
-                      The form interaction works, but it is not connected to a
-                      backend yet. No information has been sent or stored.
+                      Our career guidance advisors have received your inquiry and
+                      will review your profile to prepare personalized recommendations.
                     </p>
 
                     <button
@@ -256,7 +257,7 @@ export function LeadCaptureSection() {
                       onClick={() => setSubmitted(false)}
                       className="mt-6 rounded-xl border border-border px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-background"
                     >
-                      Back to form
+                      Submit another inquiry
                     </button>
                   </motion.div>
                 ) : (
@@ -277,6 +278,15 @@ export function LeadCaptureSection() {
                     </div>
 
                     <form onSubmit={handleSubmit} className="mt-6 space-y-4 sm:mt-7 sm:space-y-5">
+                      {/* Anti-spam honeypot */}
+                      <input
+                        type="text"
+                        name="hp_company"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        className="hidden"
+                        aria-hidden="true"
+                      />
                       <div>
                         <label htmlFor="lead-name" className={labelClass}>
                           Full name <span className="text-error">*</span>

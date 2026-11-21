@@ -1,4 +1,5 @@
-import Image from "next/image";
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, Mail, MapPin, Phone } from "lucide-react";
 import { BrandLogo } from "@/components/common/BrandLogo";
@@ -17,12 +18,13 @@ const accountLinks = [
 ];
 
 const legalLinks = [
-  { label: "Privacy Policy", href: "/privacy" },
-  { label: "Terms of Use", href: "/terms" },
+  { label: "Privacy Policy", href: "/privacy-policy" },
+  { label: "Terms & Conditions", href: "/terms-and-conditions" },
 ];
 
 const linkClass =
   "w-fit rounded-sm text-sm text-white/75 transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-primary-dark";
+
 function HoysalaBorder() {
   return (
     <div className="w-full h-5 sm:h-6 overflow-hidden leading-none select-none bg-primary-dark">
@@ -38,6 +40,14 @@ function HoysalaBorder() {
 }
 
 export function MarketingFooter() {
+  function handleOpenCookies() {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("careeredge:open-cookie-preferences")
+      );
+    }
+  }
+
   return (
     <footer className="relative isolate overflow-hidden bg-primary-dark">
       {/* Top border */}
@@ -161,7 +171,7 @@ export function MarketingFooter() {
             reserved.
           </p>
 
-          <ul className="flex items-center gap-5">
+          <ul className="flex flex-wrap items-center gap-5">
             {legalLinks.map((link) => (
               <li key={link.label}>
                 <Link
@@ -172,6 +182,15 @@ export function MarketingFooter() {
                 </Link>
               </li>
             ))}
+            <li>
+              <button
+                type="button"
+                onClick={handleOpenCookies}
+                className="transition-colors hover:text-gold cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gold"
+              >
+                Cookie Preferences
+              </button>
+            </li>
           </ul>
         </div>
       </div>

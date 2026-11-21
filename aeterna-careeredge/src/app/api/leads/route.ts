@@ -6,12 +6,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendLeadNotificationEmail } from "@/lib/email/client";
 import { recordConsent } from "@/lib/compliance/consent";
+import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. Sliding-window IP Rate Limiting (5 requests / minute)
+    const ip = getClientIp(req);
+    const rateCheck = checkRateLimit(`leads:${ip}`, 5, 60 * 1000);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { error: "Too many submissions from this connection. Please wait a minute." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const {
       name,
@@ -22,9 +33,18 @@ export async function POST(req: NextRequest) {
       interest,
       counsellorConsent,
       marketingConsent,
+      hp_company, // Honeypot trap
     } = body;
 
-    // 1. Validation
+    // 2. Honeypot check: Bots fill hidden fields; silently drop
+    if (hp_company) {
+      return NextResponse.json({
+        success: true,
+        message: "Thank you! Your information has been received.",
+      });
+    }
+
+    // 3. Validation
     if (!name || typeof name !== "string" || name.trim().length < 2) {
       return NextResponse.json(
         { error: "Full name must be at least 2 characters.", field: "name" },

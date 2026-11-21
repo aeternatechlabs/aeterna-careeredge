@@ -142,7 +142,7 @@ export function HeroSection() {
               >
                 <Link href="/signup">
                   <Button size="lg" fullWidth className="w-full px-4 text-sm sm:w-auto sm:px-6 sm:text-base">
-                    Take Free Career Assessment
+                    Get Started Free
                     <motion.span
                       variants={arrowVariants}
                       className="inline-flex"
