@@ -28,7 +28,6 @@ import {
 } from "@/components/dashboard/getting-started-stepper";
 import { StatsStrip } from "@/components/dashboard/stats-strip";
 import { ToolsCarousel } from "@/components/dashboard/tools-carousel";
-import { AllToolsGrid } from "@/components/dashboard/all-tools-grid";
 import { YourFilesSection } from "@/components/dashboard/your-files-section";
 import {
   GraduationCap,
@@ -278,17 +277,22 @@ export function DashboardClient({ user }: DashboardClientProps) {
         </section>
 
         {/* ============================================================
-            SECTION 2: DO THIS NEXT (Most Prominent Full-Width Maroon Card)
+            SECTION 2: TOOLS FOR YOUR CAREER (Moved directly below Greeting)
+        ============================================================ */}
+        <ToolsCarousel />
+
+        {/* ============================================================
+            SECTION 3: DO THIS NEXT (Most Prominent Full-Width Maroon Hero Card)
         ============================================================ */}
         <NextStepCard action={nextAction} />
 
         {/* ============================================================
-            SECTION 3: GETTING STARTED STEPPER (6-step Progress)
+            SECTION 4: GETTING STARTED STEPPER (6-step Progress with Chevrons)
         ============================================================ */}
         <GettingStartedStepper milestones={milestones} />
 
         {/* ============================================================
-            SECTION 4: CAREER STATISTICS STRIP (4 Key Metrics)
+            SECTION 5: CAREER STATISTICS STRIP (4 Key Metrics)
         ============================================================ */}
         <StatsStrip
           profileReady={score}
@@ -298,31 +302,16 @@ export function DashboardClient({ user }: DashboardClientProps) {
         />
 
         {/* ============================================================
-            SECTION 5: TOOLS TOUR CAROUSEL (Explore Our Tools)
+            SECTION 6: YOUR FILES (Recent Resumes & Document Upload Box)
         ============================================================ */}
-        <ToolsCarousel />
+        <YourFilesSection
+          resumes={user.resumes}
+          storedDocuments={user.storedDocuments}
+          onOpenUploadModal={() => setIsUploadModalOpen(true)}
+        />
 
         {/* ============================================================
-            SECTION 6 & 7: ALL TOOLS GRID (2/3) + YOUR FILES (1/3)
-        ============================================================ */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
-          {/* Section 6: All Tools Grid (Left 7-8 cols on desktop, full width on mobile) */}
-          <div className="lg:col-span-7 xl:col-span-8">
-            <AllToolsGrid onOpenUploadModal={() => setIsUploadModalOpen(true)} />
-          </div>
-
-          {/* Section 7: Your Files (Right 4-5 cols on desktop, full width on mobile) */}
-          <div className="lg:col-span-5 xl:col-span-4">
-            <YourFilesSection
-              resumes={user.resumes}
-              storedDocuments={user.storedDocuments}
-              onOpenUploadModal={() => setIsUploadModalOpen(true)}
-            />
-          </div>
-        </div>
-
-        {/* ============================================================
-            SECTION 8: COMING-SOON MESSAGE
+            SECTION 7: COMING-SOON MESSAGE
         ============================================================ */}
         <div className="flex items-center justify-center gap-2 pt-2 pb-4 text-center text-xs text-[#907D79]">
           <Lightbulb size={14} className="text-[#F2B33D] shrink-0" aria-hidden="true" />

@@ -214,7 +214,7 @@ export function ToolsCarousel() {
                 aria-label={`${idx + 1} of ${totalSlides}: ${slide.title}`}
                 className="min-w-full sm:min-w-[calc(50%-6px)] lg:min-w-[calc(33.333%-8px)] snap-start shrink-0"
               >
-                <div className="group relative flex h-full items-center justify-between rounded-2xl border border-[#F0DFDC] bg-white p-4 sm:p-5 shadow-xs transition-all duration-200 hover:border-[#7A1A2B]/40 hover:shadow-card min-h-[148px]">
+                <div className="group relative flex h-full items-center justify-between rounded-2xl border border-[#F0DFDC] bg-white p-4 sm:p-5 shadow-xs transition-all duration-200 hover:border-[#7A1A2B]/40 hover:shadow-card min-h-[156px] sm:min-h-[164px]">
                   {/* Left: Text & Action Button */}
                   <div className="flex flex-col justify-between h-full space-y-3 min-w-0 pr-2">
                     <div className="space-y-1.5">
@@ -238,7 +238,7 @@ export function ToolsCarousel() {
                     <div>
                       <Link
                         href={slide.href}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-[#7A1A2B] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-[#650B19] active:bg-[#4C0915] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1A2B]"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[#7A1A2B] px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-[#650B19] active:bg-[#4C0915] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1A2B]"
                       >
                         <span>{slide.actionText}</span>
                         <ArrowRight size={12} aria-hidden="true" />
@@ -246,13 +246,13 @@ export function ToolsCarousel() {
                     </div>
                   </div>
 
-                  {/* Right: AI-Generated 3D Visual Asset */}
-                  <div className="shrink-0 relative w-20 h-20 sm:w-22 sm:h-22 flex items-center justify-center pl-1">
+                  {/* Right: Transparent Cutout 3D Visual Asset (Increased Size) */}
+                  <div className="shrink-0 relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center pl-1">
                     <Image
                       src={slide.imageSrc}
                       alt=""
-                      width={88}
-                      height={88}
+                      width={112}
+                      height={112}
                       className="w-full h-full object-contain drop-shadow-xs group-hover:scale-105 transition-transform duration-200"
                     />
                   </div>
