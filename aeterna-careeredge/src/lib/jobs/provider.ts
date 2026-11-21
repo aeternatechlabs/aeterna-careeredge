@@ -136,6 +136,7 @@ export class JoobleJobProvider implements JobProvider {
         total: data.totalCount || jobs.length,
         page,
         pageSize: 20,
+        hasMore: (data.totalCount || jobs.length) > page * 20,
         sourceProvider: "JOOBLE_API",
       };
     } catch (err) {
@@ -192,6 +193,7 @@ export class MultiDomainMockJobProvider implements JobProvider {
       total: filtered.length,
       page,
       pageSize,
+      hasMore: start + pageSize < filtered.length,
       sourceProvider: "MOCK_DEMO",
     };
   }
@@ -210,12 +212,16 @@ export class UnifiedJobProvider implements JobProvider {
   private mock = new MultiDomainMockJobProvider();
 
   async searchJobs(params: JobSearchParams): Promise<JobSearchResult> {
+    const page = params.page || 1;
+    const pageSize = params.pageSize || 9;
+
     const cacheKey = JSON.stringify({
       q: params.query || "",
       loc: params.location || "",
       dom: params.domain || "ALL",
       typ: params.employmentType || "",
-      p: params.page || 1,
+      p: page,
+      ps: pageSize,
     });
 
     const cached = SEARCH_CACHE.get(cacheKey);
@@ -223,25 +229,43 @@ export class UnifiedJobProvider implements JobProvider {
       return cached.data;
     }
 
-    let result: JobSearchResult;
+    // 1. Fetch matching verified curated multi-domain jobs
+    const mockRes = await this.mock.searchJobs({
+      ...params,
+      page: 1,
+      pageSize: 100,
+    });
+    let combinedJobs = [...mockRes.jobs];
 
-    // Try Jooble if configured
+    // 2. Query Jooble for live market jobs if configured
     if (this.jooble.isConfigured()) {
       try {
         const joobleRes = await this.jooble.searchJobs(params);
         if (joobleRes.jobs.length > 0) {
-          result = joobleRes;
-        } else {
-          // If Jooble returned 0 matches for domain, fallback to curated multi-domain mock
-          result = await this.mock.searchJobs(params);
+          const existingTitles = new Set(
+            combinedJobs.map((j) => j.title.toLowerCase().trim())
+          );
+          const uniqueLiveJobs = joobleRes.jobs.filter(
+            (j) => !existingTitles.has(j.title.toLowerCase().trim())
+          );
+          combinedJobs = [...combinedJobs, ...uniqueLiveJobs];
         }
-      } catch {
-        // Fallback to mock on error
-        result = await this.mock.searchJobs(params);
+      } catch (err) {
+        console.warn("[UnifiedJobProvider] Jooble live query skipped/failed:", err);
       }
-    } else {
-      result = await this.mock.searchJobs(params);
     }
+
+    const start = (page - 1) * pageSize;
+    const paginated = combinedJobs.slice(start, start + pageSize);
+
+    const result: JobSearchResult = {
+      jobs: paginated,
+      total: combinedJobs.length,
+      page,
+      pageSize,
+      hasMore: start + pageSize < combinedJobs.length,
+      sourceProvider: this.jooble.isConfigured() ? "JOOBLE_API" : "MOCK_DEMO",
+    };
 
     SEARCH_CACHE.set(cacheKey, { timestamp: Date.now(), data: result });
     return result;

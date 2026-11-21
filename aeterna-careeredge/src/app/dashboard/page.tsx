@@ -52,7 +52,7 @@ export default async function DashboardPage() {
         orderBy: { createdAt: "desc" },
       },
       resumes: {
-        take: 1,
+        take: 5,
         select: {
           id: true,
           title: true,
