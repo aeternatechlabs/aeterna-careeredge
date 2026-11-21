@@ -168,8 +168,8 @@ export function GettingStartedStepper({ milestones }: GettingStartedStepperProps
           </div>
         </div>
 
-        {/* Horizontal Swipeable Track of Full Cards on Mobile */}
-        <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory">
+        {/* Horizontal Swipeable Track of Full Cards on Mobile with visible horizontal scrollbar */}
+        <div className="flex gap-2.5 overflow-x-auto pb-2.5 pt-0.5 snap-x snap-mandatory ce-horizontal-scrollbar">
           {milestones.map((milestone, idx) => {
             const isDone = milestone.isComplete;
             const isCurrent = idx === activeIndex;

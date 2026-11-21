@@ -576,6 +576,30 @@ html {
   background: rgba(137, 107, 102, 0.4);
 }
 
+/* Visible Horizontal Scrollbar for Mobile Stepper & Carousel Tracks */
+.ce-horizontal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #D8C7C4 #F5EAE7;
+}
+
+.ce-horizontal-scrollbar::-webkit-scrollbar {
+  height: 5px;
+}
+
+.ce-horizontal-scrollbar::-webkit-scrollbar-track {
+  background: #F5EAE7;
+  border-radius: 9999px;
+}
+
+.ce-horizontal-scrollbar::-webkit-scrollbar-thumb {
+  background: #D8C7C4;
+  border-radius: 9999px;
+}
+
+.ce-horizontal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #7A1A2B;
+}
+
 /* Canvas Scrollbars in Signed-in App */
 [data-app-theme="careeredge-premium"] ::-webkit-scrollbar {
   width: 6px;
