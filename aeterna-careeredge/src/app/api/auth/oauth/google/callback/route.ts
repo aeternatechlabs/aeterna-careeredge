@@ -18,8 +18,9 @@ export async function GET(req: NextRequest) {
   const oauthError = searchParams.get("error");
 
   const origin =
-    req.headers.get("origin") ||
+    process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXTAUTH_URL ||
+    req.headers.get("origin") ||
     req.nextUrl.origin ||
     "http://localhost:3000";
 
