@@ -3,9 +3,9 @@
 // src/components/dashboard/tools-carousel.tsx
 // Section 5: "Tools for your career" Carousel with 3D-meets-editorial AI visual assets:
 // 1. Resume Studio (/illustrations/resume-studio.png)
-// 2. Interview Prep (/illustrations/interview-prep.png)
-// 3. LinkedIn Optimizer (/illustrations/linkedin-optimizer.png)
-// 4. Job Match (/illustrations/job-match.png)
+// 2. LinkedIn Optimizer (/illustrations/linkedin-optimizer.png)
+// 3. Job Match (/illustrations/job-match.png)
+// 4. Interview Prep (/illustrations/interview-prep.png)
 // 5. 30-Day Sprint (/illustrations/sprint.png)
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
@@ -34,15 +34,6 @@ export const CAROUSEL_SLIDES: CarouselSlide[] = [
     imageSrc: "/illustrations/resume-studio.png",
   },
   {
-    id: "interview-prep",
-    category: "Prepare",
-    title: "Interview Prep",
-    description: "Ace your technical & HR rounds.",
-    actionText: "Prepare Now",
-    href: "/interview-prep",
-    imageSrc: "/illustrations/interview-prep.png",
-  },
-  {
     id: "linkedin-optimizer",
     category: "Improve",
     title: "LinkedIn Optimizer",
@@ -59,6 +50,15 @@ export const CAROUSEL_SLIDES: CarouselSlide[] = [
     actionText: "View Matches",
     href: "/jobs",
     imageSrc: "/illustrations/job-match.png",
+  },
+  {
+    id: "interview-prep",
+    category: "Prepare",
+    title: "Interview Prep",
+    description: "Ace your technical & HR rounds.",
+    actionText: "Prepare Now",
+    href: "/interview-prep",
+    imageSrc: "/illustrations/interview-prep.png",
   },
   {
     id: "sprint",

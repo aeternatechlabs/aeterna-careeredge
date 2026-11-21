@@ -60,6 +60,74 @@ export function NextStepCard({ action }: NextStepCardProps) {
           />
         </div>
 
+        {/* Decorative Background Shapes & Accents: Flowing curves, glowing orbs & gold stars */}
+        <div className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
+          {/* Subtle Ambient Glowing Orbs */}
+          <div className="absolute -top-16 -right-16 w-60 h-60 rounded-full bg-[#F2B33D]/12 blur-3xl" />
+          <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 w-80 h-32 rounded-full bg-[#B91C1C]/20 blur-2xl" />
+
+          {/* Flowing Curved Luminous Waves */}
+          <svg
+            className="absolute inset-0 w-full h-full opacity-20 hidden sm:block"
+            viewBox="0 0 1000 160"
+            preserveAspectRatio="none"
+            fill="none"
+          >
+            <path
+              d="M 180 160 C 360 30, 640 125, 1000 15"
+              stroke="url(#goldCurveGrad)"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M 240 160 C 440 60, 720 140, 1000 65"
+              stroke="#FFFFFF"
+              strokeWidth="1"
+              strokeDasharray="4 4"
+              opacity="0.35"
+            />
+            <defs>
+              <linearGradient id="goldCurveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#F2B33D" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.2" />
+              </linearGradient>
+            </defs>
+          </svg>
+
+          {/* Concentric Geometric Rings (Right side behind CTA) */}
+          <svg
+            className="absolute -right-8 top-1/2 -translate-y-1/2 w-64 h-64 opacity-15"
+            viewBox="0 0 200 200"
+            fill="none"
+          >
+            <circle cx="100" cy="100" r="45" stroke="#FFFFFF" strokeWidth="1" />
+            <circle cx="100" cy="100" r="75" stroke="#F2B33D" strokeWidth="1" strokeDasharray="3 5" />
+            <circle cx="100" cy="100" r="105" stroke="#FFFFFF" strokeWidth="0.75" />
+          </svg>
+
+          {/* Elegant 4-Point Gold Sparkles */}
+          <svg
+            className="absolute top-4 right-[28%] w-3 h-3 text-[#F2B33D] opacity-70 animate-pulse"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" />
+          </svg>
+          <svg
+            className="absolute bottom-4 right-16 w-2.5 h-2.5 text-[#F2B33D] opacity-50"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" />
+          </svg>
+          <svg
+            className="absolute top-5 left-[40%] w-2 h-2 text-white opacity-40"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" />
+          </svg>
+        </div>
+
         {/* Content Overlay */}
         <div className="relative z-10 w-full p-5 sm:p-6 md:p-6 lg:p-7 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
           {/* Left spacer on md/lg screens so text sits in the clear maroon area */}

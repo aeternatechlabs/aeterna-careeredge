@@ -30,7 +30,6 @@ import { StatsStrip } from "@/components/dashboard/stats-strip";
 import { ToolsCarousel } from "@/components/dashboard/tools-carousel";
 import { YourFilesSection } from "@/components/dashboard/your-files-section";
 import {
-  GraduationCap,
   Upload,
   Pencil,
   Lightbulb,
@@ -232,18 +231,8 @@ export function DashboardClient({ user }: DashboardClientProps) {
           className="rounded-2xl sm:rounded-[20px] border border-[#F0DFDC] bg-white p-4 sm:p-6 shadow-xs"
         >
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            {/* Left: Greeting, verification badges, target role & score */}
+            {/* Left: Greeting, target role */}
             <div className="space-y-1.5 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#7A1A2B] px-3 py-1 text-[11px] font-bold text-white shadow-2xs">
-                  <GraduationCap size={12} aria-hidden="true" />
-                  <span>Tier 1 Verified</span>
-                </span>
-                <span className="rounded-full bg-[#F9E8E8] border border-[#F0DFDC] px-3 py-1 text-[11px] font-bold text-[#7A1A2B]">
-                  {academicDomain}
-                </span>
-              </div>
-
               <h1 className="font-heading text-xl sm:text-2xl font-extrabold tracking-tight text-[#2A1417]">
                 Welcome back, {firstName} 👋
               </h1>
