@@ -28,26 +28,27 @@ export function NextStepCard({ action }: NextStepCardProps) {
   return (
     <section aria-label="Do this next" className="w-full">
       <div className="relative overflow-hidden rounded-2xl sm:rounded-[22px] bg-[#650B19] text-white shadow-md border border-[#520914] min-h-[140px] sm:min-h-[156px] flex items-center">
-        {/* Background Hero Banner Illustration (Student + Vidhana Soudha + Golden Hour) */}
-        <div className="absolute inset-0 z-0 pointer-events-none select-none">
+        {/* Background Hero Banner Illustration (Student + Vidhana Soudha)
+            Displayed ONLY on md and lg screens, scaled cleanly to left so the boy's face and head are fully shown */}
+        <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[240px] md:w-[270px] lg:w-[310px] pointer-events-none select-none overflow-hidden z-0">
           <Image
             src="/illustrations/hero-banner-student.png"
             alt=""
             fill
             priority
-            className="object-cover object-left opacity-95"
+            className="object-contain object-left"
           />
-          {/* Subtle gradient vignette to guarantee text contrast on small viewports */}
+          {/* Smooth gradient blend on the right edge into solid maroon #650B19 */}
           <div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-[#650B19]/60 to-[#650B19] md:via-[#650B19]/30 md:to-[#650B19]/90"
+            className="absolute inset-y-0 right-0 w-24 bg-gradient-to-r from-transparent to-[#650B19]"
             aria-hidden="true"
           />
         </div>
 
         {/* Content Overlay */}
-        <div className="relative z-10 w-full p-5 sm:p-6 md:p-7 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
-          {/* Left spacer on large screens so text sits in the clear maroon area */}
-          <div className="hidden lg:block lg:w-[320px] xl:w-[380px] shrink-0" aria-hidden="true" />
+        <div className="relative z-10 w-full p-5 sm:p-6 md:p-6 lg:p-7 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
+          {/* Left spacer on md/lg screens so text sits in the clear maroon area */}
+          <div className="hidden md:block md:w-[200px] lg:w-[240px] shrink-0" aria-hidden="true" />
 
           {/* Action Text */}
           <div className="space-y-1.5 sm:space-y-2 min-w-0 flex-1">
