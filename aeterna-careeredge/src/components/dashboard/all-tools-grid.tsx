@@ -174,7 +174,7 @@ export function AllToolsGrid({ onOpenUploadModal }: AllToolsGridProps) {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
           {filteredTools.map((tool) => {
             const Icon = tool.icon;
 

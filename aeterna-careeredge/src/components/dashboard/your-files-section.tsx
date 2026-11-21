@@ -119,7 +119,10 @@ export function YourFilesSection({
                     </span>
                   </Link>
 
-                  <span className="text-[11px] text-[#907D79] shrink-0 font-medium">
+                  <span
+                    suppressHydrationWarning
+                    className="text-[11px] text-[#907D79] shrink-0 font-medium"
+                  >
                     {file.date}
                   </span>
                 </div>

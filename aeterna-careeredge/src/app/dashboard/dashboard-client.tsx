@@ -223,8 +223,8 @@ export function DashboardClient({ user }: DashboardClientProps) {
         router.push("/login");
       }}
     >
-      {/* Maximum content width ~1020px, 24px vertical rhythm (space-y-6) */}
-      <div className="mx-auto max-w-[1020px] space-y-6 pb-12 w-full min-w-0">
+      {/* Full available width on all screens, 24px vertical rhythm (space-y-6) */}
+      <div className="w-full space-y-6 pb-12 min-w-0">
         {/* ============================================================
             SECTION 1: GREETING ROW
         ============================================================ */}
@@ -308,14 +308,14 @@ export function DashboardClient({ user }: DashboardClientProps) {
         {/* ============================================================
             SECTION 6 & 7: ALL TOOLS GRID (2/3) + YOUR FILES (1/3)
         ============================================================ */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Section 6: All Tools Grid (Left 7 cols on desktop, full width on mobile) */}
-          <div className="lg:col-span-7">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
+          {/* Section 6: All Tools Grid (Left 7-8 cols on desktop, full width on mobile) */}
+          <div className="lg:col-span-7 xl:col-span-8">
             <AllToolsGrid onOpenUploadModal={() => setIsUploadModalOpen(true)} />
           </div>
 
-          {/* Section 7: Your Files (Right 5 cols on desktop, full width on mobile) */}
-          <div className="lg:col-span-5">
+          {/* Section 7: Your Files (Right 4-5 cols on desktop, full width on mobile) */}
+          <div className="lg:col-span-5 xl:col-span-4">
             <YourFilesSection
               resumes={user.resumes}
               storedDocuments={user.storedDocuments}
