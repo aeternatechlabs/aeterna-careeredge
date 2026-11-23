@@ -48,6 +48,7 @@ const PRIMARY_SECTIONS: NavSection[] = [
     title: "Overview",
     items: [
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { label: "Pricing & Plans", href: "/pricing", icon: Sparkles, featureId: "pricing" },
     ],
   },
   {
@@ -76,7 +77,6 @@ const PRIMARY_SECTIONS: NavSection[] = [
 
 const MORE_SECTION: NavItem[] = [
   { label: "1-on-1 Counselling", href: "/counselling", icon: CalendarDays, featureId: "career-counselling" },
-  { label: "Pricing & Plans", href: "/pricing", icon: Sparkles, featureId: "pricing" },
 ];
 
 const COMING_SOON_SECTION: NavItem[] = [
