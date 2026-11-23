@@ -88,18 +88,36 @@ export interface SessionPayload {
   onboardingCompleted: boolean;
 }
 
+// ── Base64URL Sanitizer (RFC 7515 spec-compliant) ───────────────────────────
+
+export function toBase64UrlToken(token: string): string {
+  if (!token) return "";
+  const parts = token.trim().split(".");
+  if (parts.length === 3) {
+    return parts
+      .map((part) =>
+        part
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "")
+      )
+      .join(".");
+  }
+  return token;
+}
+
 // ── Create and sign a session JWT ────────────────────────────────────────────
 
 export async function createSession(payload: SessionPayload): Promise<string> {
   const secret = getSecret();
 
-  const token = await new SignJWT({ ...payload })
+  const rawToken = await new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${SESSION_DURATION_SECONDS}s`)
     .sign(secret);
 
-  return token;
+  return toBase64UrlToken(rawToken);
 }
 
 // ── Verify and decode a JWT ───────────────────────────────────────────────────
@@ -116,6 +134,9 @@ export async function verifySession(
       }
     } catch {}
     cleanToken = cleanToken.trim().replace(/^["']|["']$/g, "").replace(/\s+/g, "");
+
+    // Convert any standard base64 (+, /, =) into pure base64url (-, _, no padding)
+    cleanToken = toBase64UrlToken(cleanToken);
 
     // Extract exactly the 3-part base64url Compact JWS if there are trailing semicolons, path attributes or quotes
     const jwtMatch = cleanToken.match(/([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)/);

@@ -113,6 +113,19 @@ async function getSessionFromRequest(
     } catch {}
     cleanToken = cleanToken.trim().replace(/^["']|["']$/g, "").replace(/\s+/g, "");
 
+    // Convert standard base64 (+, /, =) into pure base64url (-, _, no padding)
+    const parts = cleanToken.split(".");
+    if (parts.length === 3) {
+      cleanToken = parts
+        .map((p) =>
+          p
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=+$/, "")
+        )
+        .join(".");
+    }
+
     const jwtMatch = cleanToken.match(/([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)/);
     if (jwtMatch) {
       cleanToken = jwtMatch[1];

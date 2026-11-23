@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useState, useEffect, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   Eye,
@@ -125,6 +125,15 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [nextUrl, setNextUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlNext = params.get("next");
+      if (urlNext) setNextUrl(urlNext);
+    }
+  }, []);
 
   const mismatch =
     confirmPassword.length > 0 && confirmPassword !== password;
@@ -402,7 +411,7 @@ export default function SignupPage() {
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
               <a
-                href="/api/auth/oauth/google"
+                href={nextUrl ? `/api/auth/oauth/google?next=${encodeURIComponent(nextUrl)}` : "/api/auth/oauth/google"}
                 className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-[#EBDDD1] bg-white text-sm font-semibold text-[#352020] shadow-sm transition hover:bg-[#FDF7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A0F1F]"
               >
                 <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">

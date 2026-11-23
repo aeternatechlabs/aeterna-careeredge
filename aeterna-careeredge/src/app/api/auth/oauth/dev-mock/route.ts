@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { handleGoogleIdentity } from "@/lib/auth/oauth";
-import { setSessionCookie } from "@/lib/session";
+import { setSessionCookie, createSession, isSecureCookie } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -34,17 +34,29 @@ export async function GET(req: NextRequest) {
 
   const { user } = await handleGoogleIdentity({ email, name, sub });
 
-  await setSessionCookie({
+  const sessionPayload = {
     userId: user.id,
     email: user.email,
     name: user.name,
     onboardingCompleted: user.onboardingCompleted,
-  });
+  };
+  const sessionToken = await createSession(sessionPayload);
+  await setSessionCookie(sessionPayload);
 
   const nextParam = searchParams.get("next");
   const defaultTarget = user.onboardingCompleted ? "/dashboard" : "/onboarding";
   const targetUrl = nextParam || defaultTarget;
-  return NextResponse.redirect(new URL(targetUrl, origin));
+  const response = NextResponse.redirect(new URL(targetUrl, origin));
+
+  response.cookies.set("ace_session", sessionToken, {
+    httpOnly: true,
+    secure: isSecureCookie(),
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  });
+
+  return response;
 }
 
 export async function POST(req: NextRequest) {

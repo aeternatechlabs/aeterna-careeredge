@@ -41,12 +41,15 @@ export default function LoginPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nextUrl, setNextUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const urlError = params.get("error");
       const urlEmail = params.get("email");
+      const urlNext = params.get("next");
+      if (urlNext) setNextUrl(urlNext);
       if (urlError || urlEmail) {
         const timer = setTimeout(() => {
           if (urlError) setError(decodeURIComponent(urlError));
@@ -314,7 +317,7 @@ export default function LoginPage() {
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
               <a
-                href="/api/auth/oauth/google"
+                href={nextUrl ? `/api/auth/oauth/google?next=${encodeURIComponent(nextUrl)}` : "/api/auth/oauth/google"}
                 className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-[#EBDDD1] bg-white text-sm font-semibold text-[#352020] shadow-sm transition hover:bg-[#FDF7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A0F1F]"
               >
                 <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
