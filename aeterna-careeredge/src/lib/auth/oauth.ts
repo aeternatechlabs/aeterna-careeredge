@@ -28,9 +28,14 @@ export function generateOAuthState(): string {
   return crypto.randomBytes(32).toString("hex");
 }
 
+export function getGoogleRedirectUri(origin: string): string {
+  if (process.env.GOOGLE_REDIRECT_URI) return process.env.GOOGLE_REDIRECT_URI;
+  return `${origin}/api/auth/callback/google`;
+}
+
 export function getGoogleAuthUrl(origin: string, state: string): string {
   const clientId = process.env.GOOGLE_CLIENT_ID || "";
-  const redirectUri = `${origin}/api/auth/oauth/google/callback`;
+  const redirectUri = getGoogleRedirectUri(origin);
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -47,11 +52,12 @@ export function getGoogleAuthUrl(origin: string, state: string): string {
 
 export async function exchangeGoogleCodeForTokens(
   code: string,
-  origin: string
+  origin: string,
+  customRedirectUri?: string
 ): Promise<{ access_token: string; id_token?: string }> {
   const clientId = process.env.GOOGLE_CLIENT_ID || "";
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET || "";
-  const redirectUri = `${origin}/api/auth/oauth/google/callback`;
+  const redirectUri = customRedirectUri || getGoogleRedirectUri(origin);
 
   const body = new URLSearchParams({
     code,

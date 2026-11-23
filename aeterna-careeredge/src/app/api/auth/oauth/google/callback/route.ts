@@ -48,7 +48,11 @@ export async function GET(req: NextRequest) {
 
   try {
     // Exchange authorization code for access token
-    const tokenData = await exchangeGoogleCodeForTokens(code, origin);
+    const tokenData = await exchangeGoogleCodeForTokens(
+      code,
+      origin,
+      `${origin}/api/auth/oauth/google/callback`
+    );
 
     // Fetch verified profile from Google
     const profile = await fetchGoogleUserInfo(tokenData.access_token);
