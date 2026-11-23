@@ -8,6 +8,7 @@
 // - 100% Real Razorpay checkout flow (Zero dev simulation bypasses)
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { StudentLayout } from "@/components/layouts/student-layout";
 import { HowItWorksPanel } from "@/components/guidance/how-it-works-panel";
 import {
@@ -34,6 +35,7 @@ interface SubscriptionState {
 }
 
 export function PricingClient({ studentName }: PricingClientProps) {
+  const router = useRouter();
   const [currentPlan, setCurrentPlan] = useState<string>("FREE");
   const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
   const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null);
@@ -74,10 +76,16 @@ export function PricingClient({ studentName }: PricingClientProps) {
           body: JSON.stringify({ planId: "FREE" }),
         });
         if (res.ok) {
-          await loadPlans();
           setCurrentPlan("FREE");
-          setSuccessMessage("Switched back to Career Starter Free plan.");
+          setSubscription({
+            status: "ACTIVE",
+            validUntil: null,
+            source: "USER_DOWNGRADE",
+          });
+          await loadPlans();
+          setSuccessMessage("✓ Successfully switched back to Career Starter Free plan.");
           setTimeout(() => setSuccessMessage(null), 5000);
+          router.refresh();
         } else {
           const errData = await res.json().catch(() => ({}));
           setErrorMessage(errData.error || "Failed to switch plan.");
@@ -366,11 +374,15 @@ export function PricingClient({ studentName }: PricingClientProps) {
               <div className="pt-2">
                 <button
                   type="button"
-                  disabled={currentPlan === "FREE"}
+                  disabled={upgradingPlan !== null || currentPlan === "FREE"}
                   onClick={() => handleUpgrade("FREE")}
                   className="w-full py-3 px-4 rounded-full text-xs font-bold border border-[#F0DFDC] text-[#6F5A5D] bg-[#FFF9F7] hover:bg-[#F9E8E8] transition disabled:opacity-80 disabled:hover:bg-[#FFF9F7] cursor-pointer disabled:cursor-default"
                 >
-                  {currentPlan === "FREE" ? "✓ Active Starter Plan" : "Downgrade to Free"}
+                  {upgradingPlan === "FREE"
+                    ? "Switching to Free..."
+                    : currentPlan === "FREE"
+                    ? "✓ Active Starter Plan"
+                    : "Downgrade to Free"}
                 </button>
               </div>
             </div>

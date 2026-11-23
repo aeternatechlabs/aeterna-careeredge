@@ -37,48 +37,63 @@ export function getEntitlementEnforcementMode(): "off" | "soft" | "on" {
   return appEnv === "production" ? "on" : "off";
 }
 
+let plansSeededInMemory = false;
+
 /**
  * Ensure default plans are seeded in the database.
  */
-export async function ensurePlansSeeded() {
-  for (const plan of Object.values(PLANS)) {
-    await db.plan.upsert({
-      where: { id: plan.id },
-      update: {
-        name: plan.name,
-        displayName: plan.displayName,
-        description: plan.description,
-        priceInr: plan.priceInr,
-        interval: plan.interval,
-        isDefault: plan.isDefault,
-      },
-      create: {
-        id: plan.id,
-        name: plan.name,
-        displayName: plan.displayName,
-        description: plan.description,
-        priceInr: plan.priceInr,
-        interval: plan.interval,
-        isDefault: plan.isDefault,
-      },
-    });
+export async function ensurePlansSeeded(force = false) {
+  if (plansSeededInMemory && !force) return;
 
-    for (const [featureKey, quota] of Object.entries(plan.quotas)) {
-      await db.planFeatureLimit.upsert({
-        where: {
-          planId_featureKey: {
-            planId: plan.id,
-            featureKey,
-          },
+  try {
+    const existingCount = await db.plan.count();
+    if (existingCount >= 3 && !force) {
+      plansSeededInMemory = true;
+      return;
+    }
+
+    for (const plan of Object.values(PLANS)) {
+      await db.plan.upsert({
+        where: { id: plan.id },
+        update: {
+          name: plan.name,
+          displayName: plan.displayName,
+          description: plan.description,
+          priceInr: plan.priceInr,
+          interval: plan.interval,
+          isDefault: plan.isDefault,
         },
-        update: { monthlyQuota: quota },
         create: {
-          planId: plan.id,
-          featureKey,
-          monthlyQuota: quota,
+          id: plan.id,
+          name: plan.name,
+          displayName: plan.displayName,
+          description: plan.description,
+          priceInr: plan.priceInr,
+          interval: plan.interval,
+          isDefault: plan.isDefault,
         },
       });
+
+      for (const [featureKey, quota] of Object.entries(plan.quotas)) {
+        await db.planFeatureLimit.upsert({
+          where: {
+            planId_featureKey: {
+              planId: plan.id,
+              featureKey,
+            },
+          },
+          update: { monthlyQuota: quota },
+          create: {
+            planId: plan.id,
+            featureKey,
+            monthlyQuota: quota,
+          },
+        });
+      }
     }
+    plansSeededInMemory = true;
+  } catch (err) {
+    console.warn("ensurePlansSeeded non-critical warning:", err);
   }
 }
 
