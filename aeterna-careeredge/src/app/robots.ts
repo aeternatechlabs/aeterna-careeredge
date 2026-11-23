@@ -12,6 +12,8 @@ export default function robots(): MetadataRoute.Robots {
           "/",
           "/privacy-policy",
           "/terms-and-conditions",
+          "/refund-policy",
+          "/contact",
           "/login",
           "/signup",
         ],

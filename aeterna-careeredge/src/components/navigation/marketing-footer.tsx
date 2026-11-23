@@ -7,9 +7,10 @@ import { BrandLogo } from "@/components/common/BrandLogo";
 const footerLinks = [
   { label: "Home", href: "/" },
   { label: "Features", href: "/#features" },
+  { label: "Pricing", href: "/pricing" },
   { label: "How It Works", href: "/#how-it-works" },
   { label: "About", href: "/#about" },
-  { label: "Contact", href: "/#contact" },
+  { label: "Contact Us", href: "/contact" },
 ];
 
 const accountLinks = [
@@ -20,6 +21,8 @@ const accountLinks = [
 const legalLinks = [
   { label: "Privacy Policy", href: "/privacy-policy" },
   { label: "Terms & Conditions", href: "/terms-and-conditions" },
+  { label: "Refund & Cancellation", href: "/refund-policy" },
+  { label: "Contact Us", href: "/contact" },
 ];
 
 const linkClass =
