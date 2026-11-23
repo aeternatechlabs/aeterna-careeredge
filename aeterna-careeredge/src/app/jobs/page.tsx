@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { JobsClient } from "./jobs-client";
-import { mapAcademicDomainToJobDomain } from "@/lib/jobs/domain-mapper";
+import { mapAcademicDomainToJobDomain, cleanRoleTitle } from "@/lib/jobs/domain-mapper";
 
 export default async function JobsPage() {
   const session = await getSession();
@@ -39,7 +39,8 @@ export default async function JobsPage() {
 
   const studentDomain = user?.profile?.academicDomain || "Engineering & Technology";
   const defaultJobDomain = mapAcademicDomainToJobDomain(studentDomain);
-  const preferredRole = user?.profile?.preferredJobRole || user?.resumes?.[0]?.targetRole || "";
+  const rawPreferredRole = user?.profile?.preferredJobRole || user?.resumes?.[0]?.targetRole || "";
+  const preferredRole = cleanRoleTitle(rawPreferredRole);
   const studentSkills = user?.skills.map((s) => s.name) || [];
 
   return (

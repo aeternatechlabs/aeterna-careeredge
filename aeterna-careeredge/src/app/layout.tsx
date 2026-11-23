@@ -98,6 +98,38 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${appUrl}/#website`,
+      url: appUrl,
+      name: "Aeterna CareerEdge",
+      description:
+        "AI-Powered Career & Employability Platform for Students, Study Abroad & Placement Guidance",
+      publisher: {
+        "@type": "Organization",
+        name: "Aeterna Overseas Education",
+        url: "https://aeternastudyabroad.com",
+        logo: `${appUrl}/assets/logos/company-logo.webp`,
+      },
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${appUrl}/#application`,
+      name: "CareerEdge Career Passport & AI Resume Studio",
+      applicationCategory: "EducationalApplication, BusinessApplication",
+      operatingSystem: "All",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "INR",
+      },
+    },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -105,6 +137,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body
         className={`${plusJakarta.variable} ${inter.variable} ${notoKannada.variable} min-h-dvh antialiased selection:bg-[#7A0F1F] selection:text-white`}
       >

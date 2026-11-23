@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { jobProvider } from "@/lib/jobs/provider";
-import { mapAcademicDomainToJobDomain } from "@/lib/jobs/domain-mapper";
+import { mapAcademicDomainToJobDomain, cleanRoleTitle } from "@/lib/jobs/domain-mapper";
 import type { EmploymentType, JobDomain, JobListing } from "@/lib/jobs/types";
 
 export async function GET(request: Request) {
@@ -48,12 +48,13 @@ export async function GET(request: Request) {
     });
 
     const studentDomain = mapAcademicDomainToJobDomain(user?.profile?.academicDomain);
-    const preferredRole = (user?.profile?.preferredJobRole || user?.resumes?.[0]?.targetRole || "").toLowerCase().trim();
+    const rawRole = user?.profile?.preferredJobRole || user?.resumes?.[0]?.targetRole || "";
+    const preferredRole = cleanRoleTitle(rawRole).toLowerCase().trim();
     const studentSkills = (user?.skills || []).map((s) => s.name.toLowerCase().trim());
     const studentSkillSet = new Set(studentSkills);
 
     // 2. Fetch search results from provider (using preferred role when matchProfile is active without manual query)
-    const effectiveQuery = query || (matchProfile && preferredRole ? preferredRole : undefined);
+    const effectiveQuery = query ? query.trim() : (matchProfile && preferredRole ? preferredRole : undefined);
 
     const result = await jobProvider.searchJobs({
       query: effectiveQuery,
@@ -79,12 +80,12 @@ export async function GET(request: Request) {
       if (preferredRole) {
         const titleLower = job.title.toLowerCase();
         if (titleLower.includes(preferredRole) || preferredRole.includes(titleLower)) {
-          score += 20;
+          score += 25;
         } else {
           const roleTokens = preferredRole.split(/[\s/,-]+/).filter((w) => w.length > 2);
-          const hasTokenMatch = roleTokens.some((token) => titleLower.includes(token));
-          if (hasTokenMatch) {
-            score += 12;
+          const matchedTokenCount = roleTokens.filter((token) => titleLower.includes(token)).length;
+          if (matchedTokenCount > 0) {
+            score += Math.min(20, matchedTokenCount * 8);
           }
         }
       }

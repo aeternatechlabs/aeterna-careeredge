@@ -85,6 +85,24 @@ export function mapAcademicDomainToJobDomain(academicDomain?: string | null): Jo
   return "ALL";
 }
 
+export function cleanRoleTitle(rawRole?: string | null): string {
+  if (!rawRole) return "";
+  let cleaned = rawRole.trim();
+  // Strip bullets, pipes, em-dashes and company suffixes like "• Nexanova Pro Tech 06/2025 – 12/2025"
+  cleaned = cleaned.replace(/[•|\-–—].*$/, "");
+  // Strip dates (e.g. 06/2025, 2022-2026, Jan 2025)
+  cleaned = cleaned.replace(/\b\d{1,2}[/-]\d{2,4}\b/g, "");
+  cleaned = cleaned.replace(/\b(19|20)\d{2}\b/g, "");
+  cleaned = cleaned.replace(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/gi, "");
+  // Strip prompt artifacts
+  cleaned = cleaned.replace(/give me ats friendly resume/gi, "");
+  cleaned = cleaned.replace(/give me.*$/gi, "");
+  cleaned = cleaned.replace(/ats friendly/gi, "");
+  cleaned = cleaned.replace(/[()]/g, "");
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
+  return cleaned;
+}
+
 export function getDomainFriendlyLabel(domain: JobDomain): string {
   switch (domain) {
     case "TECH":
