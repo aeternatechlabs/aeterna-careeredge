@@ -63,36 +63,11 @@ export function PricingClient({ studentName }: PricingClientProps) {
     loadPlans();
   }, [loadPlans]);
 
-  const handleUpgrade = async (planId: "PREMIUM" | "PLACEMENT_PASS" | "FREE") => {
+  const handleUpgrade = async (planId: "PREMIUM" | "PLACEMENT_PASS") => {
     setUpgradingPlan(planId);
     setErrorMessage(null);
 
     try {
-      // ── Self-Service Downgrade to Free ─────────────────────────────────────
-      if (planId === "FREE") {
-        const res = await fetch("/api/billing/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ planId: "FREE" }),
-        });
-        if (res.ok) {
-          setCurrentPlan("FREE");
-          setSubscription({
-            status: "ACTIVE",
-            validUntil: null,
-            source: "USER_DOWNGRADE",
-          });
-          await loadPlans();
-          setSuccessMessage("✓ Successfully switched back to Career Starter Free plan.");
-          setTimeout(() => setSuccessMessage(null), 5000);
-          router.refresh();
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          setErrorMessage(errData.error || "Failed to switch plan.");
-        }
-        return;
-      }
-
       // ── Paid Plan: Step 1 Create Razorpay Order ─────────────────────────────
       const orderRes = await fetch("/api/billing/order", {
         method: "POST",
@@ -374,15 +349,10 @@ export function PricingClient({ studentName }: PricingClientProps) {
               <div className="pt-2">
                 <button
                   type="button"
-                  disabled={upgradingPlan !== null || currentPlan === "FREE"}
-                  onClick={() => handleUpgrade("FREE")}
-                  className="w-full py-3 px-4 rounded-full text-xs font-bold border border-[#F0DFDC] text-[#6F5A5D] bg-[#FFF9F7] hover:bg-[#F9E8E8] transition disabled:opacity-80 disabled:hover:bg-[#FFF9F7] cursor-pointer disabled:cursor-default"
+                  disabled
+                  className="w-full py-3.5 px-4 rounded-full text-xs font-bold border border-[#F0DFDC] text-[#907D79] bg-[#FFF9F7] opacity-80 cursor-default"
                 >
-                  {upgradingPlan === "FREE"
-                    ? "Switching to Free..."
-                    : currentPlan === "FREE"
-                    ? "✓ Active Starter Plan"
-                    : "Downgrade to Free"}
+                  {currentPlan === "FREE" ? "✓ Your Current Plan" : "Included Free with All Plans"}
                 </button>
               </div>
             </div>
