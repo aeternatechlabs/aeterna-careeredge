@@ -30,17 +30,19 @@ export async function POST(request: Request) {
     }
 
     // In development/test mode, allow simulated upgrade for local verification
+    const durationDays = planId === "PLACEMENT_PASS" ? 45 : 30;
+
     if (isDevUpgrade || !razorpay_signature) {
       const sub = await grantDevSubscription(
         session.userId,
         planId || "PREMIUM",
-        30 // 30-day validity
+        durationDays
       );
 
       await trackProgressEvent({
         userId: session.userId,
         eventType: "READINESS_REPORT_GENERATED",
-        title: "Upgraded to CareerEdge Pro",
+        title: planId === "PLACEMENT_PASS" ? "Activated Placement Season Pass" : "Upgraded to CareerEdge Pro",
         description: "Unlocked unlimited resume versions, 1-click application packs, and interview prep kits.",
       });
 
@@ -57,12 +59,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid payment signature" }, { status: 400 });
     }
 
-    const sub = await grantDevSubscription(session.userId, planId || "PREMIUM", 30);
+    const sub = await grantDevSubscription(session.userId, planId || "PREMIUM", durationDays);
 
     await trackProgressEvent({
       userId: session.userId,
       eventType: "READINESS_REPORT_GENERATED",
-      title: "Upgraded to CareerEdge Pro",
+      title: planId === "PLACEMENT_PASS" ? "Activated Placement Season Pass" : "Upgraded to CareerEdge Pro",
       description: `Payment verified (${razorpay_payment_id}). Subscription active.`,
     });
 

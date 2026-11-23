@@ -399,10 +399,11 @@ export function PricingClient({ studentName }: PricingClientProps) {
               </div>
               <button
                 type="button"
-                onClick={() => handleUpgrade("PLACEMENT_PASS", true)}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#7A1A2B] px-5 py-2 text-xs font-bold text-white hover:bg-[#650B19] transition shadow-xs"
+                onClick={() => handleUpgrade("PLACEMENT_PASS", false)}
+                disabled={upgrading || currentPlan === "PLACEMENT_PASS"}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#7A1A2B] px-5 py-2 text-xs font-bold text-white hover:bg-[#650B19] transition shadow-xs disabled:opacity-50"
               >
-                <span>Get Pass</span>
+                <span>{currentPlan === "PLACEMENT_PASS" ? "Current Pass" : "Get Pass"}</span>
                 <ArrowRight size={12} />
               </button>
             </div>
