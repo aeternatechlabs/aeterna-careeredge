@@ -41,22 +41,119 @@ export function PricingClient({ studentName }: PricingClientProps) {
   const handleUpgrade = async (planId = "PREMIUM", isDev = false) => {
     setUpgrading(true);
     try {
-      const res = await fetch("/api/billing/verify", {
+      if (isDev) {
+        // Fast Developer instant testing bypass
+        const res = await fetch("/api/billing/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ planId, isDevUpgrade: true }),
+        });
+        if (res.ok) {
+          setCurrentPlan(planId);
+          setSuccessMessage(
+            `🎉 Successfully upgraded to ${
+              planId === "PREMIUM" ? "CareerEdge Pro" : "Placement Season Pass"
+            }! All features unlocked.`
+          );
+          setTimeout(() => setSuccessMessage(null), 6000);
+        }
+        return;
+      }
+
+      // Step 1: Create Order from backend
+      const orderRes = await fetch("/api/billing/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          planId,
-          isDevUpgrade: isDev,
-        }),
+        body: JSON.stringify({ planId }),
       });
 
-      if (res.ok) {
-        setCurrentPlan(planId);
-        setSuccessMessage(`🎉 Successfully upgraded to ${planId === "PREMIUM" ? "CareerEdge Pro" : "Placement Season Pass"}! All features unlocked.`);
-        setTimeout(() => setSuccessMessage(null), 6000);
+      if (!orderRes.ok) {
+        throw new Error("Failed to create billing order");
       }
-    } catch (err) {
+
+      const orderData = await orderRes.json();
+
+      // Step 2: Open Razorpay Checkout modal if live credentials are configured
+      if (orderData.isLive && orderData.keyId) {
+        if (!(window as any).Razorpay) {
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://checkout.razorpay.com/v1/checkout.js";
+            script.onload = () => resolve();
+            script.onerror = () =>
+              reject(new Error("Failed to load Razorpay checkout SDK"));
+            document.body.appendChild(script);
+          });
+        }
+
+        const options = {
+          key: orderData.keyId,
+          amount: orderData.amount,
+          currency: orderData.currency || "INR",
+          name: "Aeterna CareerEdge",
+          description:
+            planId === "PREMIUM"
+              ? "CareerEdge Pro Subscription"
+              : "Placement Season Pass (45 Days)",
+          image: "/assets/logos/company-logo.webp",
+          order_id: orderData.orderId,
+          handler: async function (response: {
+            razorpay_order_id: string;
+            razorpay_payment_id: string;
+            razorpay_signature: string;
+          }) {
+            // Step 3: Verify HMAC-SHA256 signature and activate subscription
+            const verifyRes = await fetch("/api/billing/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                planId,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            if (verifyRes.ok) {
+              setCurrentPlan(planId);
+              setSuccessMessage(
+                `🎉 Payment verified! Successfully upgraded to ${
+                  planId === "PREMIUM" ? "CareerEdge Pro" : "Placement Season Pass"
+                }! All limits lifted.`
+              );
+              setTimeout(() => setSuccessMessage(null), 6000);
+            }
+          },
+          prefill: {
+            name: studentName,
+          },
+          theme: {
+            color: "#7A1A2B",
+          },
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+      } else {
+        // Fallback simulation when live keys are not yet provided
+        const res = await fetch("/api/billing/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ planId, isDevUpgrade: true }),
+        });
+        if (res.ok) {
+          setCurrentPlan(planId);
+          setSuccessMessage(
+            `🎉 Upgraded to ${
+              planId === "PREMIUM" ? "CareerEdge Pro" : "Placement Season Pass"
+            }! (Simulated order mode active).`
+          );
+          setTimeout(() => setSuccessMessage(null), 6000);
+        }
+      }
+    } catch (err: any) {
       console.error("Upgrade error:", err);
+      alert(err.message || "Payment process could not be initialized.");
     } finally {
       setUpgrading(false);
     }
