@@ -4,9 +4,10 @@
 // Transparent, modern Value-Based Pricing & Plans matching CareerEdge Brand System:
 // Option A: 3 First-Class Plans (Career Starter, CareerEdge Pro, Placement Season Pass)
 // - Primary maroon: #7A1A2B, Page background: #FDF6F3, Border: #F0DFDC, Gold: #F2B33D, Green: #1F8A5B
-// - Rounded 24px cards, clear typography hierarchy, honest non-predatory value proposition.
+// - Plans positioned directly above the fold for maximum visibility
+// - 100% Real Razorpay checkout flow (Zero dev simulation bypasses)
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { StudentLayout } from "@/components/layouts/student-layout";
 import { HowItWorksPanel } from "@/components/guidance/how-it-works-panel";
 import {
@@ -18,110 +19,116 @@ import {
   Zap,
   ArrowRight,
   GraduationCap,
-  Clock,
-  HelpCircle,
-  X,
+  AlertCircle,
+  Calendar,
 } from "lucide-react";
 
 interface PricingClientProps {
   studentName: string;
 }
 
+interface SubscriptionState {
+  status: string;
+  validUntil: string | null;
+  source: string;
+}
+
 export function PricingClient({ studentName }: PricingClientProps) {
   const [currentPlan, setCurrentPlan] = useState<string>("FREE");
+  const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
   const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/api/billing/plans")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
+  const loadPlans = useCallback(async () => {
+    try {
+      const res = await fetch("/api/billing/plans", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
         if (data?.currentPlan?.id) {
           setCurrentPlan(data.currentPlan.id);
         }
-      })
-      .catch((err) => console.error("Error loading plans:", err));
+        if (data?.subscription) {
+          setSubscription(data.subscription);
+        }
+      }
+    } catch (err) {
+      console.error("Error loading plans:", err);
+    }
   }, []);
 
-  const handleUpgrade = async (planId: "PREMIUM" | "PLACEMENT_PASS" | "FREE" = "PREMIUM", isDev = false) => {
+  useEffect(() => {
+    loadPlans();
+  }, [loadPlans]);
+
+  const handleUpgrade = async (planId: "PREMIUM" | "PLACEMENT_PASS" | "FREE") => {
     setUpgradingPlan(planId);
+    setErrorMessage(null);
+
     try {
+      // ── Self-Service Downgrade to Free ─────────────────────────────────────
       if (planId === "FREE") {
         const res = await fetch("/api/billing/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ planId: "FREE", isDevUpgrade: true }),
+          body: JSON.stringify({ planId: "FREE" }),
         });
         if (res.ok) {
+          await loadPlans();
           setCurrentPlan("FREE");
-          setSuccessMessage("Switched to Career Starter Free plan.");
+          setSuccessMessage("Switched back to Career Starter Free plan.");
           setTimeout(() => setSuccessMessage(null), 5000);
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          setErrorMessage(errData.error || "Failed to switch plan.");
         }
         return;
       }
 
-      if (isDev) {
-        // Developer instant testing bypass
-        const res = await fetch("/api/billing/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ planId, isDevUpgrade: true }),
-        });
-        if (res.ok) {
-          setCurrentPlan(planId);
-          setSuccessMessage(
-            `🎉 Successfully activated ${
-              planId === "PREMIUM" ? "CareerEdge Pro" : "Placement Season Pass"
-            }! All limits lifted.`
-          );
-          setTimeout(() => setSuccessMessage(null), 6000);
-        }
-        return;
-      }
-
-      // Step 1: Create Order from backend
+      // ── Paid Plan: Step 1 Create Razorpay Order ─────────────────────────────
       const orderRes = await fetch("/api/billing/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ planId }),
       });
 
+      const orderData = await orderRes.json().catch(() => ({}));
+
       if (!orderRes.ok) {
-        throw new Error("Failed to create billing order");
+        throw new Error(orderData.error || "Failed to create billing order.");
       }
 
-      const orderData = await orderRes.json();
+      // ── Step 2: Load Razorpay Checkout SDK ──────────────────────────────────
+      if (!(window as any).Razorpay) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          script.onload = () => resolve();
+          script.onerror = () =>
+            reject(new Error("Unable to load Razorpay checkout SDK. Check your internet connection."));
+          document.body.appendChild(script);
+        });
+      }
 
-      // Step 2: Open Razorpay Checkout modal if live credentials are configured
-      if (orderData.isLive && orderData.keyId) {
-        if (!(window as any).Razorpay) {
-          await new Promise<void>((resolve, reject) => {
-            const script = document.createElement("script");
-            script.src = "https://checkout.razorpay.com/v1/checkout.js";
-            script.onload = () => resolve();
-            script.onerror = () =>
-              reject(new Error("Failed to load Razorpay checkout SDK"));
-            document.body.appendChild(script);
-          });
-        }
+      const planTitle =
+        planId === "PREMIUM" ? "CareerEdge Pro (Monthly)" : "Placement Season Pass (45 Days)";
 
-        const options = {
-          key: orderData.keyId,
-          amount: orderData.amount,
-          currency: orderData.currency || "INR",
-          name: "Aeterna CareerEdge",
-          description:
-            planId === "PREMIUM"
-              ? "CareerEdge Pro Monthly Subscription"
-              : "Placement Season Pass (45 Days One-Time)",
-          image: "/assets/logos/company-logo.webp",
-          order_id: orderData.orderId,
-          handler: async function (response: {
-            razorpay_order_id: string;
-            razorpay_payment_id: string;
-            razorpay_signature: string;
-          }) {
-            // Step 3: Verify HMAC-SHA256 signature and activate subscription
+      // ── Step 3: Launch Razorpay Modal ───────────────────────────────────────
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency || "INR",
+        name: "Aeterna CareerEdge",
+        description: planTitle,
+        image: "/assets/logos/company-logo.webp",
+        order_id: orderData.orderId,
+        handler: async function (response: {
+          razorpay_order_id: string;
+          razorpay_payment_id: string;
+          razorpay_signature: string;
+        }) {
+          // ── Step 4: Verify Payment Signature with Backend ───────────────────
+          try {
             const verifyRes = await fetch("/api/billing/verify", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -133,71 +140,130 @@ export function PricingClient({ studentName }: PricingClientProps) {
               }),
             });
 
-            if (verifyRes.ok) {
+            const verifyData = await verifyRes.json().catch(() => ({}));
+
+            if (verifyRes.ok && verifyData.success) {
+              await loadPlans();
               setCurrentPlan(planId);
               setSuccessMessage(
                 `🎉 Payment verified! Successfully upgraded to ${
                   planId === "PREMIUM" ? "CareerEdge Pro" : "Placement Season Pass"
-                }! All features unlocked.`
+                }! All features and quotas are now active.`
               );
-              setTimeout(() => setSuccessMessage(null), 6000);
+              setTimeout(() => setSuccessMessage(null), 8000);
+            } else {
+              setErrorMessage(
+                verifyData.error ||
+                  "Payment was processed by Razorpay, but verification could not be completed. Please contact support."
+              );
             }
+          } catch (err: any) {
+            console.error("Verification error:", err);
+            setErrorMessage(err.message || "Failed to verify payment with server.");
+          }
+        },
+        prefill: {
+          name: studentName,
+        },
+        theme: {
+          color: "#7A1A2B",
+        },
+        modal: {
+          ondismiss: function () {
+            setUpgradingPlan(null);
           },
-          prefill: {
-            name: studentName,
-          },
-          theme: {
-            color: "#7A1A2B",
-          },
-        };
+        },
+      };
 
-        const rzp = new (window as any).Razorpay(options);
-        rzp.open();
-      } else {
-        // Fallback simulation when live keys are not yet provided
-        const res = await fetch("/api/billing/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ planId, isDevUpgrade: true }),
-        });
-        if (res.ok) {
-          setCurrentPlan(planId);
-          setSuccessMessage(
-            `🎉 Upgraded to ${
-              planId === "PREMIUM" ? "CareerEdge Pro" : "Placement Season Pass"
-            }! (Simulated order mode active).`
-          );
-          setTimeout(() => setSuccessMessage(null), 6000);
-        }
-      }
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
     } catch (err: any) {
       console.error("Upgrade error:", err);
-      alert(err.message || "Payment process could not be initialized.");
+      setErrorMessage(err.message || "Payment process could not be initialized.");
     } finally {
       setUpgradingPlan(null);
     }
   };
 
+  const formattedValidUntil = subscription?.validUntil
+    ? new Date(subscription.validUntil).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : null;
+
   return (
     <StudentLayout userName={studentName}>
       <div className="min-h-screen bg-[#FDF6F3] p-4 sm:p-6 md:p-8 text-[#2A1417]">
-        <div className="max-w-6xl mx-auto space-y-10 pb-16">
-          {/* Header */}
-          <div className="text-center max-w-3xl mx-auto space-y-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#F9E8E8] text-[#7A1A2B] border border-[#F0DFDC] shadow-2xs">
+        <div className="max-w-6xl mx-auto space-y-6 pb-16">
+          {/* Top Compact Header */}
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-[#F9E8E8] text-[#7A1A2B] border border-[#F0DFDC] shadow-2xs">
               <ShieldCheck className="w-3.5 h-3.5 text-[#F2B33D]" />
               Fair, Transparent Career Pricing
             </span>
-            <h1 className="font-heading text-2.5xl sm:text-3xl md:text-4xl font-extrabold text-[#2A1417] tracking-tight">
-              Honest Plans For Every Stage of Your Career Journey
+            <h1 className="font-heading text-2.5xl sm:text-3xl md:text-3.5xl font-extrabold text-[#2A1417] tracking-tight">
+              Simple, Transparent Plans For Every Career Stage
             </h1>
-            <p className="text-xs sm:text-sm text-[#6F5A5D] leading-relaxed max-w-2xl mx-auto">
-              No hidden fees, no fake paywalls. Start free forever with your verified career baseline, or unlock deep role-tailored optimization and placement sprints when recruitment begins.
+            <p className="text-xs sm:text-sm text-[#6F5A5D] leading-relaxed">
+              No hidden fees, no dark patterns. Free forever for your baseline profile, or upgrade when recruitment begins.
             </p>
           </div>
 
-          {/* Guidance Helper */}
-          <HowItWorksPanel toolKey="pricing" />
+          {/* Active Plan Notification Banner */}
+          <div className="rounded-2xl border border-[#F0DFDC] bg-white p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                  currentPlan === "PREMIUM"
+                    ? "bg-[#7A1A2B] text-[#F2B33D]"
+                    : currentPlan === "PLACEMENT_PASS"
+                    ? "bg-[#F2B33D] text-[#2A1417]"
+                    : "bg-[#EBF7F0] text-[#1F8A5B]"
+                }`}
+              >
+                {currentPlan === "PLACEMENT_PASS" ? (
+                  <GraduationCap size={18} />
+                ) : currentPlan === "PREMIUM" ? (
+                  <Sparkles size={18} />
+                ) : (
+                  <CheckCircle2 size={18} />
+                )}
+              </div>
+              <div>
+                <span className="text-[11px] uppercase tracking-wider text-[#907D79] font-bold block">
+                  Your Current Membership
+                </span>
+                <strong className="text-sm text-[#2A1417]">
+                  {currentPlan === "PREMIUM"
+                    ? "CareerEdge Pro (Active Subscription)"
+                    : currentPlan === "PLACEMENT_PASS"
+                    ? "Placement Season Pass (45 Days Active)"
+                    : "Career Starter (Free Forever)"}
+                </strong>
+                {formattedValidUntil && currentPlan !== "FREE" && (
+                  <span className="text-[#6F5A5D] block mt-0.5 text-[11px]">
+                    <Calendar size={11} className="inline mr-1 text-[#7A1A2B]" />
+                    Valid until {formattedValidUntil}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {currentPlan !== "FREE" ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-[#EBF7F0] text-[#1F8A5B] border border-[#1F8A5B]/20">
+                  <Check size={12} strokeWidth={3} />
+                  All Features Unlocked
+                </span>
+              ) : (
+                <span className="text-[11px] text-[#6F5A5D]">
+                  Select a plan below to unlock unlimited resumes &amp; interview kits
+                </span>
+              )}
+            </div>
+          </div>
 
           {/* Success Alert */}
           {successMessage && (
@@ -207,10 +273,24 @@ export function PricingClient({ studentName }: PricingClientProps) {
             </div>
           )}
 
-          {/* 3-Card Pricing Grid: Career Starter vs CareerEdge Pro vs Placement Season Pass */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+          {/* Error Alert */}
+          {errorMessage && (
+            <div className="bg-[#FDF2F2] border border-[#E02424]/30 text-[#9B1C1C] text-xs sm:text-sm px-5 py-3 rounded-2xl flex items-center gap-3 max-w-xl mx-auto shadow-xs">
+              <AlertCircle className="w-5 h-5 text-[#E02424] shrink-0" />
+              <span className="font-semibold">{errorMessage}</span>
+            </div>
+          )}
+
+          {/* 3-Card Pricing Grid: Positioned Higher Up for Maximum Visibility */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch pt-2">
             {/* Card 1: Free Starter */}
-            <div className="relative overflow-hidden rounded-3xl border border-[#F0DFDC] bg-white p-6 sm:p-7 shadow-xs flex flex-col justify-between space-y-6">
+            <div
+              className={`relative overflow-hidden rounded-3xl bg-white p-6 sm:p-7 shadow-xs flex flex-col justify-between space-y-6 transition ${
+                currentPlan === "FREE"
+                  ? "border-2 border-[#1F8A5B]/40 ring-1 ring-[#1F8A5B]/20"
+                  : "border border-[#F0DFDC]"
+              }`}
+            >
               <div className="space-y-5">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#907D79] bg-[#FDF6F3] px-2.5 py-0.5 rounded-full border border-[#F0DFDC]">
@@ -218,7 +298,7 @@ export function PricingClient({ studentName }: PricingClientProps) {
                   </span>
                   {currentPlan === "FREE" && (
                     <span className="text-[11px] font-bold px-3 py-0.5 rounded-full bg-[#EBF7F0] text-[#1F8A5B] border border-[#1F8A5B]/20">
-                      Current Plan
+                      ✓ Current Plan
                     </span>
                   )}
                 </div>
@@ -278,7 +358,7 @@ export function PricingClient({ studentName }: PricingClientProps) {
                     <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#EBF7F0] text-[#1F8A5B] mt-0.5">
                       <Check className="w-3 h-3 stroke-[3]" />
                     </div>
-                    <span>Role-Fit & Job Match (15 matches/month)</span>
+                    <span>Role-Fit &amp; Job Match (15 matches/month)</span>
                   </li>
                 </ul>
               </div>
@@ -290,13 +370,19 @@ export function PricingClient({ studentName }: PricingClientProps) {
                   onClick={() => handleUpgrade("FREE")}
                   className="w-full py-3 px-4 rounded-full text-xs font-bold border border-[#F0DFDC] text-[#6F5A5D] bg-[#FFF9F7] hover:bg-[#F9E8E8] transition disabled:opacity-80 disabled:hover:bg-[#FFF9F7] cursor-pointer disabled:cursor-default"
                 >
-                  {currentPlan === "FREE" ? "Active Starter Plan" : "Downgrade to Free"}
+                  {currentPlan === "FREE" ? "✓ Active Starter Plan" : "Downgrade to Free"}
                 </button>
               </div>
             </div>
 
             {/* Card 2: CareerEdge Pro (Flagship) */}
-            <div className="relative overflow-hidden rounded-3xl border-2 border-[#7A1A2B] bg-white p-6 sm:p-7 shadow-card flex flex-col justify-between space-y-6">
+            <div
+              className={`relative overflow-hidden rounded-3xl bg-white p-6 sm:p-7 shadow-card flex flex-col justify-between space-y-6 transition ${
+                currentPlan === "PREMIUM"
+                  ? "border-2 border-[#1F8A5B] ring-2 ring-[#1F8A5B]/20"
+                  : "border-2 border-[#7A1A2B]"
+              }`}
+            >
               {/* Top Accent Ribbon */}
               <div className="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-r from-[#7A1A2B] via-[#F2B33D] to-[#7A1A2B]" />
 
@@ -305,10 +391,16 @@ export function PricingClient({ studentName }: PricingClientProps) {
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#7A1A2B] bg-[#F9E8E8] px-2.5 py-0.5 rounded-full border border-[#F0DFDC]">
                     Flagship Subscription
                   </span>
-                  <span className="inline-flex items-center gap-1 bg-[#7A1A2B] text-[#F2B33D] text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-2xs">
-                    <Zap size={11} className="fill-[#F2B33D]" />
-                    Most Popular
-                  </span>
+                  {currentPlan === "PREMIUM" ? (
+                    <span className="text-[11px] font-bold px-3 py-0.5 rounded-full bg-[#EBF7F0] text-[#1F8A5B] border border-[#1F8A5B]/20">
+                      ✓ Current Plan
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 bg-[#7A1A2B] text-[#F2B33D] text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-2xs">
+                      <Zap size={11} className="fill-[#F2B33D]" />
+                      Most Popular
+                    </span>
+                  )}
                 </div>
 
                 <div>
@@ -377,39 +469,34 @@ export function PricingClient({ studentName }: PricingClientProps) {
                 </ul>
               </div>
 
-              <div className="pt-2 space-y-2">
+              <div className="pt-2">
                 <button
                   type="button"
-                  onClick={() => handleUpgrade("PREMIUM", false)}
+                  onClick={() => handleUpgrade("PREMIUM")}
                   disabled={upgradingPlan !== null || currentPlan === "PREMIUM"}
-                  className="w-full py-3.5 px-5 rounded-full text-xs font-extrabold bg-[#7A1A2B] text-white hover:bg-[#650B19] active:bg-[#4C0915] shadow-sm hover:shadow transition disabled:opacity-50 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1A2B]"
+                  className="w-full py-3.5 px-5 rounded-full text-xs font-extrabold bg-[#7A1A2B] text-white hover:bg-[#650B19] active:bg-[#4C0915] shadow-sm hover:shadow transition disabled:opacity-75 disabled:cursor-default flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1A2B] cursor-pointer"
                 >
                   <Sparkles className="w-4 h-4 text-[#F2B33D]" />
                   <span>
                     {currentPlan === "PREMIUM"
-                      ? "Current Active Plan"
+                      ? "✓ Current Active Plan"
                       : upgradingPlan === "PREMIUM"
-                      ? "Processing..."
+                      ? "Opening Razorpay..."
                       : "Upgrade to Pro (₹499/mo)"}
                   </span>
-                  <ArrowRight size={13} className="text-white" />
+                  {currentPlan !== "PREMIUM" && <ArrowRight size={13} className="text-white" />}
                 </button>
-
-                {/* Dev Test Upgrade Button */}
-                {currentPlan !== "PREMIUM" && (
-                  <button
-                    type="button"
-                    onClick={() => handleUpgrade("PREMIUM", true)}
-                    className="w-full py-2 px-3 text-[11px] font-semibold text-[#7A1A2B] bg-[#F9E8E8] hover:bg-[#F0DFDC] rounded-full border border-[#F0DFDC] transition"
-                  >
-                    ⚡ Dev Test Upgrade (Pro)
-                  </button>
-                )}
               </div>
             </div>
 
             {/* Card 3: Placement Season Pass */}
-            <div className="relative overflow-hidden rounded-3xl border-2 border-[#F2B33D]/60 bg-white p-6 sm:p-7 shadow-card flex flex-col justify-between space-y-6">
+            <div
+              className={`relative overflow-hidden rounded-3xl bg-white p-6 sm:p-7 shadow-card flex flex-col justify-between space-y-6 transition ${
+                currentPlan === "PLACEMENT_PASS"
+                  ? "border-2 border-[#1F8A5B] ring-2 ring-[#1F8A5B]/20"
+                  : "border-2 border-[#F2B33D]/70"
+              }`}
+            >
               {/* Top Accent Ribbon */}
               <div className="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-r from-[#F2B33D] via-[#7A1A2B] to-[#F2B33D]" />
 
@@ -418,10 +505,16 @@ export function PricingClient({ studentName }: PricingClientProps) {
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#2A1417] bg-[#FDF1D6] px-2.5 py-0.5 rounded-full border border-[#F2B33D]/40">
                     45-Day Fixed Pass
                   </span>
-                  <span className="inline-flex items-center gap-1 bg-[#F2B33D] text-[#2A1417] text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-2xs">
-                    <GraduationCap size={12} className="text-[#2A1417]" />
-                    Campus Special
-                  </span>
+                  {currentPlan === "PLACEMENT_PASS" ? (
+                    <span className="text-[11px] font-bold px-3 py-0.5 rounded-full bg-[#EBF7F0] text-[#1F8A5B] border border-[#1F8A5B]/20">
+                      ✓ Current Plan
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 bg-[#F2B33D] text-[#2A1417] text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-2xs">
+                      <GraduationCap size={12} className="text-[#2A1417]" />
+                      Campus Special
+                    </span>
+                  )}
                 </div>
 
                 <div>
@@ -490,36 +583,30 @@ export function PricingClient({ studentName }: PricingClientProps) {
                 </ul>
               </div>
 
-              <div className="pt-2 space-y-2">
+              <div className="pt-2">
                 <button
                   type="button"
-                  onClick={() => handleUpgrade("PLACEMENT_PASS", false)}
+                  onClick={() => handleUpgrade("PLACEMENT_PASS")}
                   disabled={upgradingPlan !== null || currentPlan === "PLACEMENT_PASS"}
-                  className="w-full py-3.5 px-5 rounded-full text-xs font-extrabold bg-[#2A1417] text-white hover:bg-[#1D0E10] active:bg-[#000000] shadow-sm hover:shadow transition disabled:opacity-50 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2A1417]"
+                  className="w-full py-3.5 px-5 rounded-full text-xs font-extrabold bg-[#2A1417] text-white hover:bg-[#1D0E10] active:bg-[#000000] shadow-sm hover:shadow transition disabled:opacity-75 disabled:cursor-default flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2A1417] cursor-pointer"
                 >
                   <GraduationCap className="w-4 h-4 text-[#F2B33D]" />
                   <span>
                     {currentPlan === "PLACEMENT_PASS"
-                      ? "Active Placement Pass"
+                      ? "✓ Active Placement Pass"
                       : upgradingPlan === "PLACEMENT_PASS"
-                      ? "Processing..."
+                      ? "Opening Razorpay..."
                       : "Get 45-Day Pass (₹799)"}
                   </span>
-                  <ArrowRight size={13} className="text-white" />
+                  {currentPlan !== "PLACEMENT_PASS" && <ArrowRight size={13} className="text-white" />}
                 </button>
-
-                {/* Dev Test Upgrade Button */}
-                {currentPlan !== "PLACEMENT_PASS" && (
-                  <button
-                    type="button"
-                    onClick={() => handleUpgrade("PLACEMENT_PASS", true)}
-                    className="w-full py-2 px-3 text-[11px] font-semibold text-[#2A1417] bg-[#FDF1D6] hover:bg-[#F2B33D]/30 rounded-full border border-[#F2B33D]/40 transition"
-                  >
-                    ⚡ Dev Test Upgrade (Pass)
-                  </button>
-                )}
               </div>
             </div>
+          </div>
+
+          {/* Guidance Helper (Relocated Below Cards to Keep Plans Above the Fold) */}
+          <div className="pt-4">
+            <HowItWorksPanel toolKey="pricing" />
           </div>
 
           {/* Detailed Feature Comparison Table */}
