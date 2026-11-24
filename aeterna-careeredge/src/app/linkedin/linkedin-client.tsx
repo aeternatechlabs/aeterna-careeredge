@@ -56,7 +56,6 @@ interface LinkedInClientProps {
   isOidcConfigured: boolean;
   errorParam?: string;
   connectedParam?: string;
-  simulatedParam?: string;
 }
 
 export function LinkedInClient({
@@ -67,7 +66,6 @@ export function LinkedInClient({
   isOidcConfigured,
   errorParam,
   connectedParam,
-  simulatedParam,
 }: LinkedInClientProps) {
   const [activeSection, setActiveSection] = useState<LinkedInSectionType>("HEADLINE");
   const [profile, setProfile] = useState(initialProfile);
@@ -78,7 +76,7 @@ export function LinkedInClient({
     if (connectedParam) {
       return {
         type: "success",
-        message: `LinkedIn account successfully linked${simulatedParam ? " (Dev Simulation Mode)" : ""}!`,
+        message: "LinkedIn account successfully linked!",
       };
     }
     return null;
@@ -462,31 +460,21 @@ export function LinkedInClient({
                 </button>
               </div>
             ) : isOidcConfigured ? (
-              <div className="flex items-center gap-2">
-                <a
-                  href="/api/auth/oauth/linkedin"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#0A66C2] px-4 py-2 text-xs font-semibold text-white hover:bg-[#084e96] transition-colors"
-                >
-                  <Network size={14} />
-                  <span>Connect LinkedIn</span>
-                </a>
-                <a
-                  href="/api/auth/oauth/linkedin?dev=true"
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-[#F0E1DE] bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
-                  title="Simulate LinkedIn connection locally without external OAuth"
-                >
-                  <span>Dev Sim</span>
-                </a>
-              </div>
-            ) : (
               <a
-                href="/api/auth/oauth/linkedin?dev=true"
+                href="/api/auth/oauth/linkedin"
                 className="inline-flex items-center gap-1.5 rounded-xl bg-[#0A66C2] px-4 py-2 text-xs font-semibold text-white hover:bg-[#084e96] transition-colors"
-                title="Connect with simulated LinkedIn identity for local testing"
               >
                 <Network size={14} />
-                <span>Connect LinkedIn (Dev Sim)</span>
+                <span>Connect LinkedIn</span>
               </a>
+            ) : (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#F0E1DE] bg-white/60 px-3 py-2 text-xs font-medium text-slate-400 cursor-not-allowed"
+                title="LinkedIn integration credentials are not configured"
+              >
+                <Network size={14} />
+                <span>LinkedIn Integration Unavailable</span>
+              </span>
             )}
           </div>
         </div>

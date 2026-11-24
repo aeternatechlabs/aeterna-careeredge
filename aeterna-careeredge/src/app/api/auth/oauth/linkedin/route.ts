@@ -7,7 +7,6 @@ import {
   isLinkedInConfigured,
   generateLinkedInAuthUrl,
   disconnectLinkedInAccount,
-  linkLinkedInAccount,
 } from "@/lib/linkedin/oauth";
 
 export async function GET(req: NextRequest) {
@@ -17,21 +16,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL("/login?next=/linkedin", req.url));
     }
 
-    const url = new URL(req.url);
-    const forceDevSim = url.searchParams.get("dev") === "true";
-
-    if (forceDevSim || !isLinkedInConfigured()) {
-      if (forceDevSim || process.env.NODE_ENV !== "production") {
-        // Safe development simulation for offline testing
-        await linkLinkedInAccount(session.userId, {
-          sub: `li_sim_${session.userId.slice(-6)}`,
-          name: session.name ? `${session.name} (LinkedIn)` : "Pooja Sharma (LinkedIn)",
-          email: session.email,
-          email_verified: true,
-        });
-        return NextResponse.redirect(new URL("/linkedin?connected=true&simulated=true", req.url));
-      }
-
+    if (!isLinkedInConfigured()) {
       return NextResponse.redirect(
         new URL(
           "/linkedin?error=" +
