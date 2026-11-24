@@ -155,13 +155,28 @@ export async function POST(req: NextRequest) {
       }
     } catch (dbError: unknown) {
       const err = dbError as { message?: string; code?: string; meta?: unknown; stack?: string };
-      console.error("[Lead Capture DB Error]:", {
+      console.error("[Lead Capture DB Error, attempting Supabase REST fallback]:", {
         message: err.message || String(dbError),
         code: err.code,
-        meta: err.meta,
-        stack: err.stack,
       });
-      // Do not abort: continue to send email notification so lead is never lost
+
+      // Edge runtime / Cloudflare Workers fallback via Supabase PostgREST HTTP API
+      try {
+        const restLeadId = await saveLeadViaSupabaseRest({
+          name: name.trim(),
+          email: normalizedEmail,
+          mobile: normalizedMobile,
+          city: city.trim(),
+          educationLevel: status.trim(),
+          careerInterest: interest.trim(),
+          counsellorConsent: Boolean(counsellorConsent),
+        });
+        if (restLeadId) {
+          leadRecordId = restLeadId;
+        }
+      } catch (restError) {
+        console.error("[Supabase REST Fallback Error]:", restError);
+      }
     }
 
     // 5. Dispatch Email Notification via Brevo/Resend to the company inbox
@@ -191,4 +206,110 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Fallback direct persistence using Supabase PostgREST HTTP API.
+ * Ensures leads are securely saved even in serverless edge runtimes
+ * where Prisma native TCP connections might be restricted.
+ */
+async function saveLeadViaSupabaseRest(data: {
+  name: string;
+  email: string;
+  mobile: string;
+  city: string;
+  educationLevel: string;
+  careerInterest: string;
+  counsellorConsent: boolean;
+}): Promise<string | null> {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SECRET_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !serviceKey) {
+    console.warn("[saveLeadViaSupabaseRest] Missing Supabase URL or Service Key");
+    return null;
+  }
+
+  const cleanUrl = supabaseUrl.replace(/\/+$/, "");
+  const headers = {
+    apikey: serviceKey,
+    Authorization: `Bearer ${serviceKey}`,
+    "Content-Type": "application/json",
+    Prefer: "return=representation",
+  };
+
+  try {
+    // 1. Resolve or create user record
+    let userId: string | null = null;
+    const userQueryRes = await fetch(
+      `${cleanUrl}/rest/v1/users?or=(email.eq.${encodeURIComponent(data.email)},mobile.eq.${encodeURIComponent(data.mobile)})&select=id&limit=1`,
+      { headers }
+    );
+
+    const existingUsers = (await userQueryRes.json().catch(() => [])) as Array<{ id: string }>;
+    if (Array.isArray(existingUsers) && existingUsers.length > 0 && existingUsers[0]?.id) {
+      userId = existingUsers[0].id;
+    } else {
+      const newUserId = "usr_" + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+      const createUserRes = await fetch(`${cleanUrl}/rest/v1/users`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          id: newUserId,
+          name: data.name,
+          email: data.email,
+          mobile: data.mobile,
+          counsellorConsent: data.counsellorConsent,
+          onboardingCompleted: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }),
+      });
+
+      if (createUserRes.ok) {
+        userId = newUserId;
+      } else {
+        const errText = await createUserRes.text().catch(() => "");
+        console.error("[saveLeadViaSupabaseRest] Failed to create user:", errText);
+      }
+    }
+
+    if (!userId) return null;
+
+    // 2. Insert into crm_leads table
+    const leadId = "lead_" + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+    const insertLeadRes = await fetch(`${cleanUrl}/rest/v1/crm_leads`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        id: leadId,
+        userId,
+        name: data.name,
+        email: data.email,
+        mobile: data.mobile,
+        city: data.city,
+        educationLevel: data.educationLevel,
+        careerInterest: data.careerInterest,
+        counsellorConsent: data.counsellorConsent,
+        syncStatus: "PENDING",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }),
+    });
+
+    if (insertLeadRes.ok) {
+      const created = (await insertLeadRes.json().catch(() => [])) as Array<{ id: string }>;
+      return (Array.isArray(created) && created[0]?.id) || leadId;
+    } else {
+      const errText = await insertLeadRes.text().catch(() => "");
+      console.error("[saveLeadViaSupabaseRest] Failed to insert lead:", errText);
+    }
+  } catch (err) {
+    console.error("[saveLeadViaSupabaseRest] Network or syntax exception:", err);
+  }
+
+  return null;
 }
