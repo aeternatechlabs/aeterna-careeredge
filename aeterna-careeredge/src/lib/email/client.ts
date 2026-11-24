@@ -158,16 +158,22 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
 
   // 1. If explicitly configured as "brevo" or if BREVO_API_KEY is present
   if (configuredProvider === "brevo" || (brevoApiKey && configuredProvider !== "resend")) {
-    if (!brevoApiKey) {
-      console.error("[EmailService] BREVO_API_KEY is not configured.");
-      return { success: false, error: "Brevo API key is not configured on this server." };
+    if (brevoApiKey) {
+      const brevoResult = await sendViaBrevo(brevoApiKey, params);
+      if (brevoResult.success) {
+        return brevoResult;
+      }
+      console.warn("[EmailService] Brevo delivery failed, attempting fallback to Resend:", brevoResult.error);
     }
-    return await sendViaBrevo(brevoApiKey, params);
   }
 
-  // 2. If RESEND_API_KEY is present
+  // 2. If RESEND_API_KEY is present (primary or fallback from Brevo)
   if (resendApiKey) {
-    return await sendViaResend(resendApiKey, params);
+    const resendResult = await sendViaResend(resendApiKey, params);
+    if (resendResult.success) {
+      return resendResult;
+    }
+    console.warn("[EmailService] Resend delivery failed:", resendResult.error);
   }
 
   // 3. Fallback in development when no email provider keys are configured
