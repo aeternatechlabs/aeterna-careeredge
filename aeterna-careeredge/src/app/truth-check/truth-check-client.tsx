@@ -199,10 +199,10 @@ export function TruthCheckClient({
                 <div className="text-center py-6">
                   <p className="text-xs text-[#765F5D]">No resumes created yet.</p>
                   <Link
-                    href="/resume"
+                    href="/resume/studio"
                     className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#7A0F1F] hover:underline"
                   >
-                    <span>Create a resume in Resume Builder</span>
+                    <span>Create a resume in Resume Studio</span>
                     <ArrowRight size={12} />
                   </Link>
                 </div>
@@ -346,11 +346,11 @@ export function TruthCheckClient({
                   </p>
                 </div>
                 <Link
-                  href="/evidence-vault"
+                  href="/resume/studio"
                   className="inline-flex items-center gap-1 text-xs font-semibold text-[#7A0F1F] hover:underline"
                 >
                   <Plus size={12} />
-                  <span>Attach Evidence to Vault</span>
+                  <span>Review in Resume Studio</span>
                 </Link>
               </div>
 
@@ -393,10 +393,10 @@ export function TruthCheckClient({
                     <div className="flex items-center gap-2">
                       {item.status === "NEEDS_EVIDENCE" && (
                         <Link
-                          href="/evidence-vault"
+                          href="/resume/studio"
                           className="inline-flex items-center gap-1 rounded-lg border border-[#EBDDD1] bg-white px-2.5 py-1 text-xs font-medium text-[#7A0F1F] hover:bg-[#FDF7F5]"
                         >
-                          <span>Add Proof</span>
+                          <span>Tailor in Studio</span>
                           <ArrowRight size={10} />
                         </Link>
                       )}

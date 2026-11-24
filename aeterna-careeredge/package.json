@@ -7,7 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node scripts/test-auth-db.js && node scripts/test-integrations.js",
+    "test": "node scripts/test-auth-db.js && node scripts/test-integrations.js && node scripts/test-leads-ratelimit.js",
     "test:integrations": "node scripts/test-integrations.js",
     "db:migrate": "node_modules/.bin/prisma migrate dev",
     "db:studio": "node_modules/.bin/prisma studio",
@@ -23,6 +23,7 @@
     "pdf-parse": "^1.1.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "resend": "^6.39.0",
     "unpdf": "^2.2.1"
   },
   "devDependencies": {

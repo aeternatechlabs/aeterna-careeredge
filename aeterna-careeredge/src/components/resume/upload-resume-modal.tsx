@@ -30,8 +30,14 @@ import type { ParsedResumePayload } from "@/lib/resume/parser";
 export interface UploadResumeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: (result: { resumeId?: string | null; passportScore?: number | null }) => void;
+  onSuccess?: (result: {
+    resumeId?: string | null;
+    passportScore?: number | null;
+    parsedData?: ParsedResumePayload | null;
+  }) => void;
   defaultTargetRole?: string;
+  mode?: "default" | "onboarding";
+  onAutofill?: (parsed: ParsedResumePayload) => void;
 }
 
 type Step = "choose" | "processing" | "review" | "success" | "error";
@@ -41,6 +47,8 @@ export function UploadResumeModal({
   onClose,
   onSuccess,
   defaultTargetRole = "",
+  mode = "default",
+  onAutofill,
 }: UploadResumeModalProps) {
   const router = useRouter();
 
@@ -203,6 +211,28 @@ export function UploadResumeModal({
         setCustomTargetRole(data.parsed.experience[0].title);
       }
 
+      // If in onboarding mode, automatically autofill the profile immediately!
+      if (mode === "onboarding" && data.parsed) {
+        if (onAutofill) {
+          try {
+            onAutofill(data.parsed);
+          } catch (e) {
+            console.error("Auto-fill error:", e);
+          }
+        }
+        if (onSuccess) {
+          try {
+            onSuccess({
+              resumeId: null,
+              passportScore: null,
+              parsedData: data.parsed,
+            });
+          } catch (e) {
+            console.error("onSuccess error:", e);
+          }
+        }
+      }
+
       // Transition to Review Screen
       setTimeout(() => {
         setStep("review");
@@ -224,6 +254,21 @@ export function UploadResumeModal({
       abortControllerRef.current.abort();
     }
     setStep("choose");
+  };
+
+  const handleApplyToOnboarding = () => {
+    if (!parsedData) return;
+    if (onAutofill) {
+      onAutofill(parsedData);
+    }
+    if (onSuccess) {
+      onSuccess({
+        resumeId: null,
+        passportScore: null,
+        parsedData,
+      });
+    }
+    onClose();
   };
 
   // Project editing handlers
@@ -413,10 +458,18 @@ export function UploadResumeModal({
       }
 
       setImportedResumeId(resData.resumeId || null);
+      if (onAutofill) {
+        try {
+          onAutofill(parsedData);
+        } catch (e) {
+          console.error("onAutofill error:", e);
+        }
+      }
       if (onSuccess) {
         onSuccess({
           resumeId: resData.resumeId,
           passportScore: resData.passportScore,
+          parsedData,
         });
       }
       setStep("success");
@@ -674,6 +727,32 @@ export function UploadResumeModal({
           {/* STEP 3: MANDATORY REVIEW SCREEN */}
           {step === "review" && parsedData && (
             <div className="space-y-6">
+              {mode === "onboarding" && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-950 shadow-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
+                      <Sparkles size={18} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-emerald-950">
+                        Credentials Extracted &amp; Profile Auto-filled!
+                      </p>
+                      <p className="text-[11px] text-emerald-800">
+                        We loaded your education, skills, and projects into your form. You can review them below or continue directly.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleApplyToOnboarding}
+                    className="shrink-0 inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-xs font-bold shadow-xs transition w-full sm:w-auto"
+                  >
+                    <CheckCircle2 size={14} />
+                    <span>View Filled Form</span>
+                  </button>
+                </div>
+              )}
+
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3.5 flex items-center gap-2.5 text-xs text-emerald-900">
                 <CheckCircle2 size={16} className="text-emerald-700 shrink-0" />
                 <span>
@@ -1097,7 +1176,7 @@ export function UploadResumeModal({
                       key={idx}
                       className="inline-flex items-center gap-1 rounded-lg bg-white border border-stone-300 px-2 py-1 text-[11px] font-medium text-stone-800"
                     >
-                      <span>{skill.name}</span>
+                      <span>{typeof skill === "string" ? skill : skill?.name}</span>
                       <button
                         type="button"
                         onClick={() =>
@@ -1147,7 +1226,7 @@ export function UploadResumeModal({
                     />
                     <div className="text-xs">
                       <p className="font-bold text-stone-900">
-                        Save & merge into my Career Passport
+                        Save & merge into my Student Profile
                       </p>
                       <p className="text-[11px] text-stone-600">
                         Populates your verified education, skills, and projects without overwriting existing entries.
@@ -1182,7 +1261,7 @@ export function UploadResumeModal({
               )}
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-between pt-2 border-t border-stone-200">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-stone-200">
                 <button
                   type="button"
                   onClick={() => setStep("choose")}
@@ -1191,24 +1270,37 @@ export function UploadResumeModal({
                   Back to Upload
                 </button>
 
-                <button
-                  type="button"
-                  disabled={savingApproved || (!createResumeOption && !saveToPassportOption)}
-                  onClick={handleApproveAndImport}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#7A0F1F] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#600C18] disabled:opacity-40 transition shadow-xs"
-                >
-                  {savingApproved ? (
-                    <>
-                      <Loader2 size={13} className="animate-spin" />
-                      <span>Importing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Approve & Save</span>
-                      <ArrowRight size={13} />
-                    </>
+                <div className="flex items-center gap-2">
+                  {mode === "onboarding" && (
+                    <button
+                      type="button"
+                      onClick={handleApplyToOnboarding}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-600 bg-emerald-50 px-4 py-2.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition shadow-2xs"
+                    >
+                      <CheckCircle2 size={14} />
+                      <span>Fill Form Now</span>
+                    </button>
                   )}
-                </button>
+
+                  <button
+                    type="button"
+                    disabled={savingApproved || (!createResumeOption && !saveToPassportOption && mode !== "onboarding")}
+                    onClick={handleApproveAndImport}
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#7A0F1F] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#600C18] disabled:opacity-40 transition shadow-xs"
+                  >
+                    {savingApproved ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin" />
+                        <span>{mode === "onboarding" ? "Saving & Filling..." : "Importing..."}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>{mode === "onboarding" ? "Approve, Save & Fill Form" : "Approve & Save"}</span>
+                        <ArrowRight size={13} />
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -1222,38 +1314,55 @@ export function UploadResumeModal({
 
               <div className="space-y-1.5 max-w-md">
                 <h3 className="font-heading text-lg font-bold text-stone-900">
-                  Resume Imported Successfully!
+                  {mode === "onboarding" ? "Onboarding Profile Updated!" : "Resume Imported Successfully!"}
                 </h3>
                 <p className="text-xs text-stone-600 leading-relaxed">
-                  Your approved credentials have been imported. Where would you like to go next?
+                  {mode === "onboarding"
+                    ? "Your degrees, experience, and verified skills have been filled directly into your onboarding steps."
+                    : "Your approved credentials have been imported. Where would you like to go next?"}
                 </p>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-3 pt-3">
-                {importedResumeId && (
+                {mode === "onboarding" ? (
                   <button
                     type="button"
                     onClick={() => {
                       onClose();
-                      router.push(`/resume/builder?id=${importedResumeId}`);
                     }}
                     className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#7A0F1F] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#600C18] shadow-xs transition"
                   >
-                    <span>Open in Resume Studio</span>
-                    <ArrowRight size={13} />
+                    <CheckCircle2 size={14} />
+                    <span>Continue Onboarding (Form Populated)</span>
                   </button>
-                )}
+                ) : (
+                  <>
+                    {importedResumeId && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          router.push(`/resume/builder?id=${importedResumeId}`);
+                        }}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#7A0F1F] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#600C18] shadow-xs transition"
+                      >
+                        <span>Open in Resume Studio</span>
+                        <ArrowRight size={13} />
+                      </button>
+                    )}
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    router.push("/passport");
-                  }}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition"
-                >
-                  <span>View Career Passport</span>
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        router.push("/dashboard");
+                      }}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition"
+                    >
+                      <span>Return to Dashboard</span>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}

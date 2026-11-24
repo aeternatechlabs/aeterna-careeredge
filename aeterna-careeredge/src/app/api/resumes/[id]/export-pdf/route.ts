@@ -39,7 +39,7 @@ export async function GET(
       );
     }
 
-    const { buffer, fileName } = await generateResumePdf({
+    const { buffer, fileName, fallbackUrl } = await generateResumePdf({
       resumeId: resume.id,
       userId: session.userId,
       studentName: user.name,
@@ -47,20 +47,36 @@ export async function GET(
       pageSize,
     });
 
-    return new Response(buffer as unknown as BodyInit, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${fileName}"`,
-        "Content-Length": buffer.length.toString(),
-        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+    if (buffer) {
+      return new Response(buffer as unknown as BodyInit, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${fileName}"`,
+          "Content-Length": buffer.length.toString(),
+          "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        },
+      });
+    }
+
+    // Serverless fallback: return client print URL
+    return NextResponse.json(
+      {
+        fallback: "CLIENT_PRINT",
+        printUrl: fallbackUrl,
+        fileName,
       },
-    });
+      { status: 200 }
+    );
   } catch (err: unknown) {
     console.error("[ExportPdfRoute] Export generation failed:", (err as Error).message);
+    const { id } = await params;
     return NextResponse.json(
-      { error: "Failed to generate PDF resume. Please try again." },
-      { status: 500 }
+      {
+        fallback: "CLIENT_PRINT",
+        printUrl: `/resume/${id}/print?autoPrint=true`,
+      },
+      { status: 200 }
     );
   }
 }

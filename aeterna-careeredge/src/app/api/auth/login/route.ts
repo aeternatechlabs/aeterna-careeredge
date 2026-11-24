@@ -4,13 +4,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { setSessionCookie } from "@/lib/session";
+import { setSessionCookie, createSession, isSecureCookie } from "@/lib/session";
+import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
 import type { LoginInput } from "@/types/auth";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
+    const ip = getClientIp(req);
+    const rateCheck = checkRateLimit(`login:${ip}`, 10, 60 * 1000);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Please wait a minute before trying again." },
+        { status: 429 }
+      );
+    }
+
     const body = (await req.json()) as Partial<LoginInput>;
     const { identifier, password } = body;
 
@@ -62,14 +72,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     // ── Set session ────────────────────────────────────────────────────────
 
-    await setSessionCookie({
+    const sessionPayload = {
       userId: user.id,
       email: user.email,
       name: user.name,
       onboardingCompleted: user.onboardingCompleted,
-    });
+    };
+    const sessionToken = await createSession(sessionPayload);
+    await setSessionCookie(sessionPayload);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       message: "Logged in successfully.",
       user: {
         id: user.id,
@@ -78,6 +90,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         onboardingCompleted: user.onboardingCompleted,
       },
     });
+
+    response.cookies.set("ace_session", sessionToken, {
+      httpOnly: true,
+      secure: isSecureCookie(),
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return response;
   } catch (err) {
     console.error("[Login Error]", err);
     return NextResponse.json(

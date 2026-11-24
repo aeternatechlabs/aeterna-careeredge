@@ -7,7 +7,7 @@ import {
   fetchGoogleUserInfo,
   handleGoogleIdentity,
 } from "@/lib/auth/oauth";
-import { setSessionCookie } from "@/lib/session";
+import { setSessionCookie, createSession, isSecureCookie } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -18,8 +18,9 @@ export async function GET(req: NextRequest) {
   const oauthError = searchParams.get("error");
 
   const origin =
-    req.headers.get("origin") ||
+    process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXTAUTH_URL ||
+    req.headers.get("origin") ||
     req.nextUrl.origin ||
     "http://localhost:3000";
 
@@ -47,7 +48,11 @@ export async function GET(req: NextRequest) {
 
   try {
     // Exchange authorization code for access token
-    const tokenData = await exchangeGoogleCodeForTokens(code, origin);
+    const tokenData = await exchangeGoogleCodeForTokens(
+      code,
+      origin,
+      `${origin}/api/auth/oauth/google/callback`
+    );
 
     // Fetch verified profile from Google
     const profile = await fetchGoogleUserInfo(tokenData.access_token);
@@ -62,18 +67,36 @@ export async function GET(req: NextRequest) {
     const { user } = await handleGoogleIdentity(profile);
 
     // Set authenticated session
-    await setSessionCookie({
+    const sessionPayload = {
       userId: user.id,
       email: user.email,
       name: user.name,
       onboardingCompleted: user.onboardingCompleted,
-    });
+    };
+    const sessionToken = await createSession(sessionPayload);
+    await setSessionCookie(sessionPayload);
 
-    const targetUrl = user.onboardingCompleted ? "/dashboard" : "/onboarding";
+    const nextCookie = req.cookies.get("ace_oauth_next")?.value;
+    const defaultTarget = user.onboardingCompleted ? "/dashboard" : "/onboarding";
+    let targetUrl = defaultTarget;
+    if (nextCookie && nextCookie.startsWith("/") && !nextCookie.startsWith("//") && user.onboardingCompleted) {
+      targetUrl = nextCookie;
+    }
+
     const response = NextResponse.redirect(new URL(targetUrl, origin));
 
-    // Clear state cookie
+    // Ensure session cookie is set directly on redirect response
+    response.cookies.set("ace_session", sessionToken, {
+      httpOnly: true,
+      secure: isSecureCookie(),
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    // Clear state and next cookies
     response.cookies.delete("ace_oauth_state");
+    response.cookies.delete("ace_oauth_next");
 
     return response;
   } catch (error) {

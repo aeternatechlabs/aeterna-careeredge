@@ -30,27 +30,20 @@ export function StudentLayout({
 }: StudentLayoutProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("ce_sidebar_collapsed");
-        if (stored !== null) return stored === "true";
-        // Default to collapsed on tablet (<1024px) to preserve workstation area
-        return window.innerWidth >= 768 && window.innerWidth < 1024;
-      } catch {}
-    }
-    return false;
-  });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    // If tablet on initial mount and user has no saved preference, default to collapsed
-    if (window.innerWidth >= 768 && window.innerWidth < 1024) {
-      if (!localStorage.getItem("ce_sidebar_collapsed")) {
+    try {
+      const stored = localStorage.getItem("ce_sidebar_collapsed");
+      if (stored !== null) {
+        setSidebarCollapsed(stored === "true");
+      } else if (window.innerWidth >= 768 && window.innerWidth < 1024) {
+        // If tablet on initial mount and user has no saved preference, default to collapsed
         setSidebarCollapsed(true);
       }
-    }
+    } catch {}
   }, []);
 
   const toggleSidebarCollapse = () => {
@@ -101,7 +94,7 @@ export function StudentLayout({
   return (
     <div
       data-app-theme="careeredge-premium"
-      className="app-theme-careeredge min-h-screen bg-background text-foreground overflow-x-hidden max-w-full"
+      className="app-theme-careeredge min-h-screen bg-[#FFF9F7] text-[#2B1B1B] overflow-x-hidden max-w-full"
     >
       {/* Desktop & Tablet sidebar */}
       <div
@@ -142,7 +135,7 @@ export function StudentLayout({
                   type="button"
                   onClick={closeMobileMenu}
                   aria-label="Close navigation menu"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F5DCDD] text-[#7A0F1F] hover:bg-[#F8E8EA] transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -179,7 +172,7 @@ export function StudentLayout({
             animate={{ scaleX: 1, opacity: 0 }}
             style={{ transformOrigin: "left" }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="h-full bg-gradient-to-r from-blue-600 via-sky-400 to-indigo-500 shadow-sm shadow-sky-400/50"
+            className="h-full bg-gradient-to-r from-[#7A0F1F] via-[#F2B63D] to-[#650B19] shadow-xs shadow-[#7A0F1F]/30"
           />
         </div>
 
@@ -187,7 +180,7 @@ export function StudentLayout({
           className={
             fullBleed
               ? "flex-1 min-h-0 w-full overflow-hidden flex flex-col"
-              : "p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto min-w-0 w-full"
+              : "p-4 sm:p-6 lg:p-8 w-full min-w-0"
           }
         >
           {fullBleed ? children : <PageTransition>{children}</PageTransition>}

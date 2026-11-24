@@ -18,6 +18,8 @@ import type { PreparedInterviewKit, InterviewPrepTheme } from "@/lib/interview/s
 
 interface InterviewPrepClientProps {
   studentName: string;
+  initialKits?: Array<{ id: string; jobTitle: string; companyName: string | null; themesCount: number; questionsCount: number; createdAt: string }>;
+  initialActiveKit?: PreparedInterviewKit | null;
   initialJobTitle?: string;
   initialCompany?: string;
   initialDomain?: string;
@@ -25,13 +27,15 @@ interface InterviewPrepClientProps {
 
 export function InterviewPrepClient({
   studentName,
+  initialKits,
+  initialActiveKit,
   initialJobTitle,
   initialCompany,
   initialDomain,
 }: InterviewPrepClientProps) {
-  const [kits, setKits] = useState<Array<{ id: string; jobTitle: string; companyName: string | null; themesCount: number; questionsCount: number; createdAt: string }>>([]);
-  const [activeKit, setActiveKit] = useState<PreparedInterviewKit | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [kits, setKits] = useState<Array<{ id: string; jobTitle: string; companyName: string | null; themesCount: number; questionsCount: number; createdAt: string }>>(initialKits || []);
+  const [activeKit, setActiveKit] = useState<PreparedInterviewKit | null>(initialActiveKit || null);
+  const [loading, setLoading] = useState(initialKits === undefined);
   const [kitLoading, setKitLoading] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set(["q-tech-1", "q-health-1", "q-comm-1"]));
@@ -77,6 +81,7 @@ export function InterviewPrepClient({
   }, [activeKit, loadKitDetails]);
 
   useEffect(() => {
+    if (initialKits !== undefined) return;
     let ignore = false;
     fetch("/api/interview-prep")
       .then((res) => (res.ok ? res.json() : null))
@@ -99,7 +104,7 @@ export function InterviewPrepClient({
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [initialKits]);
 
   const handleCreateKit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,11 +176,11 @@ export function InterviewPrepClient({
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <Link
-              href="/evidence-vault"
+              href="/resume/studio"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"
             >
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              Evidence Vault
+              <Sparkles className="w-4 h-4 text-[#7A0F1F]" />
+              Resume Studio
             </Link>
             <button
               onClick={() => setShowGenerateModal(true)}
@@ -299,7 +304,7 @@ export function InterviewPrepClient({
                                     <span
                                       className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                                         q.category === "TECHNICAL"
-                                          ? "bg-blue-50 text-blue-700 border border-blue-200"
+                                          ? "bg-[#F8E8EA] text-[#7A0F1F] border border-[#E8D2CE]"
                                           : q.category === "SCENARIO"
                                           ? "bg-purple-50 text-purple-700 border border-purple-200"
                                           : "bg-emerald-50 text-emerald-800 border border-emerald-200"

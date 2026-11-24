@@ -2,7 +2,7 @@
 // POST /api/onboarding — saves completed or partial onboarding data for the current user
 
 import { NextRequest, NextResponse } from "next/server";
-import { getSession, setSessionCookie } from "@/lib/session";
+import { getSession, setSessionCookie, createSession, isSecureCookie } from "@/lib/session";
 import { db } from "@/lib/db";
 import type { OnboardingData } from "@/types/onboarding";
 
@@ -160,17 +160,29 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
 
     // 3. Refresh session cookie with synced name and onboarding status
-    await setSessionCookie({
+    const refreshedPayload = {
       ...session,
       name: updatedUser.name,
       onboardingCompleted: updatedUser.onboardingCompleted,
-    });
+    };
+    const refreshedToken = await createSession(refreshedPayload);
+    await setSessionCookie(refreshedPayload);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       message: isPartial ? "Progress saved." : "Onboarding complete.",
       partial: isPartial,
       user: updatedUser,
     });
+
+    response.cookies.set("ace_session", refreshedToken, {
+      httpOnly: true,
+      secure: isSecureCookie(),
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return response;
   } catch (err) {
     console.error("[Onboarding Error]", err);
     return NextResponse.json(

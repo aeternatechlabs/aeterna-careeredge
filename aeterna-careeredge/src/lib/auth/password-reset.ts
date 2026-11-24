@@ -4,6 +4,7 @@
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
+import { sendPasswordResetEmail } from "@/lib/email/client";
 
 const TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
@@ -73,7 +74,13 @@ export async function createPasswordResetToken(
 
   const resetUrl = `${origin}/reset-password?token=${rawToken}`;
 
-  // Development Delivery: log to server console and expose in response only during development
+  // Dispatch password reset email via Resend (or logs in dev if key not yet set)
+  await sendPasswordResetEmail({
+    toEmail: user.email,
+    studentName: user.name,
+    resetUrl,
+  });
+
   const isDev = process.env.NODE_ENV !== "production";
 
   if (isDev) {
@@ -92,8 +99,7 @@ export async function createPasswordResetToken(
     };
   }
 
-  // Production Delivery: when SMTP/SMS credentials arrive, trigger delivery here
-  // (In production, devToken and devResetUrl are NEVER exposed)
+  // Production response: anti-enumeration, secrets never exposed in body
   return {
     success: true,
     message: genericSuccessMessage,

@@ -21,7 +21,6 @@ export default async function LinkedInPage({ searchParams }: PageProps) {
   const resolved = await searchParams;
   const errorParam = typeof resolved.error === "string" ? resolved.error : undefined;
   const connectedParam = typeof resolved.connected === "string" ? resolved.connected : undefined;
-  const simulatedParam = typeof resolved.simulated === "string" ? resolved.simulated : undefined;
 
   const user = await db.user.findUnique({
     where: { id: session.userId },
@@ -68,7 +67,6 @@ export default async function LinkedInPage({ searchParams }: PageProps) {
       isOidcConfigured={isLinkedInConfigured()}
       errorParam={errorParam}
       connectedParam={connectedParam}
-      simulatedParam={simulatedParam}
     />
   );
 }

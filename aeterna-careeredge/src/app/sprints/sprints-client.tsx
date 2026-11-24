@@ -16,6 +16,7 @@ import type { SprintSummary } from "@/lib/sprints/service";
 
 interface SprintsClientProps {
   studentName: string;
+  initialSprint?: SprintSummary | null;
   initialRole?: string;
   initialProfession?: string;
 }
@@ -29,11 +30,12 @@ const WEEKS = [
 
 export function SprintsClient({
   studentName,
+  initialSprint,
   initialRole,
   initialProfession,
 }: SprintsClientProps) {
-  const [sprint, setSprint] = useState<SprintSummary | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [sprint, setSprint] = useState<SprintSummary | null>(initialSprint !== undefined ? initialSprint : null);
+  const [loading, setLoading] = useState(initialSprint === undefined);
   const [showGenerateModal, setShowGenerateModal] = useState(Boolean(initialRole));
   const [targetRoleInput, setTargetRoleInput] = useState(initialRole || "Junior Software Engineer");
   const [targetProfessionInput, setTargetProfessionInput] = useState(initialProfession || "Technology & Software");
@@ -56,6 +58,7 @@ export function SprintsClient({
   }, []);
 
   useEffect(() => {
+    if (initialSprint !== undefined) return;
     let ignore = false;
     fetch("/api/sprints")
       .then((res) => (res.ok ? res.json() : null))
@@ -71,7 +74,7 @@ export function SprintsClient({
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [initialSprint]);
 
   const handleGenerateSprint = async (e: React.FormEvent) => {
     e.preventDefault();

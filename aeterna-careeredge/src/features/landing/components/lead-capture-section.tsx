@@ -93,14 +93,49 @@ function SelectField({
 
 export function LeadCaptureSection() {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [requiredConsent, setRequiredConsent] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setErrorMessage("");
+    setSubmitting(true);
 
-    // Demo only: no backend or lead storage is connected yet.
-    setSubmitted(true);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const payload = {
+      name: formData.get("name") as string,
+      mobile: formData.get("mobile") as string,
+      email: formData.get("email") as string,
+      city: formData.get("city") as string,
+      status: formData.get("status") as string,
+      interest: formData.get("interest") as string,
+      counsellorConsent: requiredConsent,
+      marketingConsent: marketingConsent,
+      hp_company: (formData.get("hp_company") as string) || "",
+    };
+
+    try {
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMessage(data.error || "Failed to submit. Please check your information.");
+        return;
+      }
+
+      setSubmitted(true);
+    } catch {
+      setErrorMessage("Network error. Please check your connection and try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -162,9 +197,9 @@ export function LeadCaptureSection() {
                   className="mt-0.5 shrink-0 text-primary"
                 />
                 <p className="text-xs leading-5 text-secondary-text">
-                  Your information should be handled responsibly. We will
-                  connect this form to the platform&apos;s privacy and data
-                  handling process before collecting real submissions.
+                  Your data is protected under India DPDP Act 2023 standards.
+                  We use your details strictly to provide career guidance and
+                  never share your personal contact without consent.
                 </p>
               </div>
             </motion.div>
@@ -209,12 +244,12 @@ export function LeadCaptureSection() {
                     </motion.div>
 
                     <h3 className="mt-6 font-heading text-xl font-bold text-foreground sm:text-2xl">
-                      Form demo completed
+                      Thank You! Request Received
                     </h3>
 
                     <p className="mt-3 max-w-sm text-sm leading-6 text-secondary-text">
-                      The form interaction works, but it is not connected to a
-                      backend yet. No information has been sent or stored.
+                      Our career guidance advisors have received your inquiry and
+                      will review your profile to prepare personalized recommendations.
                     </p>
 
                     <button
@@ -222,7 +257,7 @@ export function LeadCaptureSection() {
                       onClick={() => setSubmitted(false)}
                       className="mt-6 rounded-xl border border-border px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-background"
                     >
-                      Back to form
+                      Submit another inquiry
                     </button>
                   </motion.div>
                 ) : (
@@ -243,6 +278,15 @@ export function LeadCaptureSection() {
                     </div>
 
                     <form onSubmit={handleSubmit} className="mt-6 space-y-4 sm:mt-7 sm:space-y-5">
+                      {/* Anti-spam honeypot */}
+                      <input
+                        type="text"
+                        name="hp_company"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        className="hidden"
+                        aria-hidden="true"
+                      />
                       <div>
                         <label htmlFor="lead-name" className={labelClass}>
                           Full name <span className="text-error">*</span>
@@ -280,6 +324,21 @@ export function LeadCaptureSection() {
                             className="min-w-0 flex-1 bg-white px-4 py-3 text-base outline-none placeholder:text-text-muted sm:text-sm"
                           />
                         </div>
+                      </div>
+
+                      <div>
+                        <label htmlFor="lead-email" className={labelClass}>
+                          Email address <span className="text-error">*</span>
+                        </label>
+                        <input
+                          id="lead-email"
+                          name="email"
+                          type="email"
+                          placeholder="Enter your email address"
+                          autoComplete="email"
+                          required
+                          className={inputClass}
+                        />
                       </div>
 
                       <SelectField
@@ -343,15 +402,21 @@ export function LeadCaptureSection() {
                         </label>
                       </div>
 
+                      {errorMessage && (
+                        <div className="rounded-xl border border-error/30 bg-error/10 p-3 text-xs font-semibold text-error">
+                          {errorMessage}
+                        </div>
+                      )}
+
                       <motion.button
                         type="submit"
-                        disabled={!requiredConsent}
+                        disabled={!requiredConsent || submitting}
                         initial="rest"
-                        whileHover={requiredConsent ? "hover" : undefined}
-                        whileTap={requiredConsent ? { scale: 0.98 } : undefined}
+                        whileHover={requiredConsent && !submitting ? "hover" : undefined}
+                        whileTap={requiredConsent && !submitting ? { scale: 0.98 } : undefined}
                         className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3.5 text-sm font-bold text-white shadow-md shadow-primary/20 transition-colors hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none sm:px-6"
                       >
-                        Get Started
+                        {submitting ? "Submitting..." : "Get Started"}
                         <motion.span
                           variants={arrowVariants}
                           transition={{

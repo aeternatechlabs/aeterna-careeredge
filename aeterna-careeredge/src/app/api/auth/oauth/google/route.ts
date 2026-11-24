@@ -13,10 +13,13 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const origin =
-    req.headers.get("origin") ||
+    process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXTAUTH_URL ||
+    req.headers.get("origin") ||
     req.nextUrl.origin ||
     "http://localhost:3000";
+
+  const next = req.nextUrl.searchParams.get("next");
 
   // Check if real Google OAuth is configured
   if (!isGoogleOAuthConfigured()) {
@@ -29,7 +32,9 @@ export async function GET(req: NextRequest) {
 
     // In development mode without credentials, redirect to dev simulation
     console.log("ℹ️ [OAUTH DEV] Google credentials not found. Routing to /api/auth/oauth/dev-mock");
-    return NextResponse.redirect(new URL("/api/auth/oauth/dev-mock", origin));
+    const devMockUrl = new URL("/api/auth/oauth/dev-mock", origin);
+    if (next) devMockUrl.searchParams.set("next", next);
+    return NextResponse.redirect(devMockUrl);
   }
 
   // Real OAuth flow
@@ -46,6 +51,16 @@ export async function GET(req: NextRequest) {
     path: "/",
     maxAge: 600, // 10 minutes
   });
+
+  if (next && next.startsWith("/") && !next.startsWith("//")) {
+    response.cookies.set("ace_oauth_next", next, {
+      httpOnly: true,
+      secure: isSecureCookie(),
+      sameSite: "lax",
+      path: "/",
+      maxAge: 600,
+    });
+  }
 
   return response;
 }

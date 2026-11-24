@@ -44,6 +44,7 @@ interface ApplicationRecord {
 
 interface ApplicationsClientProps {
   studentName: string;
+  initialApplications?: ApplicationRecord[];
   initialJobTitle?: string;
   initialCompany?: string;
   initialRefId?: string;
@@ -51,7 +52,7 @@ interface ApplicationsClientProps {
 
 const STAGES: { key: ApplicationStatus; label: string; color: string }[] = [
   { key: "SAVED", label: "Saved", color: "bg-gray-100 text-gray-700 border-gray-300" },
-  { key: "VISITED", label: "Visited Portal", color: "bg-blue-50 text-blue-700 border-blue-200" },
+  { key: "VISITED", label: "Visited Portal", color: "bg-[#F8E8EA] text-[#7A0F1F] border-[#E8D2CE]" },
   { key: "APPLIED", label: "Applied", color: "bg-amber-50 text-amber-700 border-amber-200" },
   { key: "INTERVIEWING", label: "Interviewing", color: "bg-purple-50 text-purple-700 border-purple-200" },
   { key: "OFFER", label: "Offer Received", color: "bg-emerald-50 text-emerald-800 border-emerald-300" },
@@ -60,12 +61,13 @@ const STAGES: { key: ApplicationStatus; label: string; color: string }[] = [
 
 export function ApplicationsClient({
   studentName,
+  initialApplications,
   initialJobTitle,
   initialCompany,
   initialRefId,
 }: ApplicationsClientProps) {
-  const [applications, setApplications] = useState<ApplicationRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [applications, setApplications] = useState<ApplicationRecord[]>(initialApplications || []);
+  const [loading, setLoading] = useState(initialApplications === undefined);
   const [activeTab, setActiveTab] = useState<string>("ALL");
 
   // Pack Modal state
@@ -104,6 +106,7 @@ export function ApplicationsClient({
   }, []);
 
   useEffect(() => {
+    if (initialApplications !== undefined) return;
     let ignore = false;
     fetch("/api/applications")
       .then((res) => (res.ok ? res.json() : null))
@@ -119,7 +122,7 @@ export function ApplicationsClient({
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [initialApplications]);
 
   const handleCreateApplication = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -614,16 +617,10 @@ export function ApplicationsClient({
                     {/* Tab 3: Proof Bank Talking Points */}
                     {packActiveTab === "proof" && (
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between">
+                        <div>
                           <p className="text-xs text-gray-700">
-                            Use these 3 talking points in recruiter screenings to back your claims with verified evidence.
+                            Use these 3 talking points in recruiter screenings to back your claims with verified achievements.
                           </p>
-                          <Link
-                            href="/evidence-vault"
-                            className="text-xs font-semibold text-[#7A0F1F] underline hover:text-[#600C18]"
-                          >
-                            Manage Vault &rarr;
-                          </Link>
                         </div>
                         <div className="space-y-3">
                           {packData.talkingPoints.map((tp, idx) => (
@@ -680,7 +677,7 @@ export function ApplicationsClient({
               {/* Pack Footer */}
               <div className="p-5 border-t border-gray-100 bg-gray-50/70 rounded-b-3xl flex items-center justify-between">
                 <Link
-                  href="/resume"
+                  href="/resume/studio?tab=resumes"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#7A0F1F] hover:underline"
                 >
                   <FileText className="w-3.5 h-3.5" />

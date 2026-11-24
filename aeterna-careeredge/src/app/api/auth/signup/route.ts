@@ -4,7 +4,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { setSessionCookie } from "@/lib/session";
+import { setSessionCookie, createSession, isSecureCookie } from "@/lib/session";
+import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
 import type { SignupInput } from "@/types/auth";
 
 // Indian mobile: 10 digits, starts with 6-9
@@ -13,6 +14,15 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
+    const ip = getClientIp(req);
+    const rateCheck = checkRateLimit(`signup:${ip}`, 5, 60 * 1000);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { error: "Too many registration attempts. Please wait a minute before trying again." },
+        { status: 429 }
+      );
+    }
+
     const body = (await req.json()) as Partial<SignupInput>;
 
     const { name, email, mobile, password, counsellorConsent } = body;
@@ -97,14 +107,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     // ── Set session cookie ─────────────────────────────────────────────────
 
-    await setSessionCookie({
+    const sessionPayload = {
       userId: user.id,
       email: user.email,
       name: user.name,
       onboardingCompleted: user.onboardingCompleted,
-    });
+    };
+    const sessionToken = await createSession(sessionPayload);
+    await setSessionCookie(sessionPayload);
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         message: "Account created successfully.",
         user: {
@@ -116,6 +128,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       },
       { status: 201 }
     );
+
+    response.cookies.set("ace_session", sessionToken, {
+      httpOnly: true,
+      secure: isSecureCookie(),
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return response;
   } catch (err) {
     console.error("[Signup Error]", err);
     return NextResponse.json(

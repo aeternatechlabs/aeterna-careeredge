@@ -40,6 +40,10 @@ export interface JobListing {
   postedDate: string;
   lastVerified: string;
   provenance: SourceProvenance;
+  matchScore?: number;
+  matchedSkillsCount?: number;
+  totalSkillsCount?: number;
+  isRecommended?: boolean;
 }
 
 export interface JobSearchParams {
@@ -56,6 +60,7 @@ export interface JobSearchResult {
   total: number;
   page: number;
   pageSize: number;
+  hasMore?: boolean;
   sourceProvider: "JOOBLE_API" | "VERIFIED_DIRECTORY" | "MOCK_DEMO";
 }
 

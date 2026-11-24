@@ -23,7 +23,12 @@ if (typeof Uint8Array !== "undefined") {
 const SESSION_COOKIE = "ace_session";
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
+let cachedNormSecret = "";
+let cachedPrimarySecret: Uint8Array | null = null;
+let cachedCandidateSecrets: Uint8Array[] | null = null;
+
 function getNormalizedSecret(): string {
+  if (cachedNormSecret) return cachedNormSecret;
   let secret = process.env.AUTH_SECRET;
   if (!secret) {
     try {
@@ -38,33 +43,40 @@ function getNormalizedSecret(): string {
       }
     } catch {}
   }
-  return (secret || "xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM=").trim().replace(/^["']|["']$/g, "");
+  cachedNormSecret = (secret || "xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM=").trim().replace(/^["']|["']$/g, "");
+  return cachedNormSecret;
 }
 
 function getSecret(): Uint8Array {
-  return new TextEncoder().encode(getNormalizedSecret());
+  const norm = getNormalizedSecret();
+  if (!cachedPrimarySecret) {
+    cachedPrimarySecret = new TextEncoder().encode(norm);
+  }
+  return cachedPrimarySecret;
 }
 
 function getSecretCandidates(): Uint8Array[] {
   const norm = getNormalizedSecret();
-  const seen = new Set<string>();
-  const candidates = [
-    norm,
-    "xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM=",
-    `"${norm}"`,
-    '"xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM="',
-    "default_dev_secret_careeredge",
-    "test-secret-key-for-unit-testing-32chars",
-  ];
-
-  const result: Uint8Array[] = [];
-  for (const c of candidates) {
-    if (!seen.has(c)) {
-      seen.add(c);
-      result.push(new TextEncoder().encode(c));
+  if (!cachedCandidateSecrets) {
+    const list = [
+      norm,
+      "xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM=",
+      `"${norm}"`,
+      '"xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM="',
+      "default_dev_secret_careeredge",
+      "test-secret-key-for-unit-testing-32chars",
+    ];
+    const seen = new Set<string>();
+    const result: Uint8Array[] = [];
+    for (const c of list) {
+      if (!seen.has(c)) {
+        seen.add(c);
+        result.push(new TextEncoder().encode(c));
+      }
     }
+    cachedCandidateSecrets = result;
   }
-  return result;
+  return cachedCandidateSecrets;
 }
 
 // ── Payload stored inside the JWT ────────────────────────────────────────────
@@ -76,18 +88,36 @@ export interface SessionPayload {
   onboardingCompleted: boolean;
 }
 
+// ── Base64URL Sanitizer (RFC 7515 spec-compliant) ───────────────────────────
+
+export function toBase64UrlToken(token: string): string {
+  if (!token) return "";
+  const parts = token.trim().split(".");
+  if (parts.length === 3) {
+    return parts
+      .map((part) =>
+        part
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "")
+      )
+      .join(".");
+  }
+  return token;
+}
+
 // ── Create and sign a session JWT ────────────────────────────────────────────
 
 export async function createSession(payload: SessionPayload): Promise<string> {
   const secret = getSecret();
 
-  const token = await new SignJWT({ ...payload })
+  const rawToken = await new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${SESSION_DURATION_SECONDS}s`)
     .sign(secret);
 
-  return token;
+  return toBase64UrlToken(rawToken);
 }
 
 // ── Verify and decode a JWT ───────────────────────────────────────────────────
@@ -105,31 +135,33 @@ export async function verifySession(
     } catch {}
     cleanToken = cleanToken.trim().replace(/^["']|["']$/g, "").replace(/\s+/g, "");
 
+    // Convert any standard base64 (+, /, =) into pure base64url (-, _, no padding)
+    cleanToken = toBase64UrlToken(cleanToken);
+
     // Extract exactly the 3-part base64url Compact JWS if there are trailing semicolons, path attributes or quotes
     const jwtMatch = cleanToken.match(/([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)/);
     if (jwtMatch) {
       cleanToken = jwtMatch[1];
     }
 
-    const secrets = getSecretCandidates();
     let payload: Record<string, unknown> | null = null;
-    for (const secret of secrets) {
-      try {
-        const res = await jwtVerify(cleanToken, secret);
-        payload = res.payload as Record<string, unknown>;
-        break;
-      } catch {}
+    // Fast path: verify with primary secret first
+    try {
+      const res = await jwtVerify(cleanToken, getSecret());
+      payload = res.payload as Record<string, unknown>;
+    } catch {
+      // Fallback path: iterate through candidates
+      const secrets = getSecretCandidates();
+      for (const secret of secrets) {
+        try {
+          const res = await jwtVerify(cleanToken, secret);
+          payload = res.payload as Record<string, unknown>;
+          break;
+        } catch {}
+      }
     }
 
-    if (!payload) {
-      try {
-        const decoded = decodeJwt(cleanToken) as Record<string, unknown>;
-        if (decoded && (decoded.userId || decoded.sub || decoded.email || decoded.id)) {
-          payload = decoded;
-        }
-      } catch {}
-    }
-
+    // Strictly require cryptographic signature verification with secrets
     if (!payload) {
       return null;
     }
@@ -154,6 +186,10 @@ export async function verifySession(
 export function isSecureCookie(): boolean {
   if (process.env.COOKIE_SECURE === "true") return true;
   if (process.env.COOKIE_SECURE === "false") return false;
+  // In production, default to true unless running on local development host
+  if (process.env.NODE_ENV === "production" && !process.env.NEXT_PUBLIC_APP_URL?.includes("localhost")) {
+    return true;
+  }
   // If explicitly hosted on HTTPS, use secure
   if (process.env.NEXT_PUBLIC_APP_URL?.startsWith("https://")) return true;
   // Over local HTTP (e.g. localhost:3000 or 10.31.248.221:3000), do NOT set secure so browsers accept the cookie

@@ -56,7 +56,6 @@ interface LinkedInClientProps {
   isOidcConfigured: boolean;
   errorParam?: string;
   connectedParam?: string;
-  simulatedParam?: string;
 }
 
 export function LinkedInClient({
@@ -67,7 +66,6 @@ export function LinkedInClient({
   isOidcConfigured,
   errorParam,
   connectedParam,
-  simulatedParam,
 }: LinkedInClientProps) {
   const [activeSection, setActiveSection] = useState<LinkedInSectionType>("HEADLINE");
   const [profile, setProfile] = useState(initialProfile);
@@ -78,7 +76,7 @@ export function LinkedInClient({
     if (connectedParam) {
       return {
         type: "success",
-        message: `LinkedIn account successfully linked${simulatedParam ? " (Dev Simulation Mode)" : ""}!`,
+        message: "LinkedIn account successfully linked!",
       };
     }
     return null;
@@ -424,11 +422,11 @@ export function LinkedInClient({
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-blue-600">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#7A0F1F]">
               <Network size={16} />
               <span>Professional Identity Suite</span>
             </div>
-            <h1 className="mt-1 font-heading text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="mt-1 font-heading text-2xl font-bold tracking-tight text-[#2B1B1B] sm:text-3xl">
               LinkedIn Profile Intelligence
             </h1>
             <p className="mt-1 text-sm text-slate-500">
@@ -440,9 +438,9 @@ export function LinkedInClient({
             <button
               type="button"
               onClick={() => setShowImportModal(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#F0E1DE] bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs transition-colors"
             >
-              <Upload size={14} className="text-blue-600" />
+              <Upload size={14} className="text-[#7A0F1F]" />
               <span>Import Profile</span>
             </button>
 
@@ -456,37 +454,27 @@ export function LinkedInClient({
                   type="button"
                   disabled={disconnecting}
                   onClick={handleDisconnect}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-rose-50 hover:text-rose-700 transition-colors disabled:opacity-50"
+                  className="rounded-xl border border-[#F0E1DE] bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-rose-50 hover:text-rose-700 transition-colors disabled:opacity-50"
                 >
                   {disconnecting ? "Disconnecting..." : "Disconnect"}
                 </button>
               </div>
             ) : isOidcConfigured ? (
-              <div className="flex items-center gap-2">
-                <a
-                  href="/api/auth/oauth/linkedin"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#0A66C2] px-4 py-2 text-xs font-semibold text-white hover:bg-[#084e96] transition-colors"
-                >
-                  <Network size={14} />
-                  <span>Connect LinkedIn</span>
-                </a>
-                <a
-                  href="/api/auth/oauth/linkedin?dev=true"
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
-                  title="Simulate LinkedIn connection locally without external OAuth"
-                >
-                  <span>Dev Sim</span>
-                </a>
-              </div>
-            ) : (
               <a
-                href="/api/auth/oauth/linkedin?dev=true"
+                href="/api/auth/oauth/linkedin"
                 className="inline-flex items-center gap-1.5 rounded-xl bg-[#0A66C2] px-4 py-2 text-xs font-semibold text-white hover:bg-[#084e96] transition-colors"
-                title="Connect with simulated LinkedIn identity for local testing"
               >
                 <Network size={14} />
-                <span>Connect LinkedIn (Dev Sim)</span>
+                <span>Connect LinkedIn</span>
               </a>
+            ) : (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#F0E1DE] bg-white/60 px-3 py-2 text-xs font-medium text-slate-400 cursor-not-allowed"
+                title="LinkedIn integration credentials are not configured"
+              >
+                <Network size={14} />
+                <span>LinkedIn Integration Unavailable</span>
+              </span>
             )}
           </div>
         </div>
@@ -525,8 +513,8 @@ export function LinkedInClient({
         <HowItWorksPanel toolKey="linkedin-check" />
 
         {/* OIDC Disclosure Banner */}
-        <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 flex items-start gap-3 text-xs text-blue-900">
-          <Info size={18} className="text-blue-700 shrink-0 mt-0.5" />
+        <div className="rounded-xl border border-[#F0E1DE] bg-[#FFF9F7] p-4 flex items-start gap-3 text-xs text-[#2B1B1B]">
+          <Info size={18} className="text-[#7A0F1F] shrink-0 mt-0.5" />
           <p>
             <strong>Official LinkedIn OIDC Policy:</strong> Standard LinkedIn connection grants identity verification. Complete historical education, skills, and work details are imported securely via <strong>LinkedIn PDF export</strong> or <strong>direct text paste</strong> without sharing LinkedIn credentials.
           </p>
@@ -535,17 +523,17 @@ export function LinkedInClient({
         {/* Readiness Overview Cards */}
         {analysisReport && (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-[#F0E1DE] bg-white p-5 shadow-sm">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Readiness Score
               </span>
-              <p className="mt-2 text-3xl font-bold text-blue-600">
+              <p className="mt-2 text-3xl font-bold text-[#7A0F1F]">
                 {analysisReport.overallScore}%
               </p>
               <p className="mt-1 text-[11px] text-slate-500">CareerEdge domain benchmark</p>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-[#F0E1DE] bg-white p-5 shadow-sm">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Proof Ratio
               </span>
@@ -555,21 +543,21 @@ export function LinkedInClient({
               <p className="mt-1 text-[11px] text-slate-500">Skills backed by Proof Bank</p>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-[#F0E1DE] bg-white p-5 shadow-sm">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Headline Status
               </span>
-              <p className="mt-2 text-lg font-bold text-slate-900">
+              <p className="mt-2 text-lg font-bold text-[#2B1B1B]">
                 {analysisReport.sectionScores.find((s) => s.section === "Headline")?.status.replace("_", " ")}
               </p>
               <p className="mt-1 text-[11px] text-slate-500">Target role alignment</p>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-[#F0E1DE] bg-white p-5 shadow-sm">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 About Narrative
               </span>
-              <p className="mt-2 text-lg font-bold text-slate-900">
+              <p className="mt-2 text-lg font-bold text-[#2B1B1B]">
                 {analysisReport.sectionScores.find((s) => s.section === "About")?.status.replace("_", " ")}
               </p>
               <p className="mt-1 text-[11px] text-slate-500">3-paragraph structure</p>
@@ -578,9 +566,9 @@ export function LinkedInClient({
         )}
 
         {/* Section Optimization Studio */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+        <div className="rounded-2xl border border-[#F0E1DE] bg-white p-6 shadow-sm space-y-6">
           {/* Section Tabs */}
-          <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-4">
+          <div className="flex flex-wrap gap-2 border-b border-[#F0E1DE] pb-4">
             {[
               { id: "HEADLINE", label: "Headline Optimization" },
               { id: "ABOUT", label: "About Narrative" },
@@ -593,7 +581,7 @@ export function LinkedInClient({
                 onClick={() => setActiveSection(tab.id as LinkedInSectionType)}
                 className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
                   activeSection === tab.id
-                    ? "bg-blue-600 text-white shadow-xs"
+                    ? "bg-[#7A0F1F] text-white shadow-xs"
                     : "bg-slate-50 text-slate-600 hover:bg-slate-100"
                 }`}
               >
@@ -606,7 +594,7 @@ export function LinkedInClient({
           <div className="space-y-6">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-sm font-bold text-[#2B1B1B]">
                   {activeSection === "HEADLINE" && "Optimized Professional Headline"}
                   {activeSection === "ABOUT" && "3-Paragraph Narrative Summary"}
                   {activeSection === "FEATURED" && "High-Proof Featured Section Recommendations"}
@@ -669,7 +657,7 @@ export function LinkedInClient({
                       ? "List your role, company, and key contributions..."
                       : "List your key projects or artifacts..."
                   }
-                  className="w-full resize-y rounded-xl border border-slate-200 bg-white p-3.5 text-xs text-slate-900 focus:border-blue-600 focus:outline-hidden focus:ring-1 focus:ring-blue-600 leading-relaxed"
+                  className="w-full resize-y rounded-xl border border-[#F0E1DE] bg-white p-3.5 text-xs text-[#2B1B1B] focus:border-[#7A0F1F] focus:outline-hidden focus:ring-1 focus:ring-[#7A0F1F] leading-relaxed"
                 />
 
                 <div className="flex items-center justify-between pt-1">
@@ -685,7 +673,7 @@ export function LinkedInClient({
                     type="button"
                     disabled={optimizing}
                     onClick={() => handleOptimize(activeSection, Boolean(currentResult))}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm text-center"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#7A0F1F] px-4 py-2 text-xs font-semibold text-white hover:bg-[#650B19] disabled:opacity-50 transition-colors shadow-sm text-center"
                   >
                     {optimizing ? (
                       <>
@@ -804,11 +792,11 @@ export function LinkedInClient({
 
                       {currentResult.keywordsTargeted.length > 0 && (
                         <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                          <span className="text-[11px] font-bold text-slate-900">Targeted Keywords:</span>
+                          <span className="text-[11px] font-bold text-[#2B1B1B]">Targeted Keywords:</span>
                           {currentResult.keywordsTargeted.map((kw, idx) => (
                             <span
                               key={idx}
-                              className="rounded-md bg-white border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-blue-600"
+                              className="rounded-md bg-white border border-[#F0E1DE] px-2 py-0.5 text-[10px] font-semibold text-[#7A0F1F]"
                             >
                               {kw}
                             </span>
@@ -818,11 +806,11 @@ export function LinkedInClient({
                     </div>
                   </div>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center min-h-[260px]">
-                    <div className="rounded-full bg-white p-3 border border-slate-200 shadow-2xs text-blue-600">
+                  <div className="h-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#F0E1DE] bg-slate-50 p-8 text-center min-h-[260px]">
+                    <div className="rounded-full bg-white p-3 border border-[#F0E1DE] shadow-2xs text-[#7A0F1F]">
                       <Sparkles size={24} />
                     </div>
-                    <h4 className="mt-3 text-xs font-bold text-slate-900">
+                    <h4 className="mt-3 text-xs font-bold text-[#2B1B1B]">
                       Ready to Optimize Your {activeSection}
                     </h4>
                     <p className="mt-1 text-xs text-slate-500 max-w-sm">
@@ -843,23 +831,15 @@ export function LinkedInClient({
                 <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 uppercase tracking-wide">
                   Staged LinkedIn Import ({stagedImport.provenance})
                 </span>
-                <h3 className="font-heading text-base font-bold text-slate-900">
+                <h3 className="font-heading text-base font-bold text-[#2B1B1B]">
                   Review &amp; Save to Career Passport
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Select verified skills, experience, and degrees to merge into your permanent Career Passport.
+                  Select verified skills, experience, and degrees to merge into your permanent student profile.
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <Link
-                  href="/passport"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
-                >
-                  <span>View Career Passport</span>
-                  <ExternalLink size={12} />
-                </Link>
-
                 <button
                   type="button"
                   disabled={
@@ -878,7 +858,7 @@ export function LinkedInClient({
                     <>
                       <ShieldCheck size={14} />
                       <span>
-                        Save & Merge to Career Passport (
+                        Save & Merge to Profile (
                         {selectedSkills.size + selectedEducations.size + selectedExperiences.size} Records)
                       </span>
                     </>
@@ -895,10 +875,10 @@ export function LinkedInClient({
                   <span>{passportMergedSuccess}</span>
                 </div>
                 <Link
-                  href="/passport"
+                  href="/dashboard"
                   className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 hover:underline"
                 >
-                  <span>Open Career Passport &rarr;</span>
+                  <span>Go to Dashboard &rarr;</span>
                 </Link>
               </div>
             )}
@@ -920,7 +900,7 @@ export function LinkedInClient({
                         setSelectedSkills(new Set(stagedImport.skills));
                       }
                     }}
-                    className="text-[11px] font-semibold text-blue-600 hover:underline"
+                    className="text-[11px] font-semibold text-[#7A0F1F] hover:underline"
                   >
                     {selectedSkills.size === stagedImport.skills.length ? "Deselect All" : "Select All"}
                   </button>
@@ -942,7 +922,7 @@ export function LinkedInClient({
                         className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium border transition ${
                           isSelected
                             ? "bg-emerald-50 border-emerald-300 text-emerald-900 font-semibold"
-                            : "bg-white border-slate-200 text-slate-500 opacity-60"
+                            : "bg-white border-[#F0E1DE] text-slate-500 opacity-60"
                         }`}
                       >
                         <span className={`w-3.5 h-3.5 rounded flex items-center justify-center border text-[9px] ${
@@ -1084,10 +1064,10 @@ export function LinkedInClient({
         {showImportModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
             <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div className="flex items-center justify-between border-b border-[#F0E1DE] pb-3">
                 <div className="flex items-center gap-2">
-                  <Upload size={18} className="text-blue-600" />
-                  <h3 className="font-heading text-lg font-bold text-slate-900">
+                  <Upload size={18} className="text-[#7A0F1F]" />
+                  <h3 className="font-heading text-lg font-bold text-[#2B1B1B]">
                     Import LinkedIn Profile
                   </h3>
                 </div>
@@ -1100,13 +1080,13 @@ export function LinkedInClient({
                 </button>
               </div>
 
-              <div className="mt-4 flex gap-2 border-b border-slate-200 pb-3">
+              <div className="mt-4 flex gap-2 border-b border-[#F0E1DE] pb-3">
                 <button
                   type="button"
                   onClick={() => setImportMode("TEXT")}
                   className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
                     importMode === "TEXT"
-                      ? "bg-blue-600 text-white"
+                      ? "bg-[#7A0F1F] text-white"
                       : "bg-slate-50 text-slate-600 hover:bg-slate-100"
                   }`}
                 >
@@ -1117,7 +1097,7 @@ export function LinkedInClient({
                   onClick={() => setImportMode("PDF")}
                   className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
                     importMode === "PDF"
-                      ? "bg-blue-600 text-white"
+                      ? "bg-[#7A0F1F] text-white"
                       : "bg-slate-50 text-slate-600 hover:bg-slate-100"
                   }`}
                 >
@@ -1133,7 +1113,7 @@ export function LinkedInClient({
 
               {importMode === "TEXT" ? (
                 <form onSubmit={handleTextImport} className="mt-4 space-y-3">
-                  <label className="block text-xs font-bold text-slate-900">
+                  <label className="block text-xs font-bold text-[#2B1B1B]">
                     Paste Copied Profile Text
                   </label>
                   <textarea
@@ -1142,20 +1122,20 @@ export function LinkedInClient({
                     value={rawText}
                     onChange={(e) => setRawText(e.target.value)}
                     placeholder="Copy all text from your LinkedIn profile or 'Save to PDF' text and paste here..."
-                    className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-900 focus:border-blue-600 focus:outline-hidden"
+                    className="w-full rounded-xl border border-[#F0E1DE] p-3 text-xs text-[#2B1B1B] focus:border-[#7A0F1F] focus:outline-hidden"
                   />
                   <div className="flex justify-end gap-2 pt-2">
                     <button
                       type="button"
                       onClick={() => setShowImportModal(false)}
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                      className="rounded-xl border border-[#F0E1DE] px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={importing}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-[#7A0F1F] px-4 py-2 text-xs font-semibold text-white hover:bg-[#650B19] disabled:opacity-50"
                     >
                       {importing && <Loader2 size={12} className="animate-spin" />}
                       <span>Parse Profile</span>
@@ -1164,9 +1144,9 @@ export function LinkedInClient({
                 </form>
               ) : (
                 <div className="mt-4 space-y-4">
-                  <div className="rounded-xl border-2 border-dashed border-slate-200 p-6 text-center">
-                    <FileText size={28} className="text-blue-600 mx-auto" />
-                    <p className="mt-2 text-xs font-bold text-slate-900">
+                  <div className="rounded-xl border-2 border-dashed border-[#F0E1DE] p-6 text-center">
+                    <FileText size={28} className="text-[#7A0F1F] mx-auto" />
+                    <p className="mt-2 text-xs font-bold text-[#2B1B1B]">
                       Upload Official LinkedIn PDF Export
                     </p>
                     <p className="mt-1 text-[11px] text-slate-500">
@@ -1177,11 +1157,11 @@ export function LinkedInClient({
                       accept="application/pdf"
                       onChange={handlePdfUpload}
                       disabled={importing}
-                      className="mt-3 block w-full text-xs text-stone-500 file:mr-2 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white"
+                      className="mt-3 block w-full text-xs text-stone-500 file:mr-2 file:rounded-lg file:border-0 file:bg-[#7A0F1F] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white"
                     />
                   </div>
                   {importing && (
-                    <div className="flex items-center justify-center gap-2 text-xs text-blue-600 font-bold">
+                    <div className="flex items-center justify-center gap-2 text-xs text-[#7A0F1F] font-bold">
                       <Loader2 size={14} className="animate-spin" />
                       <span>Parsing PDF text streams...</span>
                     </div>

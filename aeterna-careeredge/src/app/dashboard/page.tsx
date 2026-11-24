@@ -1,9 +1,15 @@
 // src/app/dashboard/page.tsx
 
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { DashboardClient } from "./dashboard-client";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  robots: { index: false, follow: false },
+};
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -40,6 +46,7 @@ export default async function DashboardPage() {
         },
       },
       storedDocuments: {
+        take: 5,
         select: {
           id: true,
           originalFileName: true,
@@ -51,6 +58,7 @@ export default async function DashboardPage() {
         orderBy: { createdAt: "desc" },
       },
       resumes: {
+        take: 5,
         select: {
           id: true,
           title: true,
@@ -60,27 +68,6 @@ export default async function DashboardPage() {
           updatedAt: true,
         },
         orderBy: { updatedAt: "desc" },
-      },
-      applications: {
-        select: {
-          id: true,
-          jobTitle: true,
-          companyName: true,
-          applicationStatus: true,
-          updatedAt: true,
-        },
-        orderBy: { updatedAt: "desc" },
-      },
-      evidenceItems: {
-        select: {
-          id: true,
-          title: true,
-          type: true,
-          relatedSkill: true,
-          provenance: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: "desc" },
       },
       _count: {
         select: {

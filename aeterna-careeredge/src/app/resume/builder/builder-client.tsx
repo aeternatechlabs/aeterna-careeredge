@@ -7,6 +7,7 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { StudentLayout } from "@/components/layouts/student-layout";
 import { HowItWorksPanel } from "@/components/guidance/how-it-works-panel";
 import type {
@@ -115,6 +116,8 @@ export function BuilderClient({
       resume.styleData
     );
   }, [resume, user]);
+
+  const router = useRouter();
 
   // Document state
   const [resumeTitle, setResumeTitle] = useState(resume.title);
@@ -583,34 +586,38 @@ export function BuilderClient({
   async function handleExportPdf() {
     setExportingPdf(true);
     setExportError(null);
+    const pageSize = data.style.layout?.pageSize || "A4";
     try {
       await handleSave("Auto-save before PDF export");
-      const pageSize = data.style.layout?.pageSize || "A4";
       const res = await fetch(`/api/resumes/${resume.id}/export-pdf?pageSize=${pageSize}`);
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to generate PDF resume.");
-      }
+      const contentType = res.headers.get("Content-Type") || "";
 
-      const blob = await res.blob();
-      const contentDisposition = res.headers.get("Content-Disposition");
-      let filename = `${(user.name || "Resume").replace(/\s+/g, "-")}-Resume.pdf`;
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (match && match[1]) filename = match[1];
-      }
+      if (res.ok && contentType.includes("application/pdf")) {
+        const blob = await res.blob();
+        const contentDisposition = res.headers.get("Content-Disposition");
+        let filename = `${(user.name || "Resume").replace(/\s+/g, "-")}-Resume.pdf`;
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename="?([^"]+)"?/);
+          if (match && match[1]) filename = match[1];
+        }
 
-      const blobUrl = window.URL.createObjectURL(blob);
-      const downloadLink = document.createElement("a");
-      downloadLink.href = blobUrl;
-      downloadLink.download = filename;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      downloadLink.remove();
-      window.URL.revokeObjectURL(blobUrl);
+        const blobUrl = window.URL.createObjectURL(blob);
+        const downloadLink = document.createElement("a");
+        downloadLink.href = blobUrl;
+        downloadLink.download = filename;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+        window.URL.revokeObjectURL(blobUrl);
+      } else {
+        // Fallback on Vercel/serverless: open print preview with autoPrint=true
+        const json = await res.json().catch(() => ({}));
+        const printUrl = json.printUrl || `/resume/${resume.id}/print?autoPrint=true&pageSize=${pageSize}`;
+        window.open(printUrl, "_blank");
+      }
     } catch (err: unknown) {
-      console.error("[ExportPdf] Failed:", err);
-      setExportError((err as Error).message || "Export failed. You can also use Print View.");
+      console.warn("[ExportPdf] Direct export failed, opening print view:", err);
+      window.open(`/resume/${resume.id}/print?autoPrint=true&pageSize=${pageSize}`, "_blank");
     } finally {
       setExportingPdf(false);
     }
@@ -638,20 +645,34 @@ export function BuilderClient({
           <div className="w-full flex items-center justify-between gap-2.5 flex-nowrap">
             {/* Left: Back Link & Document Title & Saved Formats Switcher */}
             <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 min-w-0">
-              <Link
-                href="/resume"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition shadow-2xs"
-                title="Back to Resumes"
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (typeof window !== "undefined" && window.opener && !window.opener.closed) {
+                    try {
+                      window.opener.focus();
+                    } catch (_) {}
+                    window.close();
+                    setTimeout(() => {
+                      router.push("/resume/studio");
+                    }, 150);
+                    return;
+                  }
+                  router.push("/resume/studio");
+                }}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition shadow-2xs cursor-pointer"
+                title="Back to Resume Studio"
               >
                 <ArrowLeft size={16} />
-              </Link>
+              </button>
 
               <div className="min-w-0 max-w-[90px] xs:max-w-[130px] sm:max-w-[180px] md:max-w-[220px]">
                 <input
                   type="text"
                   value={resumeTitle}
                   onChange={(e) => setResumeTitle(e.target.value)}
-                  className="font-heading text-xs sm:text-sm font-bold text-slate-900 focus:border-b focus:border-blue-600 focus:outline-hidden w-full truncate bg-transparent"
+                  className="font-heading text-xs sm:text-sm font-bold text-slate-900 focus:border-b focus:border-[#7A0F1F] focus:outline-hidden w-full truncate bg-transparent"
                   title="Click to rename resume"
                 />
               </div>
@@ -664,9 +685,9 @@ export function BuilderClient({
                   className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 text-xs font-semibold text-slate-700 transition shadow-2xs"
                   title="View and switch between saved resumes & studio formats"
                 >
-                  <Bookmark size={13} className="text-blue-600" />
+                  <Bookmark size={13} className="text-[#7A0F1F]" />
                   <span className="hidden md:inline">Saved Formats</span>
-                  <span className="rounded-full bg-blue-100 text-blue-700 px-1.5 text-[10px] font-bold">
+                  <span className="rounded-full bg-blue-100 text-[#7A0F1F] px-1.5 text-[10px] font-bold">
                     {savedResumes.length}
                   </span>
                   <ChevronDown
@@ -690,7 +711,7 @@ export function BuilderClient({
                       </div>
                       <Link
                         href="/resume/studio"
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-[#7A0F1F] hover:text-[#7A0F1F]"
                       >
                         <Sparkles size={11} className="text-amber-500" />
                         <span>Studio</span>
@@ -706,7 +727,7 @@ export function BuilderClient({
                             href={`/resume/builder?id=${r.id}`}
                             className={`flex items-center justify-between p-2 rounded-xl text-xs transition ${
                               isCurrent
-                                ? "bg-blue-50/80 text-blue-900 font-semibold border border-blue-200"
+                                ? "bg-[#F8E8EA] text-[#7A0F1F] font-semibold border border-[#E8D2CE]"
                                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                             }`}
                           >
@@ -738,7 +759,7 @@ export function BuilderClient({
                   onClick={() => setIsLeftCollapsed(!isLeftCollapsed)}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
                     !isLeftCollapsed
-                      ? "bg-white text-blue-600 shadow-xs"
+                      ? "bg-white text-[#7A0F1F] shadow-xs"
                       : "text-slate-500 hover:text-slate-800"
                   }`}
                   title="Toggle Left Content Panel"
@@ -752,7 +773,7 @@ export function BuilderClient({
                   onClick={() => setIsRightCollapsed(!isRightCollapsed)}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
                     !isRightCollapsed
-                      ? "bg-white text-blue-600 shadow-xs"
+                      ? "bg-white text-[#7A0F1F] shadow-xs"
                       : "text-slate-500 hover:text-slate-800"
                   }`}
                   title="Toggle Right Design Panel"
@@ -794,13 +815,13 @@ export function BuilderClient({
                 disabled={analyzingFull}
                 onClick={handleAnalyzeFull}
                 aria-label="Full Analyze"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/90 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 hover:text-blue-800 transition shadow-2xs disabled:opacity-50 shrink-0"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#E8D2CE] bg-[#F8E8EA] px-2.5 sm:px-3 py-1.5 text-xs font-bold text-[#7A0F1F] hover:bg-[#F5DCDD] transition shadow-2xs disabled:opacity-50 shrink-0"
                 title="Run full AI intelligence audit across entire resume"
               >
                 {analyzingFull ? (
-                  <Loader2 size={13} className="animate-spin text-blue-600" />
+                  <Loader2 size={13} className="animate-spin text-[#7A0F1F]" />
                 ) : (
-                  <Sparkles size={13} className="text-blue-600" />
+                  <Sparkles size={13} className="text-[#7A0F1F]" />
                 )}
                 <span className="hidden sm:inline">{analyzingFull ? "Analyzing…" : "Full Analyze"}</span>
               </button>
@@ -810,7 +831,7 @@ export function BuilderClient({
                 type="button"
                 disabled={saving}
                 onClick={() => handleSave("Manual student save")}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 sm:px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50 transition shadow-xs"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#7A0F1F] px-3 sm:px-4 py-1.5 text-xs font-bold text-white hover:bg-[#650B19] disabled:opacity-50 transition shadow-xs"
               >
                 {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                 <span>Save</span>
@@ -821,7 +842,7 @@ export function BuilderClient({
                 type="button"
                 disabled={exportingPdf}
                 onClick={handleExportPdf}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3 sm:px-3.5 py-1.5 text-xs font-bold text-white hover:bg-slate-800 transition shadow-xs disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#F8E8EA] text-[#7A0F1F] hover:bg-[#F5DCDD] border border-[#E8D2CE] px-3 sm:px-3.5 py-1.5 text-xs font-bold transition shadow-xs disabled:opacity-50"
                 title="Download ATS-Friendly Vector PDF"
               >
                 {exportingPdf ? (
@@ -852,9 +873,9 @@ export function BuilderClient({
                         setShowMoreMenu(false);
                         handleAnalyzeFull();
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-blue-700 bg-blue-50/50 hover:bg-blue-50 hover:text-blue-900 font-semibold transition"
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[#7A0F1F] bg-[#FFF9F7] hover:bg-[#F8E8EA] hover:text-[#650B19] font-semibold transition"
                     >
-                      <Sparkles size={14} className="text-blue-600" />
+                      <Sparkles size={14} className="text-[#7A0F1F]" />
                       <span>Full Resume Analysis</span>
                     </button>
 
@@ -918,7 +939,7 @@ export function BuilderClient({
                       }}
                       className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-medium transition"
                     >
-                      <HelpCircle size={14} className="text-blue-600" />
+                      <HelpCircle size={14} className="text-[#7A0F1F]" />
                       <span>How it Works Guide</span>
                     </button>
                   </div>
@@ -1001,7 +1022,7 @@ export function BuilderClient({
                 <div className="flex flex-col items-center py-6 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-4 h-full">
                   <button
                     onClick={() => setIsLeftCollapsed(false)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition"
+                    className="p-2 text-[#7A0F1F] hover:bg-[#F8E8EA] rounded-xl transition"
                     title="Expand Sections Editor"
                   >
                     <PanelLeftOpen size={18} />
@@ -1022,13 +1043,13 @@ export function BuilderClient({
                         type="button"
                         disabled={analyzingFull}
                         onClick={handleAnalyzeFull}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition shadow-2xs disabled:opacity-50"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold text-[#7A0F1F] bg-[#F8E8EA] border border-[#E8D2CE] hover:bg-[#F5DCDD] transition shadow-2xs disabled:opacity-50"
                         title="Run full AI intelligence audit across entire resume"
                       >
                         {analyzingFull ? (
-                          <Loader2 size={11} className="animate-spin text-blue-600" />
+                          <Loader2 size={11} className="animate-spin text-[#7A0F1F]" />
                         ) : (
-                          <Sparkles size={11} className="text-blue-600" />
+                          <Sparkles size={11} className="text-[#7A0F1F]" />
                         )}
                         <span>{analyzingFull ? "Analyzing…" : "Full Analyze"}</span>
                       </button>
@@ -1066,7 +1087,7 @@ export function BuilderClient({
                         value={jobDescription}
                         onChange={(e) => setJobDescription(e.target.value)}
                         placeholder="Paste a job description to benchmark keywords and match requirements…"
-                        className="w-full text-xs text-slate-800 rounded-lg border border-slate-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none leading-relaxed bg-white"
+                        className="w-full text-xs text-slate-800 rounded-lg border border-slate-200 p-2.5 focus:outline-none focus:ring-2 focus:ring-[#7A0F1F]/20 focus:border-[#7A0F1F] resize-none leading-relaxed bg-white"
                       />
                     </div>
 
@@ -1138,8 +1159,8 @@ export function BuilderClient({
                     onClick={() => setZoom(75)}
                     className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition ${
                       zoom === 75
-                        ? "bg-blue-600 text-white shadow-2xs"
-                        : "bg-blue-50 text-blue-700 border border-blue-200/70 hover:bg-blue-100"
+                        ? "bg-[#7A0F1F] text-white shadow-2xs"
+                        : "bg-[#F8E8EA] text-[#7A0F1F] border border-[#E8D2CE] hover:bg-[#F5DCDD]"
                     }`}
                     title="Fit full page height inside viewport without scrolling"
                   >
@@ -1168,7 +1189,7 @@ export function BuilderClient({
                   <button
                     type="button"
                     onClick={() => setShowBeforeAfterModal(true)}
-                    className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:underline"
+                    className="inline-flex items-center gap-1 font-semibold text-[#7A0F1F] hover:underline"
                   >
                     <SlidersHorizontal size={12} />
                     <span className="hidden sm:inline">Before / After</span>
@@ -1207,7 +1228,7 @@ export function BuilderClient({
                 <div className="flex flex-col items-center py-6 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-4 h-full">
                   <button
                     onClick={() => setIsRightCollapsed(false)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition"
+                    className="p-2 text-[#7A0F1F] hover:bg-[#F8E8EA] rounded-xl transition"
                     title="Expand Design & Formatting Panel"
                   >
                     <Palette size={18} />
@@ -1263,7 +1284,7 @@ export function BuilderClient({
                 onClick={() => setMobileTab("edit")}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg transition ${
                   mobileTab === "edit"
-                    ? "bg-white text-blue-600 shadow-xs"
+                    ? "bg-white text-[#7A0F1F] shadow-xs"
                     : "hover:text-slate-900"
                 }`}
               >
@@ -1276,7 +1297,7 @@ export function BuilderClient({
                 onClick={() => setMobileTab("customize")}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg transition ${
                   mobileTab === "customize"
-                    ? "bg-white text-blue-600 shadow-xs"
+                    ? "bg-white text-[#7A0F1F] shadow-xs"
                     : "hover:text-slate-900"
                 }`}
               >
@@ -1289,7 +1310,7 @@ export function BuilderClient({
                 onClick={() => setMobileTab("preview")}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg transition ${
                   mobileTab === "preview"
-                    ? "bg-white text-blue-600 shadow-xs"
+                    ? "bg-white text-[#7A0F1F] shadow-xs"
                     : "hover:text-slate-900"
                 }`}
               >
@@ -1302,7 +1323,7 @@ export function BuilderClient({
                 onClick={() => setMobileTab("ai_review")}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg transition ${
                   mobileTab === "ai_review"
-                    ? "bg-white text-blue-600 shadow-xs"
+                    ? "bg-white text-[#7A0F1F] shadow-xs"
                     : "hover:text-slate-900"
                 }`}
               >
@@ -1364,7 +1385,7 @@ export function BuilderClient({
                   <button
                     type="button"
                     onClick={() => setShowBeforeAfterModal(true)}
-                    className="text-blue-600 font-semibold hover:underline"
+                    className="text-[#7A0F1F] font-semibold hover:underline"
                   >
                     Before / After
                   </button>
@@ -1416,7 +1437,7 @@ export function BuilderClient({
             <div className="w-full max-w-xl bg-white h-full shadow-2xl p-6 overflow-y-auto space-y-4 border-l border-slate-200 animate-in slide-in-from-right duration-200">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white shadow-2xs">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#7A0F1F] text-white shadow-2xs">
                     <Sparkles size={16} />
                   </div>
                   <div>
@@ -1497,7 +1518,7 @@ export function BuilderClient({
             <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in duration-150">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#F8E8EA] text-[#7A0F1F]">
                     <Sparkles size={14} />
                   </div>
                   <h4 className="font-heading text-sm font-bold text-slate-900">
@@ -1592,7 +1613,7 @@ export function BuilderClient({
                     await handleSave("Fit to 1 Page adjustments applied", updatedData);
                     setShowFitPageModal(false);
                   }}
-                  className="rounded-xl bg-blue-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-700 shadow-xs"
+                  className="rounded-xl bg-[#7A0F1F] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#650B19] shadow-xs"
                 >
                   Apply Adjustments
                 </button>
@@ -1623,7 +1644,7 @@ export function BuilderClient({
 
               {runningTruthCheck ? (
                 <div className="py-12 text-center">
-                  <Loader2 size={32} className="animate-spin text-blue-600 mx-auto" />
+                  <Loader2 size={32} className="animate-spin text-[#7A0F1F] mx-auto" />
                   <p className="mt-2 text-xs font-semibold text-slate-500">
                     Verifying resume claims against Evidence Vault and Career Passport...
                   </p>
@@ -1666,7 +1687,7 @@ export function BuilderClient({
                     <button
                       type="button"
                       onClick={() => setShowTruthModal(false)}
-                      className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"
+                      className="rounded-xl bg-[#7A0F1F] px-4 py-2 text-xs font-bold text-white hover:bg-[#650B19]"
                     >
                       Done
                     </button>

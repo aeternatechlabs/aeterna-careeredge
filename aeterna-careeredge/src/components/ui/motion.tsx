@@ -38,11 +38,11 @@ export function LoadingButton({
 
   const variantStyles = {
     primary:
-      "bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.99] shadow-sm disabled:bg-blue-600/60 shadow-blue-900/10",
+      "bg-[#7A0F1F] text-white hover:bg-[#650B19] active:scale-[0.99] shadow-sm disabled:bg-[#7A0F1F]/60 shadow-[#7A0F1F]/10",
     secondary:
       "bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200 active:scale-[0.99]",
     outline:
-      "border border-slate-200 bg-white text-slate-800 hover:border-blue-400 hover:bg-slate-50",
+      "border border-slate-200 bg-white text-slate-800 hover:border-[#E8D2CE] hover:bg-slate-50",
     ghost:
       "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900",
     gold: "bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold hover:brightness-105 shadow-sm shadow-amber-900/10",
@@ -57,7 +57,7 @@ export function LoadingButton({
   return (
     <button
       disabled={disabled || loading}
-      className={`relative inline-flex items-center justify-center font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 disabled:cursor-not-allowed disabled:opacity-65 select-none ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+      className={`relative inline-flex items-center justify-center font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A0F1F]/30 disabled:cursor-not-allowed disabled:opacity-65 select-none ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
       {...props}
     >
       <AnimatePresence mode="wait" initial={false}>
@@ -146,8 +146,8 @@ export function GenerationProgress({
     >
       <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
-            <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F8E8EA] text-[#7A0F1F] border border-[#E8D2CE]">
+            <Loader2 className="h-4 w-4 animate-spin text-[#7A0F1F]" />
           </div>
           <div>
             <h4 className="text-sm font-bold text-slate-900">{title}</h4>
@@ -160,7 +160,7 @@ export function GenerationProgress({
 
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1 text-xs text-slate-600 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200">
-            <Clock className="h-3 w-3 text-blue-600" />
+            <Clock className="h-3 w-3 text-[#7A0F1F]" />
             {secondsElapsed}s
           </span>
           {onCancel && (
@@ -179,7 +179,7 @@ export function GenerationProgress({
       {/* Progress bar */}
       <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100 mb-4">
         <motion.div
-          className="h-full bg-gradient-to-r from-blue-600 via-blue-700 to-sky-400"
+          className="h-full bg-gradient-to-r from-[#7A0F1F] via-[#F2B63D] to-[#650B19]"
           initial={{ width: "0%" }}
           animate={{ width: `${progressPercent}%` }}
           transition={{ duration: 0.35, ease: "easeInOut" }}
@@ -196,7 +196,7 @@ export function GenerationProgress({
               key={step.id}
               className={`flex items-start gap-2 rounded-xl p-2.5 text-xs transition-colors ${
                 isCurrent
-                  ? "bg-blue-50/70 border border-blue-200 shadow-xs"
+                  ? "bg-[#F8E8EA] border border-[#E8D2CE] shadow-xs"
                   : isDone
                   ? "text-slate-700"
                   : "text-slate-400 opacity-60"
@@ -206,13 +206,13 @@ export function GenerationProgress({
                 {isDone ? (
                   <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                 ) : isCurrent ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                  <Loader2 className="h-4 w-4 animate-spin text-[#7A0F1F]" />
                 ) : (
                   <div className="h-3.5 w-3.5 rounded-full border border-slate-300" />
                 )}
               </div>
               <div>
-                <p className={`font-semibold ${isCurrent ? "text-blue-700" : "text-slate-800"}`}>
+                <p className={`font-semibold ${isCurrent ? "text-[#7A0F1F]" : "text-slate-800"}`}>
                   {step.label}
                 </p>
                 {step.detail && (

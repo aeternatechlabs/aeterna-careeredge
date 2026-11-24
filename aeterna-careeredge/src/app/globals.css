@@ -244,117 +244,132 @@ html {
 }
 
 /* ========================================================
-   CAREEREDGE SIGNED-IN APP PREMIUM THEME (SCOPED)
-   Executive Midnight Navy & Royal Cobalt
+   CAREEREDGE SIGNED-IN APP LIGHT THEME DESIGN SYSTEM (SCOPED)
+   Warm Ivory Canvas + Soft Blush Sidebar + White Cards
+   + Deep Maroon Accents (#7A0F1F) + Elegant Gold Highlights (#F2B63D)
    Strictly scoped to [data-app-theme="careeredge-premium"]
    Zero cascade bleed into landing, login, or signup pages.
 ======================================================== */
 
 [data-app-theme="careeredge-premium"],
 .app-theme-careeredge {
-  /* Crisp Modern Slate Canvas & Pure White Surfaces */
-  --background: #f8fafc;        /* Slate-50 Canvas */
-  --surface: #ffffff;           /* Pure White Surface */
-  --surface-card: #ffffff;      /* Pure White Card */
-  --surface-muted: #f1f5f9;     /* Slate-100 Muted */
-  --border: #e2e8f0;           /* Slate-200 Precision Border */
-  --border-strong: #cbd5e1;    /* Slate-300 Strong Border */
-  --border-subtle: #f1f5f9;
+  /* Brand Primary */
+  --primary: #7A0F1F;
+  --primary-hover: #650B19;
+  --primary-dark: #650B19;
+  --primary-soft: #F8E8EA;
+  --primary-subtle: #FDF3F3;
+  --primary-muted: rgba(122, 15, 31, 0.08);
 
-  /* Executive Typography */
-  --foreground: #0f172a;        /* Slate-900 Ultra-crisp Text */
-  --text-secondary: #475569;    /* Slate-600 Readable Secondary */
-  --text-muted: #94a3b8;        /* Slate-400 Subtle Muted */
+  /* Gold Accents */
+  --gold: #F2B63D;
+  --gold-soft: #FFF2D6;
+  --gold-dark: #D97706;
 
-  /* Royal Cobalt Primary Accent */
-  --primary: #2563eb;          /* Blue-600 Royal Cobalt */
-  --primary-dark: #1d4ed8;     /* Blue-700 Hover */
-  --primary-light: #60a5fa;    /* Blue-400 Highlights */
-  --primary-soft: #eff6ff;     /* Blue-50 Soft Fill */
-  --primary-muted: rgba(37, 99, 235, 0.08);
+  /* Application Backgrounds */
+  --background: #FFF9F7;        /* Warm Ivory Canvas */
+  --surface: #FFFFFF;           /* Pure White Cards & Panels */
+  --surface-card: #FFFFFF;
+  --surface-soft: #FFF5F2;      /* Secondary Panels */
+  --surface-muted: #F9EEEA;     /* Subtle Backgrounds */
 
-  /* Warm Amber Highlights */
-  --gold: #f59e0b;             /* Amber-500 Warm Gold */
-  --gold-soft: #fef3c7;        /* Amber-50 Soft Gold */
-  --accent: #2563eb;
-  --accent-soft: #eff6ff;
-  --success: #10b981;          /* Emerald-500 */
-  --warning: #f59e0b;          /* Amber-500 */
-  --error: #ef4444;            /* Red-500 */
+  /* Borders */
+  --border: #F0E1DE;           /* Card & Section Borders */
+  --border-strong: #E8D2CE;    /* Stronger Separators */
+  --border-subtle: #F6EAE7;
 
-  /* Executive Midnight Navy UI Elements */
-  --navy-bg: #0b132b;          /* Deep Midnight Navy */
-  --navy-surface: #0f172a;     /* Slate-900 / Navy Surface */
-  --navy-border: #1e293b;      /* Slate-800 Navy Border */
-  --navy-active-bar: #38bdf8;  /* Sky-400 Active Bar */
+  /* Typography */
+  --foreground: #2B1B1B;        /* Main Headings */
+  --text-heading: #2B1B1B;
+  --text-body: #604B49;         /* Normal Text */
+  --text-secondary: #604B49;
+  --text-muted: #907D79;        /* Secondary Text */
+  --text-disabled: #B8A9A5;     /* Disabled Content */
+
+  /* Sidebar Tokens */
+  --sidebar-bg: #FFF1ED;
+  --sidebar-border: #F0DEDA;
+  --sidebar-logo: #7A0F1F;
+  --sidebar-text: #59413F;
+  --sidebar-icon: #896B66;
+  --sidebar-active-bg: #F5DCDD;
+  --sidebar-active-text: #7A0F1F;
+  --sidebar-active-icon: #7A0F1F;
+  --sidebar-active-bar: #7A0F1F;
+  --sidebar-hover-bg: #FBE7E4;
+  --sidebar-footer-bg: #F9EAE6;
+  --sidebar-footer-text: #765653;
+
+  /* Status Colors */
+  --success: #16A34A;
+  --warning: #D97706;
+  --error: #DC2626;
+  --info: #2563EB;
 
   /* Modern Subtle Elevation */
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 14px -2px rgba(15, 23, 42, 0.04);
-  --shadow-dropdown: 0 12px 36px -4px rgba(15, 23, 42, 0.12);
-  --shadow-hover: 0 4px 14px -2px rgba(37, 99, 235, 0.15), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 1px 3px rgba(122, 15, 31, 0.03), 0 4px 14px -2px rgba(96, 75, 73, 0.04);
+  --shadow-dropdown: 0 12px 32px -4px rgba(43, 27, 27, 0.08);
+  --shadow-hover: 0 4px 14px -2px rgba(122, 15, 31, 0.08), 0 2px 6px -1px rgba(96, 75, 73, 0.04);
   --app-radius-sm: 0.5rem;
   --app-radius-md: 0.75rem;
   --app-radius-lg: 1rem;
   --app-radius-xl: 1.25rem;
 
-  /* Aliases */
-  --ce-maroon: #2563eb;
-  --ce-maroon-dark: #1d4ed8;
-  --ce-maroon-light: #60a5fa;
-  --ce-maroon-subtle: #eff6ff;
-  --ce-gold: #f59e0b;
-  --ce-gold-dark: #d97706;
-  --ce-gold-subtle: #fef3c7;
-  --ce-canvas: #f8fafc;
-  --ce-surface: #ffffff;
-  --ce-surface-muted: #f1f5f9;
-  --ce-border: #e2e8f0;
-  --ce-border-subtle: #f1f5f9;
-  --ce-text-primary: #0f172a;
-  --ce-text-secondary: #475569;
-  --ce-text-muted: #94a3b8;
-  --ce-shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.03), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
-  --ce-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 16px -2px rgba(0, 0, 0, 0.03);
-  --ce-shadow-hover: 0 4px 14px -2px rgba(37, 99, 235, 0.15), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  /* Aliases for full backwards compatibility */
+  --ce-maroon: #7A0F1F;
+  --ce-maroon-dark: #650B19;
+  --ce-maroon-light: #9B2C3B;
+  --ce-maroon-subtle: #F8E8EA;
+  --ce-gold: #F2B63D;
+  --ce-gold-dark: #D97706;
+  --ce-gold-subtle: #FFF2D6;
+  --ce-canvas: #FFF9F7;
+  --ce-surface: #FFFFFF;
+  --ce-surface-muted: #F9EEEA;
+  --ce-border: #F0E1DE;
+  --ce-border-subtle: #F6EAE7;
+  --ce-text-primary: #2B1B1B;
+  --ce-text-secondary: #604B49;
+  --ce-text-muted: #907D79;
+  --ce-shadow-subtle: 0 1px 3px rgba(122, 15, 31, 0.02), 0 4px 12px -2px rgba(96, 75, 73, 0.04);
+  --ce-shadow-card: 0 1px 3px rgba(122, 15, 31, 0.03), 0 6px 16px -2px rgba(96, 75, 73, 0.04);
+  --ce-shadow-hover: 0 4px 14px -2px rgba(122, 15, 31, 0.08), 0 2px 6px -1px rgba(96, 75, 73, 0.04);
 }
 
 /* ────────────────────────────────────────────────────────────
    COMPREHENSIVE SCOPED UTILITY REMAPS (Applies across all
-   signed-in pages, neutralizing 100% of legacy hardcoded colors)
+   signed-in pages, enforcing cohesive Light Theme palette)
    ──────────────────────────────────────────────────────────── */
 
-/* 1. All Maroon/Red backgrounds -> Royal Cobalt */
+/* 1. Primary Maroon backgrounds */
 [data-app-theme="careeredge-premium"] .bg-\[\#7A0F1F\],
 [data-app-theme="careeredge-premium"] .bg-\[\#7a0f1f\],
 [data-app-theme="careeredge-premium"] .bg-\[\#4C0915\],
 [data-app-theme="careeredge-premium"] .bg-\[\#630E1E\],
 [data-app-theme="careeredge-premium"] .bg-\[\#5D0B18\],
 [data-app-theme="careeredge-premium"] .bg-\[\#5C0914\],
-[data-app-theme="careeredge-premium"] .bg-\[\#E11D48\],
 [data-app-theme="careeredge-premium"] .disabled\:bg-\[\#7A0F1F\],
 [data-app-theme="careeredge-premium"] .file\:bg-\[\#7A0F1F\] {
   background-color: var(--primary) !important;
 }
 
-/* 2. All Maroon hovers -> Darker Cobalt */
+/* 2. Primary Maroon hovers */
 [data-app-theme="careeredge-premium"] .hover\:bg-\[\#4C0915\]:hover,
 [data-app-theme="careeredge-premium"] .hover\:bg-\[\#600C18\]:hover,
 [data-app-theme="careeredge-premium"] .hover\:bg-\[\#630E1E\]:hover,
 [data-app-theme="careeredge-premium"] .hover\:bg-\[\#7A0F1F\]:hover,
-[data-app-theme="careeredge-premium"] .hover\:bg-\[\#BE123C\]:hover,
+[data-app-theme="careeredge-premium"] .hover\:bg-\[\#650B19\]:hover,
 [data-app-theme="careeredge-premium"] .hover\:bg-\[\#570B15\]:hover {
-  background-color: var(--primary-dark) !important;
+  background-color: var(--primary-hover) !important;
 }
 
-/* 3. All Maroon text -> Royal Cobalt */
+/* 3. Primary Maroon text */
 [data-app-theme="careeredge-premium"] .text-\[\#7A0F1F\],
 [data-app-theme="careeredge-premium"] .text-\[\#7a0f1f\],
 [data-app-theme="careeredge-premium"] .text-\[\#4C0915\],
 [data-app-theme="careeredge-premium"] .text-\[\#630E1E\],
 [data-app-theme="careeredge-premium"] .text-\[\#570B15\],
 [data-app-theme="careeredge-premium"] .text-\[\#A34A57\],
-[data-app-theme="careeredge-premium"] .text-\[\#EAC2C5\],
-[data-app-theme="careeredge-premium"] .text-\[\#E11D48\],
 [data-app-theme="careeredge-premium"] .group-hover\:text-\[\#7A0F1F\],
 [data-app-theme="careeredge-premium"] .group-focus-within\:text-\[\#7A0F1F\],
 [data-app-theme="careeredge-premium"] .hover\:text-\[\#7A0F1F\]:hover,
@@ -364,7 +379,7 @@ html {
   color: var(--primary) !important;
 }
 
-/* 4. All Maroon borders, outlines & focus rings -> Royal Cobalt */
+/* 4. Primary Maroon borders, outlines & focus rings */
 [data-app-theme="careeredge-premium"] .border-\[\#7A0F1F\],
 [data-app-theme="careeredge-premium"] .border-\[\#4C0915\],
 [data-app-theme="careeredge-premium"] .border-t-\[\#7A0F1F\],
@@ -381,48 +396,18 @@ html {
   --tw-ring-color: var(--primary) !important;
 }
 
-/* 5. All Maroon/Dark Gradients -> Midnight Navy & Royal Blue Gradients */
-[data-app-theme="careeredge-premium"] .from-\[\#4C0915\],
-[data-app-theme="careeredge-premium"] .from-\[\#5C0914\],
-[data-app-theme="careeredge-premium"] .from-\[\#7A0F1F\],
-[data-app-theme="careeredge-premium"] .from-\[\#121215\],
-[data-app-theme="careeredge-premium"] .from-\[\#18181B\] {
-  --tw-gradient-from: #0b132b var(--tw-gradient-from-position) !important;
-  --tw-gradient-to: rgba(11, 19, 43, 0) var(--tw-gradient-to-position) !important;
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
-}
-
-[data-app-theme="careeredge-premium"] .via-\[\#7A0F1F\],
-[data-app-theme="careeredge-premium"] .via-\[\#A82035\],
-[data-app-theme="careeredge-premium"] .via-\[\#18181B\],
-[data-app-theme="careeredge-premium"] .via-\[\#1E1E24\] {
-  --tw-gradient-to: rgba(15, 23, 42, 0) var(--tw-gradient-to-position) !important;
-  --tw-gradient-stops: var(--tw-gradient-from), #0f172a var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
-}
-
-[data-app-theme="careeredge-premium"] .to-\[\#4C0915\],
-[data-app-theme="careeredge-premium"] .to-\[\#5C0914\],
-[data-app-theme="careeredge-premium"] .to-\[\#5D0B18\],
-[data-app-theme="careeredge-premium"] .to-\[\#7A0F1F\],
-[data-app-theme="careeredge-premium"] .to-\[\#9A1B2E\],
-[data-app-theme="careeredge-premium"] .to-\[\#121215\],
-[data-app-theme="careeredge-premium"] .to-\[\#18181B\],
-[data-app-theme="careeredge-premium"] .to-\[\#27272A\] {
-  --tw-gradient-to: #1e3a8a var(--tw-gradient-to-position) !important;
-}
-
-/* 6. All Beige borders & dividers -> Crisp Slate Border */
+/* 5. Soft Warm Borders & Dividers */
 [data-app-theme="careeredge-premium"] .border-\[\#EBDDD1\],
 [data-app-theme="careeredge-premium"] .border-\[\#EFE5DC\],
 [data-app-theme="careeredge-premium"] .border-\[\#F0E5DA\],
 [data-app-theme="careeredge-premium"] .border-\[\#DBCABF\],
-[data-app-theme="careeredge-premium"] .border-\[\#8E7A77\],
+[data-app-theme="careeredge-premium"] .border-\[\#e2e8f0\],
 [data-app-theme="careeredge-premium"] .divide-\[\#EBDDD1\] > :not([hidden]) ~ :not([hidden]),
 [data-app-theme="careeredge-premium"] .divide-\[\#F0E5DA\] > :not([hidden]) ~ :not([hidden]) {
   border-color: var(--border) !important;
 }
 
-/* 7. All Muddy Beige/Yellow backgrounds -> Crisp Slate Muted Surface */
+/* 6. Soft Warm Light Backgrounds */
 [data-app-theme="careeredge-premium"] .bg-\[\#FFF8F0\],
 [data-app-theme="careeredge-premium"] .bg-\[\#FFF9ED\],
 [data-app-theme="careeredge-premium"] .bg-\[\#FFFBF9\],
@@ -436,15 +421,12 @@ html {
 [data-app-theme="careeredge-premium"] .bg-\[\#FCF9F6\],
 [data-app-theme="careeredge-premium"] .bg-\[\#FDF7F5\],
 [data-app-theme="careeredge-premium"] .bg-\[\#FDFBF9\],
-[data-app-theme="careeredge-premium"] .bg-\[\#FCE9E8\],
-[data-app-theme="careeredge-premium"] .bg-\[\#FFF0EF\],
-[data-app-theme="careeredge-premium"] .bg-\[\#FFF5F5\],
-[data-app-theme="careeredge-premium"] .bg-\[\#EBDDD1\],
-[data-app-theme="careeredge-premium"] .bg-\[\#EFE5DC\] {
+[data-app-theme="careeredge-premium"] .bg-\[\#f8fafc\],
+[data-app-theme="careeredge-premium"] .bg-\[\#f1f5f9\] {
   background-color: var(--surface-muted) !important;
 }
 
-/* 8. All Beige hovers -> Clean Slate Hover */
+/* 7. Soft Light Hovers */
 [data-app-theme="careeredge-premium"] .hover\:bg-\[\#FFF8F0\]:hover,
 [data-app-theme="careeredge-premium"] .hover\:bg-\[\#FFF9ED\]:hover,
 [data-app-theme="careeredge-premium"] .hover\:bg-\[\#FFFBF9\]:hover,
@@ -453,38 +435,43 @@ html {
 [data-app-theme="careeredge-premium"] .hover\:bg-\[\#FCF9F6\]:hover,
 [data-app-theme="careeredge-premium"] .hover\:bg-\[\#F5EEE8\]:hover,
 [data-app-theme="careeredge-premium"] .hover\:bg-\[\#f8efe7\]:hover,
-[data-app-theme="careeredge-premium"] .hover\:bg-\[\#FBE4E4\]:hover,
-[data-app-theme="careeredge-premium"] .hover\:bg-\[\#FCE9E8\]:hover {
-  background-color: #e2e8f0 !important;
+[data-app-theme="careeredge-premium"] .hover\:bg-\[\#f1f5f9\]:hover {
+  background-color: var(--primary-soft) !important;
 }
 
-/* 9. All Dark Brown text -> Crisp Slate-900 Foreground */
+/* 8. Main Heading Text -> #2B1B1B */
 [data-app-theme="careeredge-premium"] .text-\[\#2B1B1B\],
 [data-app-theme="careeredge-premium"] .text-\[\#2B1810\],
 [data-app-theme="careeredge-premium"] .text-\[\#352020\],
+[data-app-theme="careeredge-premium"] .text-\[\#0f172a\],
 [data-app-theme="careeredge-premium"] .hover\:text-\[\#2B1B1B\]:hover,
 [data-app-theme="careeredge-premium"] .hover\:text-\[\#2B1810\]:hover {
   color: var(--foreground) !important;
 }
 
-/* 10. All Muted Brown text -> Slate-600 Secondary */
+/* 9. Body & Muted Text -> #604B49 & #907D79 */
 [data-app-theme="careeredge-premium"] .text-\[\#765F5D\],
 [data-app-theme="careeredge-premium"] .text-\[\#5A4747\],
 [data-app-theme="careeredge-premium"] .text-\[\#8A7573\],
 [data-app-theme="careeredge-premium"] .text-\[\#8E7A77\],
+[data-app-theme="careeredge-premium"] .text-\[\#475569\],
+[data-app-theme="careeredge-premium"] .placeholder\:text-\[\#8E7A77\]::placeholder {
+  color: var(--text-body) !important;
+}
+
 [data-app-theme="careeredge-premium"] .text-\[\#9A8580\],
 [data-app-theme="careeredge-premium"] .text-\[\#B9A5A3\],
 [data-app-theme="careeredge-premium"] .text-\[\#C0A89E\],
-[data-app-theme="careeredge-premium"] .placeholder\:text-\[\#8E7A77\]::placeholder,
+[data-app-theme="careeredge-premium"] .text-\[\#94a3b8\],
 [data-app-theme="careeredge-premium"] .placeholder\:text-\[\#9A8580\]::placeholder {
-  color: var(--text-secondary) !important;
+  color: var(--text-muted) !important;
 }
 
-/* 11. Warm Gold/Amber badges and indicators */
+/* 10. Warm Gold Highlights (#F2B63D & #FFF2D6) */
 [data-app-theme="careeredge-premium"] .bg-\[\#F2B63D\],
 [data-app-theme="careeredge-premium"] .bg-\[\#F6B51C\] {
   background-color: var(--gold) !important;
-  color: #ffffff !important;
+  color: #2B1B1B !important;
 }
 
 [data-app-theme="careeredge-premium"] .text-\[\#F2B63D\],
@@ -492,7 +479,7 @@ html {
 [data-app-theme="careeredge-premium"] .text-\[\#8C5A08\],
 [data-app-theme="careeredge-premium"] .text-\[\#FFD78A\],
 [data-app-theme="careeredge-premium"] .text-\[\#FFE5A8\] {
-  color: var(--gold) !important;
+  color: var(--gold-dark) !important;
 }
 
 [data-app-theme="careeredge-premium"] .border-\[\#F2B63D\],
@@ -501,39 +488,36 @@ html {
   border-color: var(--gold) !important;
 }
 
-[data-app-theme="careeredge-premium"] .hover\:bg-\[\#e0a632\]:hover {
-  background-color: #d97706 !important;
-}
-
 [data-app-theme="careeredge-premium"] .bg-\[\#FFF0D4\],
-[data-app-theme="careeredge-premium"] .bg-\[\#FFF0C7\] {
+[data-app-theme="careeredge-premium"] .bg-\[\#FFF0C7\],
+[data-app-theme="careeredge-premium"] .bg-\[\#FFF2D6\] {
   background-color: var(--gold-soft) !important;
-  color: #92400e !important;
+  color: #78350F !important;
 }
 
 .app-theme-careeredge .ce-card {
-  background-color: var(--ce-surface);
-  border: 1px solid var(--ce-border);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 16px;
-  box-shadow: var(--ce-shadow-card);
+  box-shadow: var(--shadow-card);
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
 }
 
 .app-theme-careeredge .ce-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: var(--ce-shadow-hover);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-hover);
 }
 
 .app-theme-careeredge .ce-card-static {
-  background-color: var(--ce-surface);
-  border: 1px solid var(--ce-border);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 16px;
-  box-shadow: var(--ce-shadow-card);
+  box-shadow: var(--shadow-card);
 }
 
 .app-theme-careeredge .ce-heading {
   font-family: var(--font-heading), sans-serif;
-  color: var(--ce-text-primary);
+  color: var(--foreground);
   letter-spacing: -0.02em;
   font-weight: 700;
 }
@@ -544,20 +528,20 @@ html {
   font-weight: 600;
   border-radius: 10px;
   padding: 0.5rem 1rem;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 2px 8px rgba(122, 15, 31, 0.2);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .app-theme-careeredge .ce-btn-primary:hover:not(:disabled) {
-  background-color: var(--primary-dark);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  background-color: var(--primary-hover);
+  box-shadow: 0 4px 14px rgba(122, 15, 31, 0.3);
   transform: translateY(-1px);
 }
 
 .app-theme-careeredge .ce-badge-gold {
-  background-color: var(--ce-gold-subtle);
-  border: 1px solid rgba(245, 158, 11, 0.4);
-  color: #b45309;
+  background-color: var(--gold-soft);
+  border: 1px solid rgba(242, 182, 61, 0.5);
+  color: #78350F;
   font-weight: 600;
   border-radius: 9999px;
   padding: 0.125rem 0.625rem;
@@ -565,14 +549,13 @@ html {
 }
 
 /* ==========================================================================
-   CUSTOM SLEEK SCROLLBARS (Scoped to Signed-In App)
-   Replaces thick/ugly browser scrollbars with subtle, modern pill indicators.
+   CUSTOM SLEEK SCROLLBARS (Warm Blush & Ivory Scoped to Signed-In App)
    ========================================================================== */
 
-/* Dark Midnight Navy Sidebar Scrollbar */
+/* Soft Warm Sidebar Scrollbar */
 .ce-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+  scrollbar-color: rgba(137, 107, 102, 0.25) transparent;
 }
 
 .ce-scrollbar::-webkit-scrollbar {
@@ -585,15 +568,39 @@ html {
 }
 
 .ce-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(137, 107, 102, 0.2);
   border-radius: 9999px;
 }
 
 .ce-scrollbar:hover::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.45);
+  background: rgba(137, 107, 102, 0.4);
 }
 
-/* Light / Canvas Scrollbars in Signed-in App */
+/* Visible Horizontal Scrollbar for Mobile Stepper & Carousel Tracks */
+.ce-horizontal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #D8C7C4 #F5EAE7;
+}
+
+.ce-horizontal-scrollbar::-webkit-scrollbar {
+  height: 5px;
+}
+
+.ce-horizontal-scrollbar::-webkit-scrollbar-track {
+  background: #F5EAE7;
+  border-radius: 9999px;
+}
+
+.ce-horizontal-scrollbar::-webkit-scrollbar-thumb {
+  background: #D8C7C4;
+  border-radius: 9999px;
+}
+
+.ce-horizontal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #7A1A2B;
+}
+
+/* Canvas Scrollbars in Signed-in App */
 [data-app-theme="careeredge-premium"] ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -604,12 +611,66 @@ html {
 }
 
 [data-app-theme="careeredge-premium"] ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #E8D2CE;
   border-radius: 9999px;
 }
 
 [data-app-theme="careeredge-premium"] ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #D8C0BC;
+}
+
+/* Invisible scrollbar utility (preserves scrollability) */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ==========================================================================
+   RESPONSIVE & MOBILE-FIRST FOUNDATIONS
+   Safe areas, touch targets, and accessibility overrides.
+   ========================================================================== */
+
+/* Safe area padding utilities for modern edge-to-edge displays */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.pt-safe {
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+}
+
+/* Accessible minimum touch target (44x44 CSS px) */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Smooth touch momentum on iOS */
+.touch-momentum {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+/* Fluid image and video containment */
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Accessible Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Invisible scrollbar utility (preserves scrollability) */

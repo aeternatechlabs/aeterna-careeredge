@@ -198,13 +198,13 @@ export function segmentResumeSections(rawText: string): Map<string, string[]> {
   sections.set(currentSection, []);
 
   const sectionKeywords: Record<string, RegExp> = {
-    SUMMARY: /^(?:professional\s+)?(?:summary|profile|about\s+me|objective)$/i,
-    EDUCATION: /^(?:education|academic\s+history|qualifications|academics)$/i,
-    EXPERIENCE: /^(?:experience|work\s+experience|employment|internships?|professional\s+experience)$/i,
-    PROJECTS: /^(?:projects|academic\s+projects|personal\s+projects|key\s+projects)$/i,
-    SKILLS: /^(?:skills|technical\s+skills|core\s+competencies|technologies)$/i,
-    CERTIFICATIONS: /^(?:(?:training\s*(?:&|and)\s*)?certifications?|licenses|credentials|courses|training)$/i,
-    ACHIEVEMENTS: /^(?:achievements?|awards|honors|extracurricular)$/i,
+    SUMMARY: /^(?:(?:professional|career|executive|personal)\s+)?(?:summary|profile|about\s+me|objective|overview)$/i,
+    EDUCATION: /^(?:education(?:al)?(?:\s*(?:&|and)\s*(?:qualifications|training|certifications|background))?|academics?(?:\s+(?:history|background|profile|qualifications))?|qualifications|academic\s+history)$/i,
+    EXPERIENCE: /^(?:(?:work|professional|employment|internship|relevant|industry|practical)\s+)?(?:experience|history|background|employment)(?:\s*(?:&|and)\s*(?:internships?|projects?))?|internships?$/i,
+    PROJECTS: /^(?:(?:technical|academic|personal|key|relevant|significant|selected|major|coursework)\s+)?projects?(?:\s+(?:work|portfolio))?(?:\s*(?:&|and)\s*(?:achievements|experience))?$/i,
+    SKILLS: /^(?:(?:technical|core|key|professional|computer|software|it|domain|hard|primary)\s+)?(?:skills|competencies|proficiencies|expertise|technologies|tools)(?:\s*(?:&|and)\s*(?:abilities|proficiencies|tools|technologies|frameworks|expertise|knowledge|skills|competencies))?$|^(?:tech\s+stack|tools\s*(?:&|and)\s*technologies|languages\s*(?:&|and)\s*(?:frameworks|technologies|tools)|programming\s+languages|areas?\s+of\s+expertise|skills\s*&?\s*abilities)$/i,
+    CERTIFICATIONS: /^(?:(?:professional|online|technical|industry)?\s*(?:training|certifications?|certificates?|licenses?|credentials?|courses?)(?:\s*(?:&|and)\s*(?:training|certifications?|certificates?|licenses?|credentials?|courses?))*)$/i,
+    ACHIEVEMENTS: /^(?:achievements?|awards?(?:\s*(?:&|and)\s*(?:achievements?|honors?))?|honors?|extracurricular(?:\s+activities)?|activities|leadership)$/i,
   };
 
   for (const line of lines) {
@@ -214,10 +214,13 @@ export function segmentResumeSections(rawText: string): Map<string, string[]> {
       /^[-*▪▫◦◆◇►▸›∙⁃✓✔]\s*/.test(line) ||
       /^\(?\d+[\.\)]\s*/.test(line);
 
-    const cleanHeader = line.replace(/[:\-–—]+$/, "").trim();
+    const cleanHeader = line
+      .replace(/^[0-9IVXABCDivxabcd#*.\s\-–—]+/, "")
+      .replace(/[:\-–—|]+$/, "")
+      .trim();
 
     // A bullet line or long sentence can NEVER be a section header
-    if (!isBullet && cleanHeader.length < 50 && !cleanHeader.includes("http")) {
+    if (!isBullet && cleanHeader.length < 60 && !cleanHeader.includes("http")) {
       for (const [secKey, regex] of Object.entries(sectionKeywords)) {
         if (regex.test(cleanHeader)) {
           matchedSection = secKey;
@@ -236,6 +239,93 @@ export function segmentResumeSections(rawText: string): Map<string, string[]> {
 
   return sections;
 }
+
+export function categorizeSkill(name: string): "TECHNICAL" | "DOMAIN" | "TOOL" | "SOFT" {
+  const techRegex = /java|python|c\+\+|react|node|sql|aws|docker|typescript|javascript|html|css|angular|flutter|kubernetes|django|flask|fastapi|spring|tailwind|graphql|rest|next|express|mongodb|postgres|redis|linux|git|c#|golang|rust|ruby|php|swift|kotlin/i;
+  const toolRegex = /git|github|gitlab|jira|figma|postman|vscode|linux|excel|tableau|powerbi|photoshop|docker|kubernetes|terraform|ansible|jenkins|vite|webpack|prisma|supabase|firebase|aws|gcp|azure/i;
+  const softRegex = /communication|leadership|teamwork|problem-solving|critical\s+thinking|adaptability|time\s+management|collaboration|mentoring|presentation|negotiation/i;
+
+  if (techRegex.test(name)) return "TECHNICAL";
+  if (toolRegex.test(name)) return "TOOL";
+  if (softRegex.test(name)) return "SOFT";
+  return "DOMAIN";
+}
+
+export const COMMON_INDUSTRY_SKILLS: Array<{
+  name: string;
+  category: "TECHNICAL" | "DOMAIN" | "TOOL" | "SOFT";
+  regex: RegExp;
+}> = [
+  // Programming Languages
+  { name: "JavaScript", category: "TECHNICAL", regex: /\bjavascript\b|\bjs\b(?!\.)/i },
+  { name: "TypeScript", category: "TECHNICAL", regex: /\btypescript\b|\bts\b(?!\.)/i },
+  { name: "Python", category: "TECHNICAL", regex: /\bpython\b/i },
+  { name: "Java", category: "TECHNICAL", regex: /\bjava\b(?!\s*script)/i },
+  { name: "C++", category: "TECHNICAL", regex: /\bc\+\+\b/i },
+  { name: "C#", category: "TECHNICAL", regex: /\bc#\b|\bc\s+sharp\b/i },
+  { name: "Go", category: "TECHNICAL", regex: /\bgolang\b|\bgo\s+language\b/i },
+  { name: "Rust", category: "TECHNICAL", regex: /\brust\b/i },
+  { name: "Ruby", category: "TECHNICAL", regex: /\bruby\b/i },
+  { name: "PHP", category: "TECHNICAL", regex: /\bphp\b/i },
+  { name: "Swift", category: "TECHNICAL", regex: /\bswift\b/i },
+  { name: "Kotlin", category: "TECHNICAL", regex: /\bkotlin\b/i },
+  { name: "Dart", category: "TECHNICAL", regex: /\bdart\b/i },
+  { name: "R", category: "TECHNICAL", regex: /\br\s+programming\b|\br\s+language\b/i },
+  { name: "SQL", category: "TECHNICAL", regex: /\bsql\b/i },
+  { name: "HTML5", category: "TECHNICAL", regex: /\bhtml5?\b/i },
+  { name: "CSS3", category: "TECHNICAL", regex: /\bcss3?\b/i },
+  { name: "Bash", category: "TOOL", regex: /\bbash\b|\bshell\s+scripting\b/i },
+
+  // Frameworks & Libraries
+  { name: "React", category: "TECHNICAL", regex: /\breact(?:\.js)?\b/i },
+  { name: "Next.js", category: "TECHNICAL", regex: /\bnext(?:\.js)?\b/i },
+  { name: "Node.js", category: "TECHNICAL", regex: /\bnode(?:\.js)?\b/i },
+  { name: "Express.js", category: "TECHNICAL", regex: /\bexpress(?:\.js)?\b/i },
+  { name: "Angular", category: "TECHNICAL", regex: /\bangular(?:\.js)?\b/i },
+  { name: "Vue.js", category: "TECHNICAL", regex: /\bvue(?:\.js)?\b/i },
+  { name: "Django", category: "TECHNICAL", regex: /\bdjango\b/i },
+  { name: "FastAPI", category: "TECHNICAL", regex: /\bfastapi\b/i },
+  { name: "Flask", category: "TECHNICAL", regex: /\bflask\b/i },
+  { name: "Spring Boot", category: "TECHNICAL", regex: /\bspring\s*boot\b/i },
+  { name: "Tailwind CSS", category: "TECHNICAL", regex: /\btailwind(?:\s*css)?\b/i },
+  { name: "Bootstrap", category: "TECHNICAL", regex: /\bbootstrap\b/i },
+  { name: "Redux", category: "TECHNICAL", regex: /\bredux\b/i },
+  { name: "GraphQL", category: "TECHNICAL", regex: /\bgraphql\b/i },
+  { name: "REST APIs", category: "TECHNICAL", regex: /\brest(?:ful)?\s+apis?\b|\brest\s+api\b/i },
+  { name: "Prisma", category: "TOOL", regex: /\bprisma(?:\s+orm)?\b/i },
+
+  // Databases & Cloud
+  { name: "PostgreSQL", category: "TECHNICAL", regex: /\bpostgres(?:ql)?\b/i },
+  { name: "MongoDB", category: "TECHNICAL", regex: /\bmongodb\b/i },
+  { name: "MySQL", category: "TECHNICAL", regex: /\bmysql\b/i },
+  { name: "Redis", category: "TECHNICAL", regex: /\bredis\b/i },
+  { name: "Firebase", category: "TOOL", regex: /\bfirebase\b/i },
+  { name: "Supabase", category: "TOOL", regex: /\bsupabase\b/i },
+  { name: "AWS", category: "TOOL", regex: /\baws\b|\bamazon\s+web\s+services\b/i },
+  { name: "Google Cloud", category: "TOOL", regex: /\bgcp\b|\bgoogle\s+cloud\b/i },
+  { name: "Azure", category: "TOOL", regex: /\bazure\b|\bmicrosoft\s+azure\b/i },
+  { name: "Docker", category: "TOOL", regex: /\bdocker\b/i },
+  { name: "Kubernetes", category: "TOOL", regex: /\bkubernetes\b|\bk8s\b/i },
+  { name: "Git", category: "TOOL", regex: /\bgit\b(?!\s*hub|\s*lab)/i },
+  { name: "GitHub", category: "TOOL", regex: /\bgithub\b/i },
+  { name: "CI/CD", category: "TOOL", regex: /\bci[\/-]cd\b|\bcontinuous\s+integration\b/i },
+  { name: "Linux", category: "TOOL", regex: /\blinux\b/i },
+  { name: "Postman", category: "TOOL", regex: /\bpostman\b/i },
+  { name: "Figma", category: "TOOL", regex: /\bfigma\b/i },
+
+  // Data Science, AI & Engineering
+  { name: "Machine Learning", category: "DOMAIN", regex: /\bmachine\s+learning\b|\bml\b/i },
+  { name: "Deep Learning", category: "DOMAIN", regex: /\bdeep\s+learning\b|\bdl\b/i },
+  { name: "Artificial Intelligence", category: "DOMAIN", regex: /\bartificial\s+intelligence\b|\bai\b(?!\s*(?:engineer|lead|specialist))/i },
+  { name: "TensorFlow", category: "TECHNICAL", regex: /\btensorflow\b/i },
+  { name: "PyTorch", category: "TECHNICAL", regex: /\bpytorch\b/i },
+  { name: "Pandas", category: "TECHNICAL", regex: /\bpandas\b/i },
+  { name: "NumPy", category: "TECHNICAL", regex: /\bnumpy\b/i },
+  { name: "Data Structures & Algorithms", category: "DOMAIN", regex: /\bdata\s+structures\s*(?:&|and)\s*algorithms\b|\bdsa\b/i },
+  { name: "Object-Oriented Programming (OOP)", category: "DOMAIN", regex: /\bobject[\s-]oriented\s+programming\b|\boop\b/i },
+  { name: "System Design", category: "DOMAIN", regex: /\bsystem\s+design\b/i },
+  { name: "Agile / Scrum", category: "DOMAIN", regex: /\bagile\b|\bscrum\b/i },
+];
 
 /**
  * Pure Deterministic Parser
@@ -567,25 +657,91 @@ export function parseResumeDeterministically(rawText: string): ParsedResumePaylo
   // Skills
   const skillLines = segments.get("SKILLS") || [];
   const rawSkills: string[] = [];
+
   for (const line of skillLines) {
-    const content = line.includes(":") ? line.slice(line.lastIndexOf(":") + 1).trim() : line;
-    if (content.includes(",")) {
-      content.split(",").map((s) => s.trim()).filter(Boolean).forEach((s) => rawSkills.push(s));
-    } else if (content.includes("|")) {
-      content.split("|").map((s) => s.trim()).filter(Boolean).forEach((s) => rawSkills.push(s));
-    } else if (content.startsWith("•") || content.startsWith("-")) {
-      rawSkills.push(content.replace(/^[•\-]\s*/, "").trim());
-    } else if (content.length < 40) {
-      rawSkills.push(content.trim());
+    if (!line.trim()) continue;
+
+    // A single line might have multiple category segments, e.g.:
+    // "Languages: Python, C++ | Frameworks: React, Express | Cloud: AWS, GCP"
+    // or "Frontend: React, Tailwind; Backend: Node.js, Express"
+    const categorySegments = line.split(/[;|](?=\s*[A-Za-z\s&/()]+:)/g);
+
+    for (const segment of categorySegments) {
+      // Strip bullet points or numbering
+      let content = segment.replace(/^[•\-*▪▫◦◆◇►▸›∙⁃✓✔\s]+/, "").trim();
+
+      // Strip category prefix if present (e.g., "Languages:" or "• Frameworks & Tools:")
+      if (content.includes(":")) {
+        content = content.slice(content.indexOf(":") + 1).trim();
+      }
+
+      // Split items by commas, pipes, or bullets
+      if (content.includes(",") || content.includes("|") || content.includes("•") || content.includes("·")) {
+        const parts = content.split(/[,|•·]/).map((s) => s.trim()).filter(Boolean);
+        for (const part of parts) {
+          // Check for parenthesized sub-items, e.g. "AWS (S3, EC2, Lambda)"
+          if (part.includes("(") && part.includes(")")) {
+            const main = part.replace(/\(.*?\)/g, "").trim();
+            if (main) rawSkills.push(main);
+            const inside = part.match(/\((.*?)\)/)?.[1];
+            if (inside) {
+              inside.split(/[,/]/).map((s) => s.trim()).filter(Boolean).forEach((s) => rawSkills.push(s));
+            }
+          } else {
+            rawSkills.push(part);
+          }
+        }
+      } else if (content.length > 1 && content.length < 50) {
+        rawSkills.push(content);
+      }
     }
   }
 
-  const skills: ParsedResumePayload["skills"] = rawSkills
-    .filter((s) => s.length > 1 && s.length < 50)
-    .map((s) => ({
-      name: s,
-      category: categorizeSkill(s),
-    }));
+  // Also harvest skills embedded in project tech stacks
+  for (const proj of rawProjects) {
+    if (proj.subtitle) {
+      const parts = proj.subtitle.split(/[,|•/]/).map((s) => s.trim()).filter(Boolean);
+      for (const p of parts) {
+        if (p.length > 1 && p.length < 35 && !p.toLowerCase().startsWith("project")) {
+          rawSkills.push(p);
+        }
+      }
+    }
+  }
+
+  // If skills found is still low (< 5), scan the rawText with the industry skills dictionary
+  if (rawSkills.length < 5) {
+    for (const skillItem of COMMON_INDUSTRY_SKILLS) {
+      if (skillItem.regex.test(rawText)) {
+        rawSkills.push(skillItem.name);
+      }
+    }
+  }
+
+  // Normalize, deduplicate case-insensitively, and clean skills
+  const seenSkillNorm = new Set<string>();
+  const skills: ParsedResumePayload["skills"] = [];
+
+  for (const raw of rawSkills) {
+    const cleaned = raw
+      .replace(/^[^a-zA-Z0-9+#.]+/, "")
+      .replace(/[^a-zA-Z0-9+#.]+(?<!\+)$/, "")
+      .trim();
+
+    const norm = cleaned.toLowerCase();
+    if (
+      cleaned.length >= 2 &&
+      cleaned.length <= 40 &&
+      !seenSkillNorm.has(norm) &&
+      !/^(?:and|or|etc|various|skills|tools|technologies|proficient|experienced|familiar|knowledge|working)$/i.test(cleaned)
+    ) {
+      seenSkillNorm.add(norm);
+      skills.push({
+        name: cleaned,
+        category: categorizeSkill(cleaned),
+      });
+    }
+  }
 
   // Certifications
   const certLines = segments.get("CERTIFICATIONS") || [];
@@ -604,11 +760,15 @@ export function parseResumeDeterministically(rawText: string): ParsedResumePaylo
       if (clean.includes(" | ")) {
         const parts = clean.split(" | ");
         title = parts[0].trim();
-        issuer = parts[1].trim();
-      } else if (clean.includes(" — ")) {
-        const parts = clean.split(" — ");
+        issuer = parts.slice(1).join(" | ").trim();
+      } else if (clean.includes(" — ") || clean.includes(" – ")) {
+        const parts = clean.split(/ — | – /);
         title = parts[0].trim();
-        issuer = parts[1].trim();
+        issuer = parts.slice(1).join(" - ").trim();
+      } else if (clean.includes(", ")) {
+        const parts = clean.split(", ");
+        title = parts[0].trim();
+        issuer = parts.slice(1).join(", ").trim();
       }
 
       currentCert = {
@@ -751,17 +911,6 @@ export function validateAndRepairExperience(
   return repaired;
 }
 
-function categorizeSkill(name: string): "TECHNICAL" | "DOMAIN" | "TOOL" | "SOFT" {
-  const techRegex = /java|python|c\+\+|react|node|sql|aws|docker|typescript|javascript|html|css|angular|flutter|kubernetes/i;
-  const toolRegex = /git|jira|figma|postman|vscode|linux|excel|tableau|powerbi|photoshop/i;
-  const softRegex = /communication|leadership|teamwork|problem-solving|critical\s+thinking|adaptability|time\s+management/i;
-
-  if (techRegex.test(name)) return "TECHNICAL";
-  if (toolRegex.test(name)) return "TOOL";
-  if (softRegex.test(name)) return "SOFT";
-  return "DOMAIN";
-}
-
 /**
  * Intelligent Structured Parser with AI Fallback
  * Strictly guarantees Anti-Hallucination: parses ONLY what is present in rawText.
@@ -772,11 +921,12 @@ export async function parseResumeWithIntelligence(
 ): Promise<ParsedResumePayload> {
   const deterministic = parseResumeDeterministically(rawText);
 
-  // If deterministic parser successfully populated education, experience, or projects, and contact, return immediately
+  // If deterministic parser successfully populated education, experience, or projects, contact, AND has at least 3 skills
   const hasGoodYield =
     (deterministic.education.length > 0 ||
       deterministic.projects.length > 0 ||
       deterministic.experience.length > 0) &&
+    deterministic.skills.length >= 3 &&
     Boolean(deterministic.contactInfo.email);
 
   if (hasGoodYield) {
@@ -807,6 +957,10 @@ CRITICAL RULES FOR PROJECTS:
 CRITICAL RULES FOR WORK EXPERIENCE:
 1. A job entry represents a role at a company (e.g. "Software Engineer Intern at CloudScale Inc").
 2. Bullet points under a role describe responsibilities and achievements, NEVER separate job entries.
+
+CRITICAL RULES FOR SKILLS:
+1. Extract ALL technologies, programming languages, frameworks, libraries, databases, cloud tools, developer tools, and domain skills listed anywhere in the resume.
+2. Return skills as an array of objects: [{"name": string, "category": "TECHNICAL"|"DOMAIN"|"TOOL"|"SOFT"}].
 
 Output strict JSON matching this schema:
 {
@@ -869,6 +1023,57 @@ ${rawText.slice(0, 8000)}
           ? deterministic.projects
           : aiProjects;
 
+      // Safely normalize AI skills (handling array of strings or objects)
+      const rawAiSkills: ParsedResumePayload["skills"] = [];
+      if (Array.isArray(data.skills)) {
+        for (const s of data.skills as any[]) {
+          if (typeof s === "string" && s.trim()) {
+            rawAiSkills.push({ name: s.trim(), category: categorizeSkill(s.trim()) });
+          } else if (s && typeof s === "object") {
+            const name = ((s as any).name || (s as any).skill || (s as any).title || "").trim();
+            if (name) {
+              rawAiSkills.push({
+                name,
+                category: (s as any).category || categorizeSkill(name),
+              });
+            }
+          }
+        }
+      }
+
+      // Merge deterministic skills and AI skills without duplicates
+      const seenSkills = new Set<string>();
+      const finalSkills: ParsedResumePayload["skills"] = [];
+      for (const s of [...rawAiSkills, ...deterministic.skills]) {
+        const norm = s.name.trim().toLowerCase();
+        if (norm.length >= 2 && !seenSkills.has(norm)) {
+          seenSkills.add(norm);
+          finalSkills.push(s);
+        }
+      }
+
+      // Merge certifications
+      const seenCerts = new Set<string>();
+      const finalCerts: ParsedResumePayload["certifications"] = [];
+      const aiCerts = Array.isArray(data.certifications) ? data.certifications : [];
+      for (const c of [...aiCerts, ...deterministic.certifications]) {
+        if (!c || !c.title) continue;
+        const norm = c.title.trim().toLowerCase();
+        if (!seenCerts.has(norm)) {
+          seenCerts.add(norm);
+          finalCerts.push(c);
+        }
+      }
+
+      // Reconcile education: prefer whichever has more complete records
+      const aiEdu = Array.isArray(data.education) ? data.education : [];
+      const finalEducation =
+        aiEdu.length >= deterministic.education.length && aiEdu.some((e: any) => e.degree && e.institution)
+          ? aiEdu
+          : deterministic.education.length > 0
+          ? deterministic.education
+          : aiEdu;
+
       return {
         contactInfo: {
           name: (data as any).name || deterministic.contactInfo.name,
@@ -880,11 +1085,11 @@ ${rawText.slice(0, 8000)}
           portfolioUrl: (data as any).portfolioUrl || deterministic.contactInfo.portfolioUrl,
         },
         summary: data.summary || deterministic.summary,
-        education: (data.education as any) || deterministic.education,
-        experience: aiExperience,
-        projects: finalProjects,
-        skills: (data.skills as any) || deterministic.skills,
-        certifications: (data.certifications as any) || deterministic.certifications,
+        education: finalEducation,
+        experience: aiExperience.length > 0 ? aiExperience : deterministic.experience,
+        projects: finalProjects.length > 0 ? finalProjects : deterministic.projects,
+        skills: finalSkills,
+        certifications: finalCerts,
         customSections: [],
         rawTextSnippet: rawText.slice(0, 1500),
         contentHash: deterministic.contentHash,

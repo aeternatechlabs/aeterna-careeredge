@@ -146,14 +146,14 @@ export function CustomizePanel({
       {/* Top Header Controls: Title & Expand/Collapse All */}
       <div className="flex items-center justify-between pb-1 border-b border-slate-200">
         <div className="flex items-center gap-1.5 text-slate-700 font-bold text-xs">
-          <SlidersHorizontal size={14} className="text-blue-600" />
+          <SlidersHorizontal size={14} className="text-[#7A0F1F]" />
           <span>Design & Formatting</span>
         </div>
         <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
           <button
             type="button"
             onClick={expandAll}
-            className="hover:text-blue-600 transition-colors"
+            className="hover:text-[#7A0F1F] transition-colors"
           >
             Expand All
           </button>
@@ -161,7 +161,7 @@ export function CustomizePanel({
           <button
             type="button"
             onClick={collapseAll}
-            className="hover:text-blue-600 transition-colors"
+            className="hover:text-[#7A0F1F] transition-colors"
           >
             Collapse All
           </button>
@@ -176,7 +176,7 @@ export function CustomizePanel({
           className="w-full flex items-center justify-between px-3.5 py-3 bg-slate-50/80 hover:bg-slate-100/80 text-left transition-colors"
         >
           <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100/70 text-blue-600">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#F8E8EA] text-[#7A0F1F]">
               <Bookmark size={14} />
             </div>
             <div>
@@ -189,7 +189,7 @@ export function CustomizePanel({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-blue-50 text-blue-700 border border-blue-200/60 px-2 py-0.5 text-[10px] font-bold">
+            <span className="rounded-full bg-blue-50 text-[#7A0F1F] border border-blue-200/60 px-2 py-0.5 text-[10px] font-bold">
               Studio
             </span>
             <ChevronDown
@@ -209,7 +209,7 @@ export function CustomizePanel({
               </p>
               <Link
                 href="/resume/studio"
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700"
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-[#7A0F1F] hover:text-[#650B19]"
               >
                 <Sparkles size={12} className="text-amber-500" />
                 <span>Open Studio</span>
@@ -222,7 +222,7 @@ export function CustomizePanel({
                 <p className="text-xs">No saved formats yet.</p>
                 <Link
                   href="/resume/studio"
-                  className="mt-1.5 inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1 text-[11px] font-bold text-white shadow-xs hover:bg-blue-700"
+                  className="mt-1.5 inline-flex items-center gap-1 rounded-lg bg-[#7A0F1F] px-3 py-1 text-[11px] font-bold text-white shadow-xs hover:bg-[#650B19]"
                 >
                   <Sparkles size={12} />
                   <span>Generate 3 Options in Studio</span>
@@ -248,7 +248,7 @@ export function CustomizePanel({
                             {resItem.title}
                           </span>
                           <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mt-0.5">
-                            <span className="font-medium text-blue-600">
+                            <span className="font-medium text-[#7A0F1F]">
                               {tpl?.name || resItem.templateId}
                             </span>
                             {resItem.targetRole && (
@@ -278,7 +278,7 @@ export function CustomizePanel({
                                 onApplySavedFormat(parsedStyle);
                               } catch {}
                             }}
-                            className="px-2 py-0.5 rounded-md text-[10px] font-semibold text-blue-700 bg-blue-100/70 hover:bg-blue-200/70 transition-colors"
+                            className="px-2 py-0.5 rounded-md text-[10px] font-semibold text-[#7A0F1F] bg-blue-100/70 hover:bg-blue-200/70 transition-colors"
                             title="Apply this template and styling to current resume"
                           >
                             Apply Style
@@ -301,7 +301,7 @@ export function CustomizePanel({
                             Switch Resume
                           </button>
                         ) : (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-blue-600">
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-[#7A0F1F]">
                             <Check size={11} />
                             <span>Active</span>
                           </span>
@@ -772,7 +772,7 @@ export function CustomizePanel({
                       layout: { ...style.layout, showContactIcons: e.target.checked },
                     })
                   }
-                  className="rounded text-blue-600 focus:ring-blue-500"
+                  className="rounded text-[#7A0F1F] focus:ring-[#7A0F1F]"
                 />
                 <span>Show Contact Icons</span>
               </label>
@@ -787,7 +787,7 @@ export function CustomizePanel({
                       layout: { ...style.layout, showPhoto: e.target.checked },
                     })
                   }
-                  className="rounded text-blue-600 focus:ring-blue-500"
+                  className="rounded text-[#7A0F1F] focus:ring-[#7A0F1F]"
                 />
                 <span>Include Photo</span>
               </label>

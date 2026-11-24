@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, type FormEvent } from "react";
 import { Eye, EyeOff, Mail, Phone, Lock } from "lucide-react";
-import { useRouter } from "next/navigation";
 import {
-  AnimatePresence,
   MotionConfig,
   motion,
   type Variants,
@@ -36,8 +34,6 @@ const formVariants: Variants = {
 type IdentifierMode = "email" | "mobile";
 
 export default function LoginPage() {
-  const router = useRouter();
-
   const [identifierMode, setIdentifierMode] = useState<IdentifierMode>("email");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -45,14 +41,22 @@ export default function LoginPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nextUrl, setNextUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const urlError = params.get("error");
-      if (urlError) setError(decodeURIComponent(urlError));
       const urlEmail = params.get("email");
-      if (urlEmail) setIdentifier(decodeURIComponent(urlEmail));
+      const urlNext = params.get("next");
+      if (urlNext) setNextUrl(urlNext);
+      if (urlError || urlEmail) {
+        const timer = setTimeout(() => {
+          if (urlError) setError(decodeURIComponent(urlError));
+          if (urlEmail) setIdentifier(decodeURIComponent(urlEmail));
+        }, 0);
+        return () => clearTimeout(timer);
+      }
     }
   }, []);
 
@@ -313,7 +317,7 @@ export default function LoginPage() {
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
               <a
-                href="/api/auth/oauth/google"
+                href={nextUrl ? `/api/auth/oauth/google?next=${encodeURIComponent(nextUrl)}` : "/api/auth/oauth/google"}
                 className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-[#EBDDD1] bg-white text-sm font-semibold text-[#352020] shadow-sm transition hover:bg-[#FDF7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A0F1F]"
               >
                 <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
@@ -354,6 +358,30 @@ export default function LoginPage() {
               Create one here
             </Link>
           </motion.p>
+
+          {/* Legal navigation links */}
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            animate="show"
+            className="mt-6 border-t border-[#EBDDD1]/60 pt-4 text-center text-xs text-[#9A8580]"
+          >
+            By signing in, you agree to our{" "}
+            <Link
+              href="/terms-and-conditions"
+              className="text-[#7A0F1F] underline hover:text-[#520914]"
+            >
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link
+              href="/privacy-policy"
+              className="text-[#7A0F1F] underline hover:text-[#520914]"
+            >
+              Privacy Policy
+            </Link>
+            .
+          </motion.div>
         </div>
       </MotionConfig>
     </AuthLayout>

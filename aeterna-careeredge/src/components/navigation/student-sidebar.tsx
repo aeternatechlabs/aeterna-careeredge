@@ -7,7 +7,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "motion/react";
 import { BrandLogo } from "@/components/common/BrandLogo";
 import {
   LayoutDashboard,
@@ -54,15 +53,7 @@ const PRIMARY_SECTIONS: NavSection[] = [
   {
     title: "Build",
     items: [
-      { label: "Career Passport", href: "/passport", icon: Fingerprint, featureId: "career-passport" },
       { label: "Resume Studio", href: "/resume/studio", icon: Sparkles, featureId: "resume-studio" },
-      { label: "Resume Builder", href: "/resume", icon: FileText, featureId: "resume-builder" },
-    ],
-  },
-  {
-    title: "Improve",
-    items: [
-      { label: "Evidence Vault", href: "/evidence-vault", icon: ShieldCheck, featureId: "evidence-vault" },
       { label: "LinkedIn Builder", href: "/linkedin", icon: Network, featureId: "linkedin-optimizer" },
     ],
   },
@@ -79,13 +70,13 @@ const PRIMARY_SECTIONS: NavSection[] = [
     items: [
       { label: "30-Day Sprints", href: "/sprints", icon: Zap, featureId: "employability-sprints" },
       { label: "Interview Prep", href: "/interview-prep", icon: HelpCircle, featureId: "interview-prep" },
+      { label: "Pricing & Plans", href: "/pricing", icon: Sparkles, featureId: "pricing" },
     ],
   },
 ];
 
 const MORE_SECTION: NavItem[] = [
   { label: "1-on-1 Counselling", href: "/counselling", icon: CalendarDays, featureId: "career-counselling" },
-  { label: "Pricing & Plans", href: "/pricing", icon: Sparkles, featureId: "pricing" },
 ];
 
 const COMING_SOON_SECTION: NavItem[] = [
@@ -105,35 +96,46 @@ export function StudentSidebar({
   onToggleCollapse,
   onLogout,
 }: StudentSidebarProps) {
-  const pathname = usePathname();
+  const currentPath = usePathname();
+  const pathname = currentPath || "";
+  const [pendingPath, setPendingPath] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const [soonOpen, setSoonOpen] = useState(false);
 
+  // Clear optimistic navigation once pathname updates
+  useEffect(() => {
+    setPendingPath(null);
+  }, [pathname]);
+
   // Auto-expand "More" if current page is within it
   useEffect(() => {
-    if (MORE_SECTION.some((item) => pathname.startsWith(item.href))) {
+    const activeRoute = pendingPath || pathname;
+    if (activeRoute && MORE_SECTION.some((item) => activeRoute.startsWith(item.href))) {
       setMoreOpen(true);
     }
-  }, [pathname]);
+  }, [pathname, pendingPath]);
 
   const renderNavItem = (item: NavItem, isMuted = false) => {
     const Icon = item.icon;
+    const activePath = pendingPath || pathname;
     const active = (() => {
+      if (!activePath) return false;
       if (item.href === "/dashboard") {
-        return pathname === "/dashboard";
+        return activePath === "/dashboard";
       }
       if (item.href === "/resume") {
         return (
-          pathname === "/resume" ||
-          (pathname.startsWith("/resume/") && !pathname.startsWith("/resume/studio"))
+          activePath === "/resume" ||
+          (activePath.startsWith("/resume/") && !activePath.startsWith("/resume/studio"))
         );
       }
       if (item.href === "/resume/studio") {
-        return pathname === "/resume/studio" || pathname.startsWith("/resume/studio/");
+        return activePath === "/resume/studio" || activePath.startsWith("/resume/studio/");
       }
-      return pathname === item.href || pathname.startsWith(`${item.href}/`);
+      return activePath === item.href || activePath.startsWith(`${item.href}/`);
     })();
 
+    const isPending = pendingPath === item.href && pathname !== item.href;
     const feat = item.featureId ? FEATURE_REGISTRY[item.featureId] : undefined;
     const isComingSoon = isMuted || feat?.status === "COMING_SOON";
 
@@ -141,42 +143,32 @@ export function StudentSidebar({
       <Link
         key={item.href}
         href={item.href}
-        onClick={onNavigate}
+        prefetch={true}
+        onClick={() => {
+          if (pathname !== item.href) {
+            setPendingPath(item.href);
+          }
+          onNavigate?.();
+        }}
         title={isCollapsed ? item.label : undefined}
         aria-current={active ? "page" : undefined}
         className={[
-          "relative group flex items-center min-h-[44px] rounded-xl px-3 py-2 text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38BDF8]",
+          "relative group flex items-center min-h-[44px] rounded-xl px-3 py-2 text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7A0F1F]",
           isCollapsed ? "justify-center px-2" : "gap-3",
           active
-            ? "font-semibold text-white"
+            ? "font-bold text-[#7A0F1F] bg-[#F5DCDD] shadow-2xs"
             : isComingSoon
-              ? "text-slate-500 hover:bg-white/5 hover:text-slate-400"
-              : "text-slate-400 hover:bg-slate-800/60 hover:text-white",
+              ? "text-[#B8A9A5] hover:bg-[#FBE7E4] hover:text-[#59413F]"
+              : "text-[#59413F] hover:bg-[#FBE7E4] hover:text-[#2B1B1B]",
+          isPending ? "opacity-90" : "",
         ].join(" ")}
       >
-        {/* Animated active background pill that glides smoothly between tabs */}
+        {/* Distinctive Maroon Active Indicator Bar */}
         {active && (
-          <motion.div
-            layoutId="sidebar-active-pill"
-            className="absolute inset-0 rounded-xl bg-white/10 shadow-xs pointer-events-none"
-            transition={{
-              type: "spring",
-              stiffness: 380,
-              damping: 32,
-            }}
-          />
-        )}
-
-        {/* Distinctive Sky Blue Active Indicator Bar that glides smoothly */}
-        {active && (
-          <motion.span
-            layoutId="sidebar-active-indicator"
-            className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-[#38BDF8] shadow-sm shadow-[#38BDF8]/60 z-10 pointer-events-none"
-            transition={{
-              type: "spring",
-              stiffness: 380,
-              damping: 32,
-            }}
+          <span
+            className={`absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-[#7A0F1F] shadow-sm shadow-[#7A0F1F]/40 z-10 pointer-events-none ${
+              isPending ? "animate-pulse" : ""
+            }`}
           />
         )}
 
@@ -186,10 +178,11 @@ export function StudentSidebar({
           className={[
             "relative z-10 shrink-0 transition-colors",
             active
-              ? "text-[#38BDF8]"
+              ? "text-[#7A0F1F]"
               : isComingSoon
-                ? "text-slate-600"
-                : "text-slate-400 group-hover:text-slate-200",
+                ? "text-[#B8A9A5]"
+                : "text-[#896B66] group-hover:text-[#2B1B1B]",
+            isPending ? "animate-pulse" : "",
           ].join(" ")}
           aria-hidden="true"
         />
@@ -197,7 +190,7 @@ export function StudentSidebar({
         {!isCollapsed && <span className="relative z-10 flex-1 truncate">{item.label}</span>}
 
         {!isCollapsed && isComingSoon && (
-          <span className="relative z-10 rounded-full bg-slate-800/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <span className="relative z-10 rounded-full bg-[#F9EEEA] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#907D79]">
             Soon
           </span>
         )}
@@ -208,24 +201,23 @@ export function StudentSidebar({
   return (
     <aside
       aria-label="Student Portal Navigation"
-      data-tour="sidebar"
       className={[
-        "flex h-full flex-col bg-[#0B132B] text-white border-r border-[#1E293B] select-none transition-all duration-200 ease-in-out",
+        "flex h-full flex-col bg-[#FFF1ED] text-[#59413F] border-r border-[#F0DEDA] select-none transition-all duration-200 ease-in-out",
         isCollapsed ? "w-20" : "w-64",
       ].join(" ")}
     >
       {/* Brand Header & Top Collapse Toggle */}
-      <div className="flex h-16 items-center justify-between px-3.5 border-b border-[#1E293B] shrink-0">
+      <div className="flex h-16 items-center justify-between px-3.5 border-b border-[#F0DEDA] shrink-0">
         {!isCollapsed ? (
           <>
-            <BrandLogo tone="dark" href="/dashboard" />
+            <BrandLogo tone="light" href="/dashboard" />
             {onToggleCollapse && (
               <button
                 type="button"
                 onClick={onToggleCollapse}
                 title="Collapse sidebar"
                 aria-label="Collapse sidebar"
-                className="hidden md:flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
+                className="hidden md:flex h-8 w-8 items-center justify-center rounded-lg text-[#765653] hover:text-[#2B1B1B] hover:bg-[#FBE7E4] transition-colors"
               >
                 <ChevronLeft size={18} />
               </button>
@@ -239,7 +231,7 @@ export function StudentSidebar({
                 onClick={onToggleCollapse}
                 title="Expand sidebar"
                 aria-label="Expand sidebar"
-                className="hidden md:flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
+                className="hidden md:flex h-9 w-9 items-center justify-center rounded-xl text-[#765653] hover:text-[#2B1B1B] hover:bg-[#FBE7E4] transition-colors"
               >
                 <ChevronRight size={18} />
               </button>
@@ -253,7 +245,7 @@ export function StudentSidebar({
         {PRIMARY_SECTIONS.map((section) => (
           <div key={section.title} className="space-y-1">
             {!isCollapsed && (
-              <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-[#907D79]">
                 {section.title}
               </p>
             )}
@@ -265,12 +257,12 @@ export function StudentSidebar({
         ))}
 
         {/* Collapsible "More" Group */}
-        <div className="pt-2 border-t border-[#1E293B] space-y-1">
+        <div className="pt-2 border-t border-[#F0DEDA] space-y-1">
           {!isCollapsed ? (
             <button
               type="button"
               onClick={() => setMoreOpen(!moreOpen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-200 transition-colors"
+              className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#907D79] hover:text-[#59413F] transition-colors"
             >
               <span>More Features</span>
               <ChevronDown
@@ -279,7 +271,7 @@ export function StudentSidebar({
               />
             </button>
           ) : (
-            <div className="h-px bg-[#1E293B] my-2" />
+            <div className="h-px bg-[#F0DEDA] my-2" />
           )}
 
           {(!isCollapsed ? moreOpen : true) && (
@@ -290,12 +282,12 @@ export function StudentSidebar({
         </div>
 
         {/* Collapsible "Coming Soon" Group (Quiet at Bottom) */}
-        <div className="pt-2 border-t border-[#1E293B] space-y-1">
+        <div className="pt-2 border-t border-[#F0DEDA] space-y-1">
           {!isCollapsed ? (
             <button
               type="button"
               onClick={() => setSoonOpen(!soonOpen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-300 transition-colors"
+              className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#907D79] hover:text-[#59413F] transition-colors"
             >
               <span>Coming Soon</span>
               <ChevronDown
@@ -314,18 +306,19 @@ export function StudentSidebar({
       </nav>
 
       {/* Bottom Footer: Settings & Sign Out */}
-      <div className="p-2.5 border-t border-[#1E293B] bg-[#080E1E] shrink-0 space-y-1">
+      <div className="p-2.5 border-t border-[#F0DEDA] bg-[#F9EAE6] shrink-0 space-y-1">
         <Link
           href="/settings"
+          prefetch={true}
           onClick={onNavigate}
           title={isCollapsed ? "Settings" : undefined}
           className={[
-            "flex items-center min-h-[44px] rounded-xl px-3 py-2 text-[14px] font-medium text-slate-400 hover:bg-slate-800/60 hover:text-white transition-all",
+            "flex items-center min-h-[44px] rounded-xl px-3 py-2 text-[14px] font-medium text-[#765653] hover:bg-[#FBE7E4] hover:text-[#2B1B1B] transition-all",
             isCollapsed ? "justify-center px-2" : "gap-3",
-            pathname === "/settings" ? "bg-white/10 text-white font-semibold" : "",
+            pathname === "/settings" ? "bg-[#F5DCDD] text-[#7A0F1F] font-bold" : "",
           ].join(" ")}
         >
-          <Settings size={18} className="text-slate-400" />
+          <Settings size={18} className="text-[#896B66]" />
           {!isCollapsed && <span>Settings</span>}
         </Link>
 
@@ -338,11 +331,11 @@ export function StudentSidebar({
             }}
             title={isCollapsed ? "Sign Out" : undefined}
             className={[
-              "w-full flex items-center min-h-[44px] rounded-xl px-3 py-2 text-[14px] font-medium text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all",
+              "w-full flex items-center min-h-[44px] rounded-xl px-3 py-2 text-[14px] font-medium text-[#765653] hover:bg-rose-100/70 hover:text-rose-700 transition-all",
               isCollapsed ? "justify-center px-2" : "gap-3",
             ].join(" ")}
           >
-            <LogOut size={18} className="text-slate-400" />
+            <LogOut size={18} className="text-[#896B66] group-hover:text-rose-700" />
             {!isCollapsed && <span>Sign Out</span>}
           </button>
         )}

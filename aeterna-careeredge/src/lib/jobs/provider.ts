@@ -2,6 +2,7 @@
 // Multi-Domain Job Provider Abstraction with Jooble & Mock Fallback + 15-min Caching
 
 import { MULTI_DOMAIN_MOCK_JOBS } from "./mock-data";
+import { cleanRoleTitle, getDomainFriendlyLabel } from "./domain-mapper";
 import type {
   JobDomain,
   JobListing,
@@ -48,7 +49,9 @@ export class JoobleJobProvider implements JobProvider {
       throw new Error("JOOBLE_API_KEY is not configured");
     }
 
-    const keywords = [params.query, params.domain !== "ALL" ? params.domain : ""]
+    const cleanedQuery = cleanRoleTitle(params.query);
+    const domainKeyword = params.domain && params.domain !== "ALL" ? getDomainFriendlyLabel(params.domain) : "";
+    const keywords = [cleanedQuery, domainKeyword, "Fresher Trainee"]
       .filter(Boolean)
       .join(" ");
 
@@ -63,11 +66,11 @@ export class JoobleJobProvider implements JobProvider {
           Accept: "application/json",
         },
         body: JSON.stringify({
-          keywords: keywords || "Graduate Fresher",
+          keywords: keywords || "Graduate Fresher Trainee",
           location: params.location || "India",
           page: page,
         }),
-        signal: AbortSignal.timeout(8000), // 8-second timeout
+        signal: AbortSignal.timeout(3500), // 3.5-second timeout for responsive UX
       });
 
       if (!response.ok) {
@@ -136,6 +139,7 @@ export class JoobleJobProvider implements JobProvider {
         total: data.totalCount || jobs.length,
         page,
         pageSize: 20,
+        hasMore: (data.totalCount || jobs.length) > page * 20,
         sourceProvider: "JOOBLE_API",
       };
     } catch (err) {
@@ -152,46 +156,72 @@ export class JoobleJobProvider implements JobProvider {
 
 export class MultiDomainMockJobProvider implements JobProvider {
   async searchJobs(params: JobSearchParams): Promise<JobSearchResult> {
-    const queryLower = (params.query || "").toLowerCase().trim();
+    const rawQuery = (params.query || "").trim();
+    const queryClean = cleanRoleTitle(rawQuery).toLowerCase().trim();
     const locLower = (params.location || "").toLowerCase().trim();
     const domainFilter = params.domain && params.domain !== "ALL" ? params.domain : null;
 
-    const filtered = MULTI_DOMAIN_MOCK_JOBS.filter((job) => {
+    let pool = MULTI_DOMAIN_MOCK_JOBS.filter((job) => {
       if (domainFilter && job.domain !== domainFilter) {
         return false;
       }
-
       if (locLower && !job.location.toLowerCase().includes(locLower)) {
         return false;
       }
-
-      if (queryLower) {
-        const titleMatch = job.title.toLowerCase().includes(queryLower);
-        const companyMatch = job.company.toLowerCase().includes(queryLower);
-        const descMatch = job.description.toLowerCase().includes(queryLower);
-        const reqMatch = job.requirements.some((r) => r.toLowerCase().includes(queryLower));
-        if (!titleMatch && !companyMatch && !descMatch && !reqMatch) {
-          return false;
-        }
-      }
-
       if (params.employmentType && job.employmentType !== params.employmentType) {
         return false;
       }
-
       return true;
     });
+
+    if (queryClean) {
+      const tokens = queryClean
+        .split(/[\s/,-]+/)
+        .filter((w) => w.length > 2 && !["and", "the", "for", "with", "all", "job"].includes(w));
+
+      if (tokens.length > 0) {
+        const scored = pool.map((job) => {
+          let score = 0;
+          const titleLower = job.title.toLowerCase();
+          const descLower = job.description.toLowerCase();
+          const reqStr = job.requirements.join(" ").toLowerCase();
+
+          if (titleLower.includes(queryClean)) score += 60;
+          if (descLower.includes(queryClean)) score += 20;
+
+          for (const token of tokens) {
+            if (titleLower.includes(token)) score += 25;
+            if (reqStr.includes(token)) score += 15;
+            if (descLower.includes(token)) score += 8;
+          }
+
+          return { job, score };
+        });
+
+        const matches = scored.filter((s) => s.score > 0);
+        if (matches.length > 0) {
+          matches.sort((a, b) => b.score - a.score);
+          if (domainFilter) {
+            const nonMatches = scored.filter((s) => s.score === 0);
+            pool = [...matches.map((m) => m.job), ...nonMatches.map((n) => n.job)];
+          } else {
+            pool = matches.map((m) => m.job);
+          }
+        }
+      }
+    }
 
     const page = params.page || 1;
     const pageSize = params.pageSize || 10;
     const start = (page - 1) * pageSize;
-    const paginated = filtered.slice(start, start + pageSize);
+    const paginated = pool.slice(start, start + pageSize);
 
     return {
       jobs: paginated,
-      total: filtered.length,
+      total: pool.length,
       page,
       pageSize,
+      hasMore: start + pageSize < pool.length,
       sourceProvider: "MOCK_DEMO",
     };
   }
@@ -210,12 +240,16 @@ export class UnifiedJobProvider implements JobProvider {
   private mock = new MultiDomainMockJobProvider();
 
   async searchJobs(params: JobSearchParams): Promise<JobSearchResult> {
+    const page = params.page || 1;
+    const pageSize = params.pageSize || 9;
+
     const cacheKey = JSON.stringify({
       q: params.query || "",
       loc: params.location || "",
       dom: params.domain || "ALL",
       typ: params.employmentType || "",
-      p: params.page || 1,
+      p: page,
+      ps: pageSize,
     });
 
     const cached = SEARCH_CACHE.get(cacheKey);
@@ -223,25 +257,45 @@ export class UnifiedJobProvider implements JobProvider {
       return cached.data;
     }
 
-    let result: JobSearchResult;
+    // 1. Fetch matching verified curated multi-domain jobs
+    const mockRes = await this.mock.searchJobs({
+      ...params,
+      page: 1,
+      pageSize: 100,
+    });
+    let combinedJobs = [...mockRes.jobs];
 
-    // Try Jooble if configured
+    // 2. Query Jooble for live market jobs if configured
     if (this.jooble.isConfigured()) {
       try {
         const joobleRes = await this.jooble.searchJobs(params);
         if (joobleRes.jobs.length > 0) {
-          result = joobleRes;
-        } else {
-          // If Jooble returned 0 matches for domain, fallback to curated multi-domain mock
-          result = await this.mock.searchJobs(params);
+          const existingTitles = new Set(
+            combinedJobs.map((j) => j.title.toLowerCase().trim())
+          );
+          const uniqueLiveJobs = joobleRes.jobs.filter(
+            (j) =>
+              !existingTitles.has(j.title.toLowerCase().trim()) &&
+              (params.domain === "ALL" || j.domain === params.domain)
+          );
+          combinedJobs = [...combinedJobs, ...uniqueLiveJobs];
         }
-      } catch {
-        // Fallback to mock on error
-        result = await this.mock.searchJobs(params);
+      } catch (err) {
+        console.warn("[UnifiedJobProvider] Jooble live query skipped/failed:", err);
       }
-    } else {
-      result = await this.mock.searchJobs(params);
     }
+
+    const start = (page - 1) * pageSize;
+    const paginated = combinedJobs.slice(start, start + pageSize);
+
+    const result: JobSearchResult = {
+      jobs: paginated,
+      total: combinedJobs.length,
+      page,
+      pageSize,
+      hasMore: start + pageSize < combinedJobs.length,
+      sourceProvider: this.jooble.isConfigured() ? "JOOBLE_API" : "MOCK_DEMO",
+    };
 
     SEARCH_CACHE.set(cacheKey, { timestamp: Date.now(), data: result });
     return result;

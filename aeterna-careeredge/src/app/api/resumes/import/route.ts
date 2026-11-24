@@ -16,6 +16,7 @@ import {
   upsertExperienceRecord,
   upsertProjectRecord,
   upsertCertificationRecord,
+  normalizeSkillName,
 } from "@/lib/passport/deduplication";
 
 export const dynamic = "force-dynamic";
@@ -108,14 +109,42 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Add/Upsert Skills (Deduplicated)
+      // Batch Add/Upsert Skills (1 findMany + 1 createMany instead of 48 round trips)
+      const existingSkills = await prisma.studentSkill.findMany({
+        where: { userId },
+        select: { name: true },
+      });
+      const existingSkillNorms = new Set(
+        existingSkills.map((s) => normalizeSkillName(s.name))
+      );
+
+      const newSkillsToInsert: Array<{
+        userId: string;
+        name: string;
+        category: "TECHNICAL" | "DOMAIN" | "TOOL" | "SOFT";
+        proficiencyLevel: "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT";
+        dataOrigin: string;
+        isVerified: boolean;
+      }> = [];
+
       for (const sk of approvedPayload.skills) {
         if (!sk.name) continue;
-        await upsertSkillRecord(userId, {
-          name: sk.name,
-          category: sk.category || "TECHNICAL",
+        const norm = normalizeSkillName(sk.name);
+        if (!norm || existingSkillNorms.has(norm)) continue;
+        existingSkillNorms.add(norm);
+        newSkillsToInsert.push({
+          userId,
+          name: sk.name.trim(),
+          category: (sk.category as any) || "TECHNICAL",
           proficiencyLevel: "INTERMEDIATE",
           dataOrigin: "DOCUMENT_EXTRACTED",
+          isVerified: false,
+        });
+      }
+
+      if (newSkillsToInsert.length > 0) {
+        await prisma.studentSkill.createMany({
+          data: newSkillsToInsert,
         });
       }
 

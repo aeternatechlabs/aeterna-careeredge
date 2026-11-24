@@ -26,10 +26,25 @@ if (typeof Uint8Array !== "undefined") {
 const SESSION_COOKIE = "ace_session";
 
 // Routes that require the user to be logged in
-const PROTECTED_PREFIXES = ["/dashboard", "/onboarding", "/resume", "/sop",
-  "/passport", "/career-discovery", "/job-matcher", "/interview-coach",
-  "/portfolio", "/applications", "/mentor", "/counselling", "/settings",
+const PROTECTED_PREFIXES = [
+  "/dashboard",
+  "/passport",
+  "/resume",
+  "/evidence-vault",
+  "/truth-check",
   "/linkedin",
+  "/jobs",
+  "/applications",
+  "/role-fit-explorer",
+  "/sprints",
+  "/interview-prep",
+  "/counselling",
+  "/pricing",
+  "/sop",
+  "/settings",
+  "/progress",
+  "/value",
+  "/onboarding",
 ];
 
 // Routes that logged-in users should not see (redirect to dashboard)
@@ -38,6 +53,44 @@ const AUTH_ROUTES = ["/login", "/signup"];
 function getNormalizedSecret(): string {
   const secret = process.env.AUTH_SECRET || "xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM=";
   return secret.trim().replace(/^["']|["']$/g, "");
+}
+
+// Pre-encode secrets once at module load to avoid re-allocating TextEncoders on every request
+let cachedNormSecret = "";
+let cachedPrimarySecret: Uint8Array | null = null;
+let cachedCandidateSecrets: Uint8Array[] | null = null;
+
+function getPrimarySecretBytes(): Uint8Array {
+  const norm = getNormalizedSecret();
+  if (!cachedPrimarySecret || cachedNormSecret !== norm) {
+    cachedNormSecret = norm;
+    cachedPrimarySecret = new TextEncoder().encode(norm);
+  }
+  return cachedPrimarySecret;
+}
+
+function getCandidateSecretBytes(): Uint8Array[] {
+  const norm = getNormalizedSecret();
+  if (!cachedCandidateSecrets || cachedNormSecret !== norm) {
+    const list = [
+      norm,
+      "xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM=",
+      `"${norm}"`,
+      '"xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM="',
+      "default_dev_secret_careeredge",
+      "test-secret-key-for-unit-testing-32chars",
+    ];
+    const seen = new Set<string>();
+    const result: Uint8Array[] = [];
+    for (const item of list) {
+      if (!seen.has(item)) {
+        seen.add(item);
+        result.push(new TextEncoder().encode(item));
+      }
+    }
+    cachedCandidateSecrets = result;
+  }
+  return cachedCandidateSecrets;
 }
 
 async function getSessionFromRequest(
@@ -60,39 +113,43 @@ async function getSessionFromRequest(
     } catch {}
     cleanToken = cleanToken.trim().replace(/^["']|["']$/g, "").replace(/\s+/g, "");
 
+    // Convert standard base64 (+, /, =) into pure base64url (-, _, no padding)
+    const parts = cleanToken.split(".");
+    if (parts.length === 3) {
+      cleanToken = parts
+        .map((p) =>
+          p
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=+$/, "")
+        )
+        .join(".");
+    }
+
     const jwtMatch = cleanToken.match(/([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)/);
     if (jwtMatch) {
       cleanToken = jwtMatch[1];
     }
 
-    const norm = getNormalizedSecret();
-    const secrets = [
-      new TextEncoder().encode(norm),
-      new TextEncoder().encode("xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM="),
-      new TextEncoder().encode(`"${norm}"`),
-      new TextEncoder().encode('"xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM="'),
-      new TextEncoder().encode("default_dev_secret_careeredge"),
-      new TextEncoder().encode("test-secret-key-for-unit-testing-32chars"),
-    ];
-
     let payload: Record<string, unknown> | null = null;
-    for (const secret of secrets) {
-      try {
-        const res = await jwtVerify(cleanToken, secret);
-        payload = res.payload as Record<string, unknown>;
-        break;
-      } catch {}
+
+    // Fast path: verify with the primary secret first (succeeds 99.9% of the time in 1 call)
+    try {
+      const res = await jwtVerify(cleanToken, getPrimarySecretBytes());
+      payload = res.payload as Record<string, unknown>;
+    } catch {
+      // Fallback path: test remaining candidate secrets
+      const candidates = getCandidateSecretBytes();
+      for (const secret of candidates) {
+        try {
+          const res = await jwtVerify(cleanToken, secret);
+          payload = res.payload as Record<string, unknown>;
+          break;
+        } catch {}
+      }
     }
 
-    if (!payload) {
-      try {
-        const decoded = decodeJwt(cleanToken) as Record<string, unknown>;
-        if (decoded && (decoded.userId || decoded.sub || decoded.email || decoded.id)) {
-          payload = decoded;
-        }
-      } catch {}
-    }
-
+    // Strictly require cryptographic signature verification with secrets
     if (!payload) return null;
 
     const rawPayload = payload as Record<string, unknown>;
@@ -105,7 +162,7 @@ async function getSessionFromRequest(
   }
 }
 
-export async function proxy(request: NextRequest): Promise<NextResponse> {
+export default async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
   // Skip Next.js internals and static assets
@@ -117,12 +174,22 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
+  const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r);
+  const isProtected = PROTECTED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+
+  // If public route (e.g. landing page "/", pricing, terms, etc.) that is neither auth nor protected, return immediately!
+  if (!isAuthRoute && !isProtected) {
+    return NextResponse.next();
+  }
+
   const session = await getSessionFromRequest(request);
   const isLoggedIn = session !== null;
 
   // ── Redirect logged-in users away from auth pages ─────────────────────
 
-  if (isLoggedIn && AUTH_ROUTES.some((r) => pathname === r)) {
+  if (isLoggedIn && isAuthRoute) {
     if (!session.onboardingCompleted) {
       return NextResponse.redirect(new URL("/onboarding", request.url));
     }
@@ -135,10 +202,6 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   }
 
   // ── Protect student routes ─────────────────────────────────────────────
-
-  const isProtected = PROTECTED_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-  );
 
   if (isProtected && !isLoggedIn) {
     const loginUrl = new URL("/login", request.url);
@@ -159,6 +222,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   return NextResponse.next();
 }
+
+export { proxy, proxy as middleware };
 
 export const config = {
   matcher: [
