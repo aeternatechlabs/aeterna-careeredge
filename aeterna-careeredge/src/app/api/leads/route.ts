@@ -95,75 +95,93 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Resolve or create associated user record for relational integrity
-    let user = await db.user.findFirst({
-      where: {
-        OR: [
-          { email: normalizedEmail },
-          { mobile: normalizedMobile },
-        ],
-      },
-    });
+    let leadRecordId: string | undefined;
 
-    if (!user) {
-      user = await db.user.create({
+    try {
+      let user = await db.user.findFirst({
+        where: {
+          OR: [
+            { email: normalizedEmail },
+            { mobile: normalizedMobile },
+          ],
+        },
+      });
+
+      if (!user) {
+        user = await db.user.create({
+          data: {
+            name: name.trim(),
+            email: normalizedEmail,
+            mobile: normalizedMobile,
+            passwordHash: null, // Lead created without password; can claim account via reset/signup
+            counsellorConsent: Boolean(counsellorConsent),
+            onboardingCompleted: false,
+          },
+        });
+      }
+
+      // 3. Persist Lead in CrmLead table
+      const leadRecord = await db.crmLead.create({
         data: {
+          userId: user.id,
           name: name.trim(),
           email: normalizedEmail,
           mobile: normalizedMobile,
-          passwordHash: null, // Lead created without password; can claim account via reset/signup
+          city: city.trim(),
+          educationLevel: status.trim(),
+          careerInterest: interest.trim(),
           counsellorConsent: Boolean(counsellorConsent),
-          onboardingCompleted: false,
+          syncStatus: "PENDING",
         },
       });
+      leadRecordId = leadRecord.id;
+
+      // 4. Record compliance consent
+      const ipAddress =
+        req.headers.get("x-forwarded-for") ||
+        req.headers.get("x-real-ip") ||
+        "127.0.0.1";
+      const userAgent = req.headers.get("user-agent") || "unknown";
+
+      if (counsellorConsent) {
+        await recordConsent({
+          userId: user.id,
+          consentType: "COUNSELLOR_CONTACT",
+          isGranted: true,
+          version: "1.0",
+          ipAddress,
+          userAgent,
+        });
+      }
+    } catch (dbError: unknown) {
+      const err = dbError as { message?: string; code?: string; meta?: unknown; stack?: string };
+      console.error("[Lead Capture DB Error]:", {
+        message: err.message || String(dbError),
+        code: err.code,
+        meta: err.meta,
+        stack: err.stack,
+      });
+      // Do not abort: continue to send email notification so lead is never lost
     }
 
-    // 3. Persist Lead in CrmLead table
-    const leadRecord = await db.crmLead.create({
-      data: {
-        userId: user.id,
+    // 5. Dispatch Email Notification via Brevo/Resend to the company inbox
+    try {
+      await sendLeadNotificationEmail({
         name: name.trim(),
         email: normalizedEmail,
         mobile: normalizedMobile,
         city: city.trim(),
-        educationLevel: status.trim(),
-        careerInterest: interest.trim(),
+        status: status.trim(),
+        interest: interest.trim(),
         counsellorConsent: Boolean(counsellorConsent),
-        syncStatus: "PENDING",
-      },
-    });
-
-    // 4. Record compliance consent
-    const ipAddress =
-      req.headers.get("x-forwarded-for") ||
-      req.headers.get("x-real-ip") ||
-      "127.0.0.1";
-    const userAgent = req.headers.get("user-agent") || "unknown";
-
-    if (counsellorConsent) {
-      await recordConsent({
-        userId: user.id,
-        consentType: "COUNSELLOR_CONTACT",
-        isGranted: true,
-        version: "1.0",
-        ipAddress,
-        userAgent,
       });
+    } catch (emailError) {
+      console.error("[Lead Capture Email Error]:", emailError);
     }
-
-    // 5. Dispatch Email Notification via Resend to the company inbox
-    await sendLeadNotificationEmail({
-      name: name.trim(),
-      email: normalizedEmail,
-      mobile: normalizedMobile,
-      city: city.trim(),
-      status: status.trim(),
-      interest: interest.trim(),
-      counsellorConsent: Boolean(counsellorConsent),
-    });
 
     return NextResponse.json({
       success: true,
-      leadId: leadRecord.id,
+      leadId: leadRecordId,
       message: "Thank you! Our career guidance team has received your information.",
     });
   } catch (error) {
