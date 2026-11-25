@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(
@@ -16,9 +17,23 @@ export async function POST(
     }
 
     const { id } = await params;
-    const existing = await prisma.resume.findFirst({
-      where: { id, userId: session.userId },
-    });
+    const supabase = getSupabaseAdmin();
+    let existing: any = null;
+
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("resumes")
+        .select("*")
+        .eq("id", id)
+        .eq("userId", session.userId)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      existing = data;
+    } else {
+      existing = await prisma.resume.findFirst({
+        where: { id, userId: session.userId },
+      });
+    }
 
     if (!existing) {
       return NextResponse.json({ error: "Resume not found or access denied." }, { status: 404 });
@@ -28,18 +43,32 @@ export async function POST(
     const newTitle = body.title || `${existing.title} (Copy)`;
     const newTargetRole = body.targetRole || existing.targetRole;
 
-    const duplicated = await prisma.resume.create({
-      data: {
-        userId: session.userId,
-        title: newTitle,
-        targetRole: newTargetRole,
-        templateId: existing.templateId,
-        structuredData: existing.structuredData,
-        styleData: existing.styleData,
-        atsScore: existing.atsScore,
-        contentHash: existing.contentHash,
-      },
-    });
+    const duplicatePayload = {
+      userId: session.userId,
+      title: newTitle,
+      targetRole: newTargetRole,
+      templateId: existing.templateId,
+      structuredData: existing.structuredData,
+      styleData: existing.styleData,
+      atsScore: existing.atsScore,
+      contentHash: existing.contentHash,
+    };
+
+    let duplicated: any = null;
+
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("resumes")
+        .insert(duplicatePayload)
+        .select()
+        .single();
+      if (error || !data) throw new Error(error?.message || "Failed to duplicate resume.");
+      duplicated = data;
+    } else {
+      duplicated = await prisma.resume.create({
+        data: duplicatePayload,
+      });
+    }
 
     return NextResponse.json({ resume: duplicated }, { status: 201 });
   } catch (err: unknown) {

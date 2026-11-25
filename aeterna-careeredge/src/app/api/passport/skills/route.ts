@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { recalculateAndSavePassportScore } from "@/lib/passport/score";
 
@@ -18,11 +19,70 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Skill name is required." }, { status: 400 });
     }
 
+    const trimmedName = name.trim();
+    const supabase = getSupabaseAdmin();
+
+    if (supabase) {
+      // Check if skill already exists for this user
+      const { data: existing } = await supabase
+        .from("student_skills")
+        .select("*")
+        .eq("userId", session.userId)
+        .ilike("name", trimmedName)
+        .maybeSingle();
+
+      if (existing) {
+        return NextResponse.json({
+          success: true,
+          skill: existing,
+          message: "Skill already exists.",
+        });
+      }
+
+      const { data: created, error: createError } = await supabase
+        .from("student_skills")
+        .insert({
+          userId: session.userId,
+          name: trimmedName,
+          category: category || "TECHNICAL",
+          proficiencyLevel: proficiencyLevel || "INTERMEDIATE",
+          dataOrigin: "STUDENT_INPUT",
+          isVerified: false,
+        })
+        .select()
+        .single();
+
+      if (createError || !created) {
+        throw new Error(createError?.message || "Could not create skill.");
+      }
+
+      // Also update StudentProfile.skills serialized list
+      const { data: allSkills } = await supabase
+        .from("student_skills")
+        .select("name")
+        .eq("userId", session.userId);
+
+      if (allSkills) {
+        await supabase
+          .from("student_profiles")
+          .update({ skills: JSON.stringify(allSkills.map((s) => s.name)) })
+          .eq("userId", session.userId);
+      }
+
+      const newScore = await recalculateAndSavePassportScore(session.userId);
+
+      return NextResponse.json({
+        success: true,
+        skill: created,
+        score: newScore,
+      });
+    }
+
     // Check if skill already exists for this user
     const existing = await db.studentSkill.findFirst({
       where: {
         userId: session.userId,
-        name: { equals: name.trim() },
+        name: { equals: trimmedName },
       },
     });
 
@@ -37,7 +97,7 @@ export async function POST(req: NextRequest) {
     const created = await db.studentSkill.create({
       data: {
         userId: session.userId,
-        name: name.trim(),
+        name: trimmedName,
         category: category || "TECHNICAL",
         proficiencyLevel: proficiencyLevel || "INTERMEDIATE",
         dataOrigin: "STUDENT_INPUT",
@@ -77,6 +137,38 @@ export async function DELETE(req: NextRequest) {
     const id = searchParams.get("id");
 
     if (!id) return NextResponse.json({ error: "Missing skill ID." }, { status: 400 });
+
+    const supabase = getSupabaseAdmin();
+
+    if (supabase) {
+      const { data: existing } = await supabase
+        .from("student_skills")
+        .select("id")
+        .eq("id", id)
+        .eq("userId", session.userId)
+        .maybeSingle();
+
+      if (!existing) return NextResponse.json({ error: "Skill not found." }, { status: 404 });
+
+      await supabase.from("student_skills").delete().eq("id", id);
+
+      // Update StudentProfile.skills serialized list
+      const { data: allSkills } = await supabase
+        .from("student_skills")
+        .select("name")
+        .eq("userId", session.userId);
+
+      if (allSkills) {
+        await supabase
+          .from("student_profiles")
+          .update({ skills: JSON.stringify(allSkills.map((s) => s.name)) })
+          .eq("userId", session.userId);
+      }
+
+      const newScore = await recalculateAndSavePassportScore(session.userId);
+
+      return NextResponse.json({ success: true, id, score: newScore });
+    }
 
     const existing = await db.studentSkill.findFirst({
       where: { id, userId: session.userId },

@@ -3,6 +3,7 @@
 // Ensures student documents are NEVER exposed through public URLs
 
 import { db } from "@/lib/db";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import crypto from "crypto";
 import { getStorageProvider } from "./provider";
 
@@ -75,9 +76,29 @@ export async function authorizeDocumentAccess(
   documentId: string,
   authenticatedUserId: string
 ): Promise<StoredFileMetadata | null> {
-  const doc = await db.storedDocument.findUnique({
-    where: { id: documentId },
-  });
+  const supabase = getSupabaseAdmin();
+  let doc: {
+    id: string;
+    originalFileName: string;
+    storageKey: string;
+    mimeType: string;
+    fileSizeBytes: number;
+    category: string;
+    userId: string;
+  } | null = null;
+
+  if (supabase) {
+    const { data } = await supabase
+      .from("stored_documents")
+      .select("id, originalFileName, storageKey, mimeType, fileSizeBytes, category, userId")
+      .eq("id", documentId)
+      .maybeSingle();
+    doc = data;
+  } else {
+    doc = await db.storedDocument.findUnique({
+      where: { id: documentId },
+    });
+  }
 
   if (!doc) {
     return null;
@@ -156,19 +177,61 @@ export async function storeStudentDocument({
   // Save via active storage provider (outside public/)
   await provider.upload(storageKey, buffer, mimeType);
 
-  // Register metadata in database
-  const record = await db.storedDocument.create({
-    data: {
-      userId,
-      originalFileName: fileName,
-      storageKey,
-      mimeType,
-      fileSizeBytes: buffer.length,
-      category,
-      isPrivate: true,
-      storageEngine: provider.name,
-    },
-  });
+  const supabase = getSupabaseAdmin();
+  let record: {
+    id: string;
+    originalFileName: string;
+    storageKey: string;
+    mimeType: string;
+    fileSizeBytes: number;
+    category: string;
+    userId: string;
+  };
+
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("stored_documents")
+      .insert({
+        userId,
+        originalFileName: fileName,
+        storageKey,
+        mimeType,
+        fileSizeBytes: buffer.length,
+        category,
+        isPrivate: true,
+        storageEngine: provider.name,
+      })
+      .select("id, originalFileName, storageKey, mimeType, fileSizeBytes, category, userId")
+      .single();
+
+    if (error || !data) {
+      throw new Error(error?.message || "Failed to persist document metadata in database.");
+    }
+    record = data;
+  } else {
+    // Register metadata in database
+    const dbRecord = await db.storedDocument.create({
+      data: {
+        userId,
+        originalFileName: fileName,
+        storageKey,
+        mimeType,
+        fileSizeBytes: buffer.length,
+        category,
+        isPrivate: true,
+        storageEngine: provider.name,
+      },
+    });
+    record = {
+      id: dbRecord.id,
+      originalFileName: dbRecord.originalFileName,
+      storageKey: dbRecord.storageKey,
+      mimeType: dbRecord.mimeType,
+      fileSizeBytes: dbRecord.fileSizeBytes,
+      category: dbRecord.category,
+      userId: dbRecord.userId,
+    };
+  }
 
   return {
     id: record.id,

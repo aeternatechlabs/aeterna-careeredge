@@ -14,6 +14,7 @@ import {
   normalizeTextEncoding,
 } from "@/lib/resume/extractor";
 import { parseResumeWithIntelligence } from "@/lib/resume/parser";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -174,12 +175,26 @@ export async function POST(req: NextRequest) {
     }
 
     // Retrieve user academic domain for domain-specific classification
-    const userProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.userId },
-      select: { academicDomain: true, preferredJobRole: true },
-    });
-
-    const domainKey = userProfile?.academicDomain || "ENGINEERING_TECH";
+    let domainKey = "ENGINEERING_TECH";
+    const supabase = getSupabaseAdmin();
+    if (supabase) {
+      const { data: userProfile } = await supabase
+        .from("student_profiles")
+        .select("academicDomain, preferredJobRole")
+        .eq("userId", session.userId)
+        .maybeSingle();
+      if (userProfile?.academicDomain) {
+        domainKey = userProfile.academicDomain;
+      }
+    } else {
+      const userProfile = await prisma.studentProfile.findUnique({
+        where: { userId: session.userId },
+        select: { academicDomain: true, preferredJobRole: true },
+      });
+      if (userProfile?.academicDomain) {
+        domainKey = userProfile.academicDomain;
+      }
+    }
 
     // Parse extracted text into structured entities
     const parsedPayload = await parseResumeWithIntelligence(extractedText, domainKey);

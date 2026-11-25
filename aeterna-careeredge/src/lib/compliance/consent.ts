@@ -2,6 +2,7 @@
 // Compliance, Consent Audit Trail & Data Privacy Foundations
 
 import { db } from "@/lib/db";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export type ConsentType =
   | "TERMS_AND_PRIVACY"
@@ -20,6 +21,29 @@ export async function recordConsent(params: {
   userAgent?: string;
   version?: string;
 }) {
+  const supabase = getSupabaseAdmin();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("consent_records")
+      .insert({
+        userId: params.userId,
+        consentType: params.consentType,
+        isGranted: params.isGranted,
+        ipAddress: params.ipAddress || null,
+        userAgent: params.userAgent || null,
+        version: params.version ?? "1.0",
+        revokedAt: params.isGranted ? null : new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.warn("[recordConsent] Supabase insert warning:", error.message);
+    } else if (data) {
+      return data;
+    }
+  }
+
   return db.consentRecord.create({
     data: {
       userId: params.userId,

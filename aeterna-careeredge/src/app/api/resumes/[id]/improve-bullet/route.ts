@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { checkEntitlement } from "@/lib/monetization/entitlements";
 import { improveBullet } from "@/lib/resume/ai-analyzer";
@@ -18,14 +19,30 @@ export async function POST(
     }
 
     const { id } = await params;
-    const resume = await prisma.resume.findFirst({
-      where: { id, userId: session.userId },
-      include: {
-        user: {
-          select: { profile: true },
+    const supabase = getSupabaseAdmin();
+    let resume: any = null;
+
+    if (supabase) {
+      const [rRes, pRes] = await Promise.all([
+        supabase.from("resumes").select("*").eq("id", id).eq("userId", session.userId).maybeSingle(),
+        supabase.from("student_profiles").select("*").eq("userId", session.userId).maybeSingle(),
+      ]);
+      if (rRes.data) {
+        resume = {
+          ...rRes.data,
+          user: { profile: pRes.data || null },
+        };
+      }
+    } else {
+      resume = await prisma.resume.findFirst({
+        where: { id, userId: session.userId },
+        include: {
+          user: {
+            select: { profile: true },
+          },
         },
-      },
-    });
+      });
+    }
 
     if (!resume) {
       return NextResponse.json({ error: "Resume not found or access denied." }, { status: 404 });

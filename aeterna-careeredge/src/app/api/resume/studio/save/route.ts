@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { DEFAULT_STYLE_CONFIG } from "@/lib/resume/templates";
 import { computeResumeContentHash } from "@/lib/resume/adapter";
@@ -12,19 +13,38 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest) {
   try {
     let session = (await getSession(req)) || (await getSession());
+    const supabase = getSupabaseAdmin();
     if (!session || !session.userId) {
-      const fallbackUser = await db.user.findFirst({
-        where: { email: { not: "intruder@careeredge.internal" } },
-        orderBy: { createdAt: "asc" },
-        select: { id: true, email: true, name: true, onboardingCompleted: true },
-      });
-      if (fallbackUser) {
-        session = {
-          userId: fallbackUser.id,
-          email: fallbackUser.email,
-          name: fallbackUser.name,
-          onboardingCompleted: fallbackUser.onboardingCompleted,
-        };
+      if (supabase) {
+        const { data: fallbackUser } = await supabase
+          .from("users")
+          .select("id, email, name, onboardingCompleted")
+          .neq("email", "intruder@careeredge.internal")
+          .order("createdAt", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (fallbackUser) {
+          session = {
+            userId: fallbackUser.id,
+            email: fallbackUser.email,
+            name: fallbackUser.name,
+            onboardingCompleted: fallbackUser.onboardingCompleted,
+          };
+        }
+      } else {
+        const fallbackUser = await db.user.findFirst({
+          where: { email: { not: "intruder@careeredge.internal" } },
+          orderBy: { createdAt: "asc" },
+          select: { id: true, email: true, name: true, onboardingCompleted: true },
+        });
+        if (fallbackUser) {
+          session = {
+            userId: fallbackUser.id,
+            email: fallbackUser.email,
+            name: fallbackUser.name,
+            onboardingCompleted: fallbackUser.onboardingCompleted,
+          };
+        }
       }
     }
 
@@ -142,19 +162,35 @@ export async function POST(req: NextRequest) {
 
     const title = cleanMojibake(resumeTitle || `${targetRole || "Role"} - ${option.strategyName}`);
 
-    const newResume = await db.resume.create({
-      data: {
-        userId: session.userId,
-        title,
-        targetRole: targetRole || null,
-        templateId: option.templateId || "standard-modern",
-        structuredData: serializedData,
-        styleData: JSON.stringify(effectiveStyle),
-        atsScore: option.matchScore || 85,
-        contentHash,
-        isDefault: false,
-      },
-    });
+    const resumePayload = {
+      userId: session.userId,
+      title,
+      targetRole: targetRole || null,
+      templateId: option.templateId || "standard-modern",
+      structuredData: serializedData,
+      styleData: JSON.stringify(effectiveStyle),
+      atsScore: option.matchScore || 85,
+      contentHash,
+      isDefault: false,
+    };
+
+    let newResume: { id: string; title: string };
+
+    if (supabase) {
+      const { data: created, error: insertError } = await supabase
+        .from("resumes")
+        .insert(resumePayload)
+        .select("id, title")
+        .single();
+      if (insertError || !created) {
+        throw new Error(insertError?.message || "Failed to save active resume.");
+      }
+      newResume = created;
+    } else {
+      newResume = await db.resume.create({
+        data: resumePayload,
+      });
+    }
 
     return NextResponse.json({
       success: true,

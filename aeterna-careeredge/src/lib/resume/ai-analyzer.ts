@@ -5,6 +5,7 @@
 import { ServerAiService } from "@/lib/ai/provider";
 import { recordUsage } from "@/lib/monetization/entitlements";
 import { prisma } from "@/lib/prisma";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type {
   FullResumeData,
   FullResumeAnalysisReport,
@@ -36,13 +37,28 @@ export async function analyzeFullResume(
 
   // 1. Content-Hash Cache Check (Zero AI Cost on Re-open)
   if (!forceRefresh) {
-    const cachedRecord = await prisma.resumeAnalysisRecord.findFirst({
-      where: {
-        resumeId,
-        contentHash,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const supabase = getSupabaseAdmin();
+    let cachedRecord: any = null;
+
+    if (supabase) {
+      const { data } = await supabase
+        .from("resume_analyses")
+        .select("*")
+        .eq("resumeId", resumeId)
+        .eq("contentHash", contentHash)
+        .order("createdAt", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      cachedRecord = data;
+    } else {
+      cachedRecord = await prisma.resumeAnalysisRecord.findFirst({
+        where: {
+          resumeId,
+          contentHash,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+    }
 
     if (cachedRecord) {
       try {
@@ -186,36 +202,55 @@ Return ONLY valid JSON matching this schema:
 
   // 3. Persist Analysis Record in DB
   try {
-    await prisma.resumeAnalysisRecord.create({
-      data: {
-        resumeId,
-        userId,
-        contentHash,
-        overallScore: validatedReport.overallScore,
-        overallSummary: validatedReport.scoreExplanation,
-        priorityFixes: JSON.stringify(validatedReport.topPriorityFixes),
-        sectionAnalyses: JSON.stringify(validatedReport.sectionAnalyses),
-        crossSectionIssues: JSON.stringify(validatedReport.crossSectionIssues),
-        atsReadability: JSON.stringify(validatedReport.atsReadabilityFindings),
-        jdComparison: validatedReport.jdComparison ? JSON.stringify(validatedReport.jdComparison) : null,
-        isAiGenerated: !!aiRes.success,
-      },
-    });
+    const supabase = getSupabaseAdmin();
+    const analysisPayload = {
+      resumeId,
+      userId,
+      contentHash,
+      overallScore: validatedReport.overallScore,
+      overallSummary: validatedReport.scoreExplanation,
+      priorityFixes: JSON.stringify(validatedReport.topPriorityFixes),
+      sectionAnalyses: JSON.stringify(validatedReport.sectionAnalyses),
+      crossSectionIssues: JSON.stringify(validatedReport.crossSectionIssues),
+      atsReadability: JSON.stringify(validatedReport.atsReadabilityFindings),
+      jdComparison: validatedReport.jdComparison ? JSON.stringify(validatedReport.jdComparison) : null,
+      isAiGenerated: !!aiRes.success,
+    };
 
-    // Update resume record with latest score and content hash
-    await prisma.resume.update({
-      where: { id: resumeId },
-      data: {
-        atsScore: validatedReport.overallScore,
-        contentHash,
-        lastAnalyzedAt: new Date(),
-        feedback: JSON.stringify({
-          overallScore: validatedReport.overallScore,
-          scoreExplanation: validatedReport.scoreExplanation,
-          priorityFixes: validatedReport.topPriorityFixes,
-        }),
-      },
-    });
+    const resumeUpdatePayload = {
+      atsScore: validatedReport.overallScore,
+      contentHash,
+      lastAnalyzedAt: new Date().toISOString(),
+      feedback: JSON.stringify({
+        overallScore: validatedReport.overallScore,
+        scoreExplanation: validatedReport.scoreExplanation,
+        priorityFixes: validatedReport.topPriorityFixes,
+      }),
+    };
+
+    if (supabase) {
+      await supabase.from("resume_analyses").insert(analysisPayload);
+      await supabase.from("resumes").update(resumeUpdatePayload).eq("id", resumeId);
+    } else {
+      await prisma.resumeAnalysisRecord.create({
+        data: analysisPayload,
+      });
+
+      // Update resume record with latest score and content hash
+      await prisma.resume.update({
+        where: { id: resumeId },
+        data: {
+          atsScore: validatedReport.overallScore,
+          contentHash,
+          lastAnalyzedAt: new Date(),
+          feedback: JSON.stringify({
+            overallScore: validatedReport.overallScore,
+            scoreExplanation: validatedReport.scoreExplanation,
+            priorityFixes: validatedReport.topPriorityFixes,
+          }),
+        },
+      });
+    }
 
     // Record usage with operation key
     await recordUsage({

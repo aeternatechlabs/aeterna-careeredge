@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { authorizeDocumentAccess } from "@/lib/storage/private-storage";
 import { getStorageProvider } from "@/lib/storage/provider";
@@ -36,16 +37,26 @@ export async function DELETE(
       console.warn("[DocumentDelete] Storage file deletion notice:", e);
     }
 
-    // 2. Unlink from any resumes
-    await prisma.resume.updateMany({
-      where: { documentId: id },
-      data: { documentId: null },
-    });
+    const supabase = getSupabaseAdmin();
 
-    // 3. Remove DB record
-    await prisma.storedDocument.delete({
-      where: { id },
-    });
+    if (supabase) {
+      // 2. Unlink from any resumes
+      await supabase.from("resumes").update({ documentId: null }).eq("documentId", id);
+
+      // 3. Remove DB record
+      await supabase.from("stored_documents").delete().eq("id", id);
+    } else {
+      // 2. Unlink from any resumes
+      await prisma.resume.updateMany({
+        where: { documentId: id },
+        data: { documentId: null },
+      });
+
+      // 3. Remove DB record
+      await prisma.storedDocument.delete({
+        where: { id },
+      });
+    }
 
     return NextResponse.json(
       { success: true, message: "Uploaded resume removed securely." },

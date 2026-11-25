@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import type { ParsedResumePayload } from "@/lib/resume/parser";
 import {
@@ -17,19 +18,38 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest) {
   try {
     let session = (await getSession(req)) || (await getSession());
+    const supabase = getSupabaseAdmin();
     if (!session || !session.userId) {
-      const fallbackUser = await db.user.findFirst({
-        where: { email: { not: "intruder@careeredge.internal" } },
-        orderBy: { createdAt: "asc" },
-        select: { id: true, email: true, name: true, onboardingCompleted: true },
-      });
-      if (fallbackUser) {
-        session = {
-          userId: fallbackUser.id,
-          email: fallbackUser.email,
-          name: fallbackUser.name,
-          onboardingCompleted: fallbackUser.onboardingCompleted,
-        };
+      if (supabase) {
+        const { data: fallbackUser } = await supabase
+          .from("users")
+          .select("id, email, name, onboardingCompleted")
+          .neq("email", "intruder@careeredge.internal")
+          .order("createdAt", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (fallbackUser) {
+          session = {
+            userId: fallbackUser.id,
+            email: fallbackUser.email,
+            name: fallbackUser.name,
+            onboardingCompleted: fallbackUser.onboardingCompleted,
+          };
+        }
+      } else {
+        const fallbackUser = await db.user.findFirst({
+          where: { email: { not: "intruder@careeredge.internal" } },
+          orderBy: { createdAt: "asc" },
+          select: { id: true, email: true, name: true, onboardingCompleted: true },
+        });
+        if (fallbackUser) {
+          session = {
+            userId: fallbackUser.id,
+            email: fallbackUser.email,
+            name: fallbackUser.name,
+            onboardingCompleted: fallbackUser.onboardingCompleted,
+          };
+        }
       }
     }
 
@@ -53,35 +73,62 @@ export async function POST(req: NextRequest) {
 
     // If source is passport, assemble payload from verified database records
     if (sourceType === "passport" || !parsedPayload) {
-      const user = await db.user.findUnique({
-        where: { id: session.userId },
-        select: { name: true, email: true, mobile: true },
-      });
+      let user: { name: string; email: string; mobile: string | null } | null = null;
+      let profile: any = null;
+      let educations: any[] = [];
+      let experiences: any[] = [];
+      let projects: any[] = [];
+      let skills: any[] = [];
+      let certifications: any[] = [];
 
-      const profile = await db.studentProfile.findUnique({
-        where: { userId: session.userId },
-      });
+      if (supabase) {
+        const [uRes, pRes, eRes, expRes, prjRes, sRes, cRes] = await Promise.all([
+          supabase.from("users").select("name, email, mobile").eq("id", session.userId).maybeSingle(),
+          supabase.from("student_profiles").select("*").eq("userId", session.userId).maybeSingle(),
+          supabase.from("education_records").select("*").eq("userId", session.userId).order("startYear", { ascending: false }),
+          supabase.from("student_experiences").select("*").eq("userId", session.userId),
+          supabase.from("student_projects").select("*").eq("userId", session.userId),
+          supabase.from("student_skills").select("*").eq("userId", session.userId),
+          supabase.from("certifications").select("*").eq("userId", session.userId),
+        ]);
+        user = uRes.data;
+        profile = pRes.data;
+        educations = eRes.data || [];
+        experiences = expRes.data || [];
+        projects = prjRes.data || [];
+        skills = sRes.data || [];
+        certifications = cRes.data || [];
+      } else {
+        user = await db.user.findUnique({
+          where: { id: session.userId },
+          select: { name: true, email: true, mobile: true },
+        });
 
-      const educations = await db.educationRecord.findMany({
-        where: { userId: session.userId },
-        orderBy: { startYear: "desc" },
-      });
+        profile = await db.studentProfile.findUnique({
+          where: { userId: session.userId },
+        });
 
-      const experiences = await db.studentExperience.findMany({
-        where: { userId: session.userId },
-      });
+        educations = await db.educationRecord.findMany({
+          where: { userId: session.userId },
+          orderBy: { startYear: "desc" },
+        });
 
-      const projects = await db.studentProject.findMany({
-        where: { userId: session.userId },
-      });
+        experiences = await db.studentExperience.findMany({
+          where: { userId: session.userId },
+        });
 
-      const skills = await db.studentSkill.findMany({
-        where: { userId: session.userId },
-      });
+        projects = await db.studentProject.findMany({
+          where: { userId: session.userId },
+        });
 
-      const certifications = await db.certification.findMany({
-        where: { userId: session.userId },
-      });
+        skills = await db.studentSkill.findMany({
+          where: { userId: session.userId },
+        });
+
+        certifications = await db.certification.findMany({
+          where: { userId: session.userId },
+        });
+      }
 
       parsedPayload = {
         contactInfo: {

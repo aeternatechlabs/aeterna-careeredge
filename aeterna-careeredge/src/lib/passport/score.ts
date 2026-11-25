@@ -4,6 +4,7 @@
 // verified competencies, projects, work experience, and certifications.
 
 import { db } from "@/lib/db";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export interface ScoreBreakdown {
   score: number;
@@ -17,17 +18,43 @@ export interface ScoreBreakdown {
 }
 
 export async function recalculateAndSavePassportScore(userId: string): Promise<number> {
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    include: {
-      profile: true,
-      educations: true,
-      skills: true,
-      projects: true,
-      experiences: true,
-      certifications: true,
-    },
-  });
+  const supabase = getSupabaseAdmin();
+  let user: any = null;
+
+  if (supabase) {
+    const [uRes, pRes, eRes, sRes, prjRes, expRes, cRes] = await Promise.all([
+      supabase.from("users").select("id").eq("id", userId).maybeSingle(),
+      supabase.from("student_profiles").select("*").eq("userId", userId).maybeSingle(),
+      supabase.from("education_records").select("id").eq("userId", userId),
+      supabase.from("student_skills").select("id").eq("userId", userId),
+      supabase.from("student_projects").select("id").eq("userId", userId),
+      supabase.from("student_experiences").select("id").eq("userId", userId),
+      supabase.from("certifications").select("id").eq("userId", userId),
+    ]);
+
+    if (!uRes.data) return 15;
+
+    user = {
+      profile: pRes.data,
+      educations: eRes.data || [],
+      skills: sRes.data || [],
+      projects: prjRes.data || [],
+      experiences: expRes.data || [],
+      certifications: cRes.data || [],
+    };
+  } else {
+    user = await db.user.findUnique({
+      where: { id: userId },
+      include: {
+        profile: true,
+        educations: true,
+        skills: true,
+        projects: true,
+        experiences: true,
+        certifications: true,
+      },
+    });
+  }
 
   if (!user) return 15;
 
@@ -70,10 +97,17 @@ export async function recalculateAndSavePassportScore(userId: string): Promise<n
 
   // Save to StudentProfile if profile exists
   if (p) {
-    await db.studentProfile.update({
-      where: { userId },
-      data: { passportScore: finalScore },
-    });
+    if (supabase) {
+      await supabase
+        .from("student_profiles")
+        .update({ passportScore: finalScore })
+        .eq("userId", userId);
+    } else {
+      await db.studentProfile.update({
+        where: { userId },
+        data: { passportScore: finalScore },
+      });
+    }
   }
 
   return finalScore;

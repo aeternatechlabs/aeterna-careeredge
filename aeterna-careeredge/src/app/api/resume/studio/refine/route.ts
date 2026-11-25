@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import type { ResumeStudioStrategyOption } from "@/lib/resume/studio-generator";
 import { ServerAiService } from "@/lib/ai/provider";
@@ -20,19 +21,38 @@ interface RefineResponseData {
 export async function POST(req: NextRequest) {
   try {
     let session = (await getSession(req)) || (await getSession());
+    const supabase = getSupabaseAdmin();
     if (!session || !session.userId) {
-      const fallbackUser = await db.user.findFirst({
-        where: { email: { not: "intruder@careeredge.internal" } },
-        orderBy: { createdAt: "asc" },
-        select: { id: true, email: true, name: true, onboardingCompleted: true },
-      });
-      if (fallbackUser) {
-        session = {
-          userId: fallbackUser.id,
-          email: fallbackUser.email,
-          name: fallbackUser.name,
-          onboardingCompleted: fallbackUser.onboardingCompleted,
-        };
+      if (supabase) {
+        const { data: fallbackUser } = await supabase
+          .from("users")
+          .select("id, email, name, onboardingCompleted")
+          .neq("email", "intruder@careeredge.internal")
+          .order("createdAt", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (fallbackUser) {
+          session = {
+            userId: fallbackUser.id,
+            email: fallbackUser.email,
+            name: fallbackUser.name,
+            onboardingCompleted: fallbackUser.onboardingCompleted,
+          };
+        }
+      } else {
+        const fallbackUser = await db.user.findFirst({
+          where: { email: { not: "intruder@careeredge.internal" } },
+          orderBy: { createdAt: "asc" },
+          select: { id: true, email: true, name: true, onboardingCompleted: true },
+        });
+        if (fallbackUser) {
+          session = {
+            userId: fallbackUser.id,
+            email: fallbackUser.email,
+            name: fallbackUser.name,
+            onboardingCompleted: fallbackUser.onboardingCompleted,
+          };
+        }
       }
     }
 

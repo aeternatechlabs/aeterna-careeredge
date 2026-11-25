@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { ServerAiService } from "@/lib/ai/provider";
 import { getFrameworkForDomain } from "@/lib/resume/frameworks";
@@ -20,9 +21,23 @@ export async function POST(
     }
 
     const { id } = await params;
-    const resume = await prisma.resume.findFirst({
-      where: { id, userId: session.userId },
-    });
+    const supabase = getSupabaseAdmin();
+    let resume: any = null;
+
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("resumes")
+        .select("*")
+        .eq("id", id)
+        .eq("userId", session.userId)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      resume = data;
+    } else {
+      resume = await prisma.resume.findFirst({
+        where: { id, userId: session.userId },
+      });
+    }
 
     if (!resume) {
       return NextResponse.json({ error: "Resume not found." }, { status: 404 });
