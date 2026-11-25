@@ -1,13 +1,9 @@
 // src/lib/auth/oauth.ts
-// Real Google OAuth architecture with fallback development simulation
+// Real Google OAuth architecture with native Supabase user persistence
 
 import crypto from "crypto";
-import { db } from "@/lib/db";
-import {
-  getSupabaseRestConfig,
-  makeRestId,
-  supabaseRestFetch,
-} from "@/lib/supabase/rest";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { makeRestId } from "@/lib/supabase/rest";
 
 export interface GoogleUserProfile {
   sub: string;
@@ -107,130 +103,93 @@ export interface GoogleIdentityUser {
   passwordHash: string | null;
 }
 
-const USER_SELECT_QUERY = "id,name,email,onboardingCompleted,passwordHash";
-
-async function findGoogleUserViaRest(
-  config: NonNullable<ReturnType<typeof getSupabaseRestConfig>>,
-  normalizedEmail: string
-): Promise<GoogleIdentityUser | null> {
-  const res = await supabaseRestFetch<GoogleIdentityUser[]>(
-    config,
-    `/rest/v1/users?email=eq.${encodeURIComponent(normalizedEmail)}&select=${USER_SELECT_QUERY}&limit=1`
-  );
-
-  if (!res.ok) {
-    throw new Error(`Supabase REST user lookup failed (${res.status}): ${res.errorText}`);
-  }
-
-  return Array.isArray(res.data) && res.data.length > 0 ? res.data[0] : null;
-}
-
-async function handleGoogleIdentityViaSupabaseRest(
-  normalizedEmail: string,
-  userName: string
-): Promise<{ user: GoogleIdentityUser; isNew: boolean }> {
-  const config = getSupabaseRestConfig();
-  if (!config) {
-    throw new Error("Supabase REST fallback unavailable: missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-  }
-
-  const existing = await findGoogleUserViaRest(config, normalizedEmail);
-  if (existing) {
-    return { user: existing, isNew: false };
-  }
-
-  const now = new Date().toISOString();
-  const createRes = await supabaseRestFetch<GoogleIdentityUser[]>(config, "/rest/v1/users", {
-    method: "POST",
-    body: JSON.stringify({
-      id: makeRestId("usr"),
-      name: userName,
-      email: normalizedEmail,
-      passwordHash: null, // OAuth user
-      onboardingCompleted: false,
-      counsellorConsent: false,
-      createdAt: now,
-      updatedAt: now,
-    }),
-  });
-
-  if (!createRes.ok) {
-    // Handle concurrent duplicate-email insert race cleanly
-    if (createRes.status === 409) {
-      const racedUser = await findGoogleUserViaRest(config, normalizedEmail);
-      if (racedUser) {
-        return { user: racedUser, isNew: false };
-      }
-    }
-    throw new Error(`Supabase REST user creation failed (${createRes.status}): ${createRes.errorText}`);
-  }
-
-  const created = Array.isArray(createRes.data) ? createRes.data[0] : null;
-  if (!created?.id) {
-    throw new Error("Supabase REST user creation succeeded but returned no user record");
-  }
-
-  return {
-    user: {
-      ...created,
-      onboardingCompleted: Boolean(created.onboardingCompleted),
-      passwordHash: created.passwordHash ?? null,
-    },
-    isNew: true,
-  };
-}
-
 /**
- * Safely resolves an authenticated Google user.
- * Uses Prisma first (local Node/dev) and falls back to Supabase PostgREST on Cloudflare Workers.
- * If user exists: links or returns the user.
+ * Safely resolves an authenticated Google user directly via Supabase.
+ * If user exists: returns the user.
  * If user does not exist: creates new user with null passwordHash.
  */
 export async function handleGoogleIdentity(profile: {
   email: string;
   name?: string;
   sub: string;
-}) {
+}): Promise<{ user: GoogleIdentityUser; isNew: boolean }> {
   const normalizedEmail = profile.email.trim().toLowerCase();
   const userName = profile.name?.trim() || "Google User";
+  const supabase = getSupabaseAdmin();
 
-  try {
-    let user = await db.user.findUnique({
-      where: { email: normalizedEmail },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        onboardingCompleted: true,
-        passwordHash: true,
-      },
-    });
+  const { data: existingUser, error: queryErr } = await supabase
+    .from("users")
+    .select("id, name, email, onboardingCompleted, passwordHash")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
 
-    let isNew = false;
-
-    if (!user) {
-      isNew = true;
-      user = await db.user.create({
-        data: {
-          name: userName,
-          email: normalizedEmail,
-          passwordHash: null, // OAuth user
-          onboardingCompleted: false,
-          counsellorConsent: false,
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          onboardingCompleted: true,
-          passwordHash: true,
-        },
-      });
-    }
-
-    return { user, isNew };
-  } catch (prismaErr) {
-    console.warn("[OAuth] Prisma unavailable, using Supabase REST fallback:", prismaErr);
-    return handleGoogleIdentityViaSupabaseRest(normalizedEmail, userName);
+  if (queryErr) {
+    throw new Error(`Google identity lookup failed: ${queryErr.message}`);
   }
+
+  if (existingUser) {
+    return {
+      user: {
+        id: existingUser.id,
+        name: existingUser.name,
+        email: existingUser.email,
+        onboardingCompleted: Boolean(existingUser.onboardingCompleted),
+        passwordHash: existingUser.passwordHash ?? null,
+      },
+      isNew: false,
+    };
+  }
+
+  const now = new Date().toISOString();
+  const newUserId = makeRestId("usr");
+  const { data: newUser, error: createErr } = await supabase
+    .from("users")
+    .insert({
+      id: newUserId,
+      name: userName,
+      email: normalizedEmail,
+      passwordHash: null,
+      onboardingCompleted: false,
+      counsellorConsent: false,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .select("id, name, email, onboardingCompleted, passwordHash")
+    .single();
+
+  if (createErr) {
+    if (createErr.code === "23505") {
+      // Duplicate race condition
+      const { data: racedUser } = await supabase
+        .from("users")
+        .select("id, name, email, onboardingCompleted, passwordHash")
+        .eq("email", normalizedEmail)
+        .maybeSingle();
+
+      if (racedUser) {
+        return {
+          user: {
+            id: racedUser.id,
+            name: racedUser.name,
+            email: racedUser.email,
+            onboardingCompleted: Boolean(racedUser.onboardingCompleted),
+            passwordHash: racedUser.passwordHash ?? null,
+          },
+          isNew: false,
+        };
+      }
+    }
+    throw new Error(`Google identity user creation failed: ${createErr.message}`);
+  }
+
+  return {
+    user: {
+      id: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
+      onboardingCompleted: Boolean(newUser.onboardingCompleted),
+      passwordHash: newUser.passwordHash ?? null,
+    },
+    isNew: true,
+  };
 }
