@@ -24,6 +24,10 @@ export async function GET(req: NextRequest) {
   // Check if real Google OAuth is configured
   if (!isGoogleOAuthConfigured()) {
     if (process.env.NODE_ENV === "production") {
+      console.error("[OAuth Google 503] Missing Google OAuth credentials in runtime env", {
+        hasClientId: Boolean(process.env.GOOGLE_CLIENT_ID),
+        hasClientSecret: Boolean(process.env.GOOGLE_CLIENT_SECRET),
+      });
       return NextResponse.json(
         { error: "Google OAuth is not configured on this server." },
         { status: 503 }
