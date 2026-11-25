@@ -2,7 +2,7 @@
 // Robust Career Passport Deduplication & Upsert Engine
 // Prevents duplicate entries across resume imports, LinkedIn merges, and manual additions.
 
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { recalculateAndSavePassportScore } from "@/lib/passport/score";
 
 // ── Text Normalization Helpers ────────────────────────────────────────────────
@@ -120,7 +120,7 @@ export async function upsertEducationRecord(userId: string, input: EducationInpu
   const normDeg = normalizeText(input.degree || input.level);
 
   // Find all user's education records
-  const existingRecords = await prisma.educationRecord.findMany({
+  const existingRecords = await db.educationRecord.findMany({
     where: { userId },
   });
 
@@ -139,7 +139,7 @@ export async function upsertEducationRecord(userId: string, input: EducationInpu
 
   if (match) {
     // Update existing record with any missing richer info
-    return await prisma.educationRecord.update({
+    return await db.educationRecord.update({
       where: { id: match.id },
       data: {
         institution: match.institution || input.institution,
@@ -155,7 +155,7 @@ export async function upsertEducationRecord(userId: string, input: EducationInpu
   }
 
   // Create new
-  return await prisma.educationRecord.create({
+  return await db.educationRecord.create({
     data: {
       userId,
       institution: input.institution,
@@ -192,7 +192,7 @@ export async function upsertExperienceRecord(userId: string, input: ExperienceIn
   const normComp = normalizeText(input.companyName);
   const normTitle = normalizeText(input.jobTitle);
 
-  const existingRecords = await prisma.studentExperience.findMany({
+  const existingRecords = await db.studentExperience.findMany({
     where: { userId },
   });
 
@@ -213,7 +213,7 @@ export async function upsertExperienceRecord(userId: string, input: ExperienceIn
         ? input.description
         : match.description;
 
-    return await prisma.studentExperience.update({
+    return await db.studentExperience.update({
       where: { id: match.id },
       data: {
         description: bestDesc,
@@ -227,7 +227,7 @@ export async function upsertExperienceRecord(userId: string, input: ExperienceIn
     });
   }
 
-  return await prisma.studentExperience.create({
+  return await db.studentExperience.create({
     data: {
       userId,
       companyName: input.companyName,
@@ -263,7 +263,7 @@ export interface ProjectInput {
 export async function upsertProjectRecord(userId: string, input: ProjectInput) {
   const normTitle = normalizeText(input.title);
 
-  const existingRecords = await prisma.studentProject.findMany({
+  const existingRecords = await db.studentProject.findMany({
     where: { userId },
   });
 
@@ -280,7 +280,7 @@ export async function upsertProjectRecord(userId: string, input: ProjectInput) {
 
     const bestUrl = match.projectUrl || input.projectUrl || input.repositoryUrl || input.artifactUrl;
 
-    return await prisma.studentProject.update({
+    return await db.studentProject.update({
       where: { id: match.id },
       data: {
         description: bestDesc || match.description,
@@ -296,7 +296,7 @@ export async function upsertProjectRecord(userId: string, input: ProjectInput) {
   }
 
   const techString = input.toolsOrTechnologies || "";
-  return await prisma.studentProject.create({
+  return await db.studentProject.create({
     data: {
       userId,
       title: input.title,
@@ -330,7 +330,7 @@ export async function upsertSkillRecord(userId: string, input: SkillInput) {
   const norm = normalizeSkillName(input.name);
   if (!norm) return null;
 
-  const existingRecords = await prisma.studentSkill.findMany({
+  const existingRecords = await db.studentSkill.findMany({
     where: { userId },
   });
 
@@ -342,7 +342,7 @@ export async function upsertSkillRecord(userId: string, input: SkillInput) {
     return match;
   }
 
-  return await prisma.studentSkill.create({
+  return await db.studentSkill.create({
     data: {
       userId,
       name: input.name.trim(),
@@ -369,7 +369,7 @@ export async function upsertCertificationRecord(userId: string, input: Certifica
   const normTitle = normalizeText(input.title);
   const normOrg = normalizeText(input.issuingOrganization);
 
-  const existingRecords = await prisma.certification.findMany({
+  const existingRecords = await db.certification.findMany({
     where: { userId },
   });
 
@@ -391,7 +391,7 @@ export async function upsertCertificationRecord(userId: string, input: Certifica
       ? input.issuingOrganization
       : match.issuingOrganization;
 
-    return await prisma.certification.update({
+    return await db.certification.update({
       where: { id: match.id },
       data: {
         issuingOrganization: cleanOrg || "Issuing Organization",
@@ -402,7 +402,7 @@ export async function upsertCertificationRecord(userId: string, input: Certifica
     });
   }
 
-  return await prisma.certification.create({
+  return await db.certification.create({
     data: {
       userId,
       title: input.title.trim(),
@@ -435,7 +435,7 @@ export async function deduplicateUserPassport(userId: string): Promise<Deduplica
   let certificationsRemoved = 0;
 
   // 1. Educations Deduplication
-  const educations = await prisma.educationRecord.findMany({
+  const educations = await db.educationRecord.findMany({
     where: { userId },
     orderBy: { createdAt: "asc" },
   });
@@ -462,14 +462,14 @@ export async function deduplicateUserPassport(userId: string): Promise<Deduplica
   }
 
   if (eduIdsToDelete.length > 0) {
-    await prisma.educationRecord.deleteMany({
+    await db.educationRecord.deleteMany({
       where: { id: { in: eduIdsToDelete } },
     });
     educationsRemoved = eduIdsToDelete.length;
   }
 
   // 2. Experiences Deduplication
-  const experiences = await prisma.studentExperience.findMany({
+  const experiences = await db.studentExperience.findMany({
     where: { userId },
     orderBy: { createdAt: "asc" },
   });
@@ -500,14 +500,14 @@ export async function deduplicateUserPassport(userId: string): Promise<Deduplica
   }
 
   if (expIdsToDelete.length > 0) {
-    await prisma.studentExperience.deleteMany({
+    await db.studentExperience.deleteMany({
       where: { id: { in: expIdsToDelete } },
     });
     experiencesRemoved = expIdsToDelete.length;
   }
 
   // 3. Projects Deduplication
-  const projects = await prisma.studentProject.findMany({
+  const projects = await db.studentProject.findMany({
     where: { userId },
     orderBy: { createdAt: "asc" },
   });
@@ -535,14 +535,14 @@ export async function deduplicateUserPassport(userId: string): Promise<Deduplica
   }
 
   if (projIdsToDelete.length > 0) {
-    await prisma.studentProject.deleteMany({
+    await db.studentProject.deleteMany({
       where: { id: { in: projIdsToDelete } },
     });
     projectsRemoved = projIdsToDelete.length;
   }
 
   // 4. Skills Deduplication
-  const skills = await prisma.studentSkill.findMany({
+  const skills = await db.studentSkill.findMany({
     where: { userId },
     orderBy: { createdAt: "asc" },
   });
@@ -563,14 +563,14 @@ export async function deduplicateUserPassport(userId: string): Promise<Deduplica
   }
 
   if (skillIdsToDelete.length > 0) {
-    await prisma.studentSkill.deleteMany({
+    await db.studentSkill.deleteMany({
       where: { id: { in: skillIdsToDelete } },
     });
     skillsRemoved = skillIdsToDelete.length;
   }
 
   // 5. Certifications Deduplication
-  const certs = await prisma.certification.findMany({
+  const certs = await db.certification.findMany({
     where: { userId },
     orderBy: { createdAt: "asc" },
   });
@@ -599,7 +599,7 @@ export async function deduplicateUserPassport(userId: string): Promise<Deduplica
   }
 
   if (certIdsToDelete.length > 0) {
-    await prisma.certification.deleteMany({
+    await db.certification.deleteMany({
       where: { id: { in: certIdsToDelete } },
     });
     certificationsRemoved = certIdsToDelete.length;

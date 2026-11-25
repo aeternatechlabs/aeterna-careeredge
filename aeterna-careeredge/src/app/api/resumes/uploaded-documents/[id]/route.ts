@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { authorizeDocumentAccess } from "@/lib/storage/private-storage";
 import { getStorageProvider } from "@/lib/storage/provider";
 
@@ -47,13 +47,13 @@ export async function DELETE(
       await supabase.from("stored_documents").delete().eq("id", id);
     } else {
       // 2. Unlink from any resumes
-      await prisma.resume.updateMany({
+      await db.resume.updateMany({
         where: { documentId: id },
         data: { documentId: null },
       });
 
       // 3. Remove DB record
-      await prisma.storedDocument.delete({
+      await db.storedDocument.delete({
         where: { id },
       });
     }

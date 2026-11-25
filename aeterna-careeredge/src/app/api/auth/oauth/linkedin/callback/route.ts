@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, createSession, SESSION_COOKIE_NAME, isSecureCookie } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import {
   exchangeLinkedInCode,
   fetchLinkedInUserInfo,
@@ -54,11 +54,11 @@ export async function GET(req: NextRequest) {
 
     // 3. Resolve student user safely
     let resolvedUser = initialUserId
-      ? await prisma.user.findUnique({ where: { id: initialUserId } })
+      ? await db.user.findUnique({ where: { id: initialUserId } })
       : null;
 
     if (!resolvedUser && identity.sub) {
-      const linked = await prisma.linkedInProfile.findFirst({
+      const linked = await db.linkedInProfile.findFirst({
         where: { linkedInSubId: identity.sub },
         include: { user: true },
       });
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (!resolvedUser && identity.email) {
-      resolvedUser = await prisma.user.findUnique({
+      resolvedUser = await db.user.findUnique({
         where: { email: identity.email.toLowerCase().trim() },
       });
     }

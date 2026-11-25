@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { checkEntitlement } from "@/lib/monetization/entitlements";
 import { normalizeResumeData } from "@/lib/resume/adapter";
 import { improveSingleSection } from "@/lib/resume/ai-analyzer";
@@ -41,7 +41,7 @@ export async function POST(
         };
       }
     } else {
-      resume = await prisma.resume.findFirst({
+      resume = await db.resume.findFirst({
         where: { id, userId: session.userId },
         include: {
           user: {

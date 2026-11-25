@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { generateId } from "@/lib/supabase/db-proxy";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { getFrameworkForDomain } from "@/lib/resume/frameworks";
 
 export async function GET(req: NextRequest) {
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ resumes: resumes || [] });
     }
 
-    const resumes = await prisma.resume.findMany({
+    const resumes = await db.resume.findMany({
       where: { userId: session.userId },
       orderBy: { updatedAt: "desc" },
     });
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
         };
       }
     } else {
-      user = await prisma.user.findUnique({
+      user = await db.user.findUnique({
         where: { id: session.userId },
         include: {
           profile: true,
@@ -294,7 +294,7 @@ export async function POST(req: NextRequest) {
       }
       newResume = created;
     } else {
-      newResume = await prisma.resume.create({
+      newResume = await db.resume.create({
         data: {
           userId: session.userId,
           title: resumeTitle,

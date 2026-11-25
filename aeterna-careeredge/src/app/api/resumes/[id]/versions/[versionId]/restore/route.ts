@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 
 export async function POST(
   req: NextRequest,
@@ -16,7 +16,7 @@ export async function POST(
     }
 
     const { id, versionId } = await params;
-    const version = await prisma.resumeVersion.findFirst({
+    const version = await db.resumeVersion.findFirst({
       where: {
         id: versionId,
         resumeId: id,
@@ -29,12 +29,12 @@ export async function POST(
     }
 
     // Save a backup of current state before restoring
-    const currentResume = await prisma.resume.findFirst({
+    const currentResume = await db.resume.findFirst({
       where: { id, userId: session.userId },
     });
 
     if (currentResume) {
-      await prisma.resumeVersion.create({
+      await db.resumeVersion.create({
         data: {
           resumeId: id,
           userId: session.userId,
@@ -54,7 +54,7 @@ export async function POST(
       parsedSnapshot = {};
     }
 
-    const updated = await prisma.resume.update({
+    const updated = await db.resume.update({
       where: { id },
       data: {
         structuredData: version.snapshot,

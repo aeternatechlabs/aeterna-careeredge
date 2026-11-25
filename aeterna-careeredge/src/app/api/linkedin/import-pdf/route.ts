@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { getStorageProvider } from "@/lib/storage/provider";
 import { MAX_FILE_SIZE_BYTES } from "@/lib/storage/private-storage";
 import { parseLinkedInProfileText } from "@/lib/linkedin/parser";
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     await storageProvider.upload(storageKey, bytes, file.type);
 
     // 2. Save StoredDocument record
-    const storedDoc = await prisma.storedDocument.create({
+    const storedDoc = await db.storedDocument.create({
       data: {
         userId: session.userId,
         originalFileName: file.name,
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     const parsed = parseLinkedInProfileText(extractedText, "LINKEDIN_PDF");
 
     // 4. Save staged import in LinkedInProfile
-    await prisma.linkedInProfile.upsert({
+    await db.linkedInProfile.upsert({
       where: { userId: session.userId },
       update: {
         importedRawJson: JSON.stringify(parsed),

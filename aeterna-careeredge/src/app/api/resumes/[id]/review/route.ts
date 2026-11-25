@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { analyzeResumeIntelligence } from "@/lib/resume/intelligence";
 import { checkEntitlement } from "@/lib/monetization/entitlements";
 
@@ -18,7 +18,7 @@ export async function POST(
     }
 
     const { id } = await params;
-    const resume = await prisma.resume.findFirst({
+    const resume = await db.resume.findFirst({
       where: { id, userId: session.userId },
     });
 
@@ -75,7 +75,7 @@ export async function POST(
     });
 
     // Save updated ATS score and feedback in DB
-    await prisma.resume.update({
+    await db.resume.update({
       where: { id },
       data: {
         atsScore: report.atsReadabilityScore,

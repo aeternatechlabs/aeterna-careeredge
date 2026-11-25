@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
       }
       docs = data || [];
     } else {
-      const dbDocs = await prisma.storedDocument.findMany({
+      const dbDocs = await db.storedDocument.findMany({
         where: {
           userId: session.userId,
           category: "RESUME",

@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { generateId } from "@/lib/supabase/db-proxy";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 
 export async function POST(
   req: NextRequest,
@@ -31,7 +31,7 @@ export async function POST(
       if (error) throw new Error(error.message);
       existing = data;
     } else {
-      existing = await prisma.resume.findFirst({
+      existing = await db.resume.findFirst({
         where: { id, userId: session.userId },
       });
     }
@@ -66,7 +66,7 @@ export async function POST(
       if (error || !data) throw new Error(error?.message || "Failed to duplicate resume.");
       duplicated = data;
     } else {
-      duplicated = await prisma.resume.create({
+      duplicated = await db.resume.create({
         data: duplicatePayload,
       });
     }

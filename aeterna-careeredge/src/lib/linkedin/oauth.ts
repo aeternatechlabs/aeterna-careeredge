@@ -3,7 +3,7 @@
 // Follows official LinkedIn OIDC specifications. Keeps client secrets strictly server-side.
 
 import crypto from "crypto";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 
 export interface LinkedInIdentity {
   sub: string;
@@ -106,7 +106,7 @@ export async function fetchLinkedInUserInfo(accessToken: string): Promise<Linked
  * Link LinkedIn identity to student user in database.
  */
 export async function linkLinkedInAccount(userId: string, identity: LinkedInIdentity) {
-  return prisma.linkedInProfile.upsert({
+  return db.linkedInProfile.upsert({
     where: { userId },
     update: {
       linkedInSubId: identity.sub,
@@ -130,10 +130,10 @@ export async function linkLinkedInAccount(userId: string, identity: LinkedInIden
  * Disconnect LinkedIn account safely.
  */
 export async function disconnectLinkedInAccount(userId: string) {
-  const existing = await prisma.linkedInProfile.findUnique({ where: { userId } });
+  const existing = await db.linkedInProfile.findUnique({ where: { userId } });
   if (!existing) return null;
 
-  return prisma.linkedInProfile.update({
+  return db.linkedInProfile.update({
     where: { userId },
     data: {
       linkedInSubId: null,

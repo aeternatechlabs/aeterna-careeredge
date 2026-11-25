@@ -15,7 +15,7 @@ import {
 } from "@/lib/resume/extractor";
 import { parseResumeWithIntelligence } from "@/lib/resume/parser";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -187,7 +187,7 @@ export async function POST(req: NextRequest) {
         domainKey = userProfile.academicDomain;
       }
     } else {
-      const userProfile = await prisma.studentProfile.findUnique({
+      const userProfile = await db.studentProfile.findUnique({
         where: { userId: session.userId },
         select: { academicDomain: true, preferredJobRole: true },
       });

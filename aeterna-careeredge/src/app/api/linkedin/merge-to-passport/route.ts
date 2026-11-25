@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import {
   upsertEducationRecord,
   upsertSkillRecord,
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
 
     // 4. Update Headline in StudentProfile if requested
     if (headline && typeof headline === "string" && headline.trim()) {
-      await prisma.studentProfile.upsert({
+      await db.studentProfile.upsert({
         where: { userId: session.userId },
         update: { headline: headline.trim() },
         create: {

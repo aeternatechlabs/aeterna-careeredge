@@ -2,7 +2,7 @@
 // Truth Check Engine (Day 2 Addendum Section B2)
 // Deterministic verification engine ensuring every resume or LinkedIn claim is traceable to the Career Passport or Evidence Vault.
 
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 
 export interface ClaimVerificationItem {
   field: string;
@@ -43,13 +43,13 @@ export async function runTruthCheck(params: {
   // 1. Fetch Student Ground Truth from Career Passport & Evidence Vault
   const [profile, educations, skills, experiences, _projects, certifications, evidenceItems] =
     await Promise.all([
-      prisma.studentProfile.findUnique({ where: { userId } }),
-      prisma.educationRecord.findMany({ where: { userId } }),
-      prisma.studentSkill.findMany({ where: { userId } }),
-      prisma.studentExperience.findMany({ where: { userId } }),
-      prisma.studentProject.findMany({ where: { userId } }),
-      prisma.certification.findMany({ where: { userId } }),
-      prisma.evidenceItem.findMany({ where: { userId } }),
+      db.studentProfile.findUnique({ where: { userId } }),
+      db.educationRecord.findMany({ where: { userId } }),
+      db.studentSkill.findMany({ where: { userId } }),
+      db.studentExperience.findMany({ where: { userId } }),
+      db.studentProject.findMany({ where: { userId } }),
+      db.certification.findMany({ where: { userId } }),
+      db.evidenceItem.findMany({ where: { userId } }),
     ]);
 
   const verifiedSkills = new Set<string>(skills.map((s: { name: string }) => s.name.toLowerCase().trim()));
@@ -244,7 +244,7 @@ export async function runTruthCheck(params: {
   const honestyScore = total === 0 ? 100 : Math.round(((verifiedCount + needsEvidenceCount * 0.7) / total) * 100);
 
   // 8. Persist to TruthCheckResult database table
-  await prisma.truthCheckResult.create({
+  await db.truthCheckResult.create({
     data: {
       userId,
       targetType: documentType,
@@ -281,11 +281,11 @@ export async function confirmClaimAsTruth(params: {
 
   if (field === "Skill") {
     // Add to studentSkill
-    const existing = await prisma.studentSkill.findFirst({
+    const existing = await db.studentSkill.findFirst({
       where: { userId, name: clean },
     });
     if (!existing) {
-      await prisma.studentSkill.create({
+      await db.studentSkill.create({
         data: {
           userId,
           name: clean,
@@ -295,7 +295,7 @@ export async function confirmClaimAsTruth(params: {
       });
     }
   } else if (field === "Certification") {
-    await prisma.evidenceItem.create({
+    await db.evidenceItem.create({
       data: {
         userId,
         title: clean,

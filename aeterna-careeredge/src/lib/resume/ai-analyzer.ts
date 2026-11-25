@@ -4,7 +4,7 @@
 
 import { ServerAiService } from "@/lib/ai/provider";
 import { recordUsage } from "@/lib/monetization/entitlements";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { generateId } from "@/lib/supabase/db-proxy";
 import type {
@@ -52,7 +52,7 @@ export async function analyzeFullResume(
         .maybeSingle();
       cachedRecord = data;
     } else {
-      cachedRecord = await prisma.resumeAnalysisRecord.findFirst({
+      cachedRecord = await db.resumeAnalysisRecord.findFirst({
         where: {
           resumeId,
           contentHash,
@@ -233,12 +233,12 @@ Return ONLY valid JSON matching this schema:
       await supabase.from("resume_analyses").insert({ id: generateId(), ...analysisPayload });
       await supabase.from("resumes").update({ ...resumeUpdatePayload, updatedAt: new Date().toISOString() }).eq("id", resumeId);
     } else {
-      await prisma.resumeAnalysisRecord.create({
+      await db.resumeAnalysisRecord.create({
         data: analysisPayload,
       });
 
       // Update resume record with latest score and content hash
-      await prisma.resume.update({
+      await db.resume.update({
         where: { id: resumeId },
         data: {
           atsScore: validatedReport.overallScore,

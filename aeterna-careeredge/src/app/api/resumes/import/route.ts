@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import type { ParsedResumePayload } from "@/lib/resume/parser";
 import { convertParsedPayloadToResumeData } from "@/lib/resume/parser";
 import { computeResumeContentHash } from "@/lib/resume/adapter";
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       if (targetRole) profileUpdates.preferredJobRole = targetRole;
 
       if (Object.keys(profileUpdates).length > 0) {
-        await prisma.studentProfile.updateMany({
+        await db.studentProfile.updateMany({
           where: { userId },
           data: profileUpdates,
         });
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
         const cleanMobile = approvedPayload.contactInfo.phone.replace(/^\+91\s?/, "").replace(/\D/g, "");
         if (cleanMobile.length >= 10) {
           try {
-            await prisma.user.update({
+            await db.user.update({
               where: { id: userId },
               data: { mobile: cleanMobile },
             });
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Batch Add/Upsert Skills (1 findMany + 1 createMany instead of 48 round trips)
-      const existingSkills = await prisma.studentSkill.findMany({
+      const existingSkills = await db.studentSkill.findMany({
         where: { userId },
         select: { name: true },
       });
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (newSkillsToInsert.length > 0) {
-        await prisma.studentSkill.createMany({
+        await db.studentSkill.createMany({
           data: newSkillsToInsert,
         });
       }
@@ -189,7 +189,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Create Resume Studio Draft
     if (createResume) {
-      const studentProfile = await prisma.studentProfile.findUnique({
+      const studentProfile = await db.studentProfile.findUnique({
         where: { userId },
         select: { academicDomain: true, preferredJobRole: true },
       });
@@ -206,7 +206,7 @@ export async function POST(req: NextRequest) {
       const title = resumeTitle || `${effectiveRole} Resume (Uploaded)`;
       const contentHash = computeResumeContentHash(resumeData);
 
-      const createdResume = await prisma.resume.create({
+      const createdResume = await db.resume.create({
         data: {
           userId,
           title,
@@ -223,7 +223,7 @@ export async function POST(req: NextRequest) {
       createdResumeId = createdResume.id;
 
       // Create snapshot version record
-      await prisma.resumeVersion.create({
+      await db.resumeVersion.create({
         data: {
           resumeId: createdResume.id,
           userId,

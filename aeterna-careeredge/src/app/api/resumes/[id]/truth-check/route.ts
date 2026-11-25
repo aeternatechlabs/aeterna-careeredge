@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { runTruthCheck } from "@/lib/truth-check/service";
 
 export async function POST(
@@ -17,7 +17,7 @@ export async function POST(
     }
 
     const { id } = await params;
-    const resume = await prisma.resume.findFirst({
+    const resume = await db.resume.findFirst({
       where: { id, userId: session.userId },
     });
 

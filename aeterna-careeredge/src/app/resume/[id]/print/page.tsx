@@ -5,7 +5,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { normalizeResumeData } from "@/lib/resume/adapter";
 import { verifyExportToken } from "@/lib/resume/pdf-export";
 import { PrintClient } from "./print-client";
@@ -22,7 +22,7 @@ interface PrintPageProps {
 
 export async function generateMetadata({ params }: PrintPageProps): Promise<Metadata> {
   const { id } = await params;
-  const resumeRecord = await prisma.resume.findUnique({
+  const resumeRecord = await db.resume.findUnique({
     where: { id },
     select: {
       targetRole: true,
@@ -49,7 +49,7 @@ export default async function ResumePrintPage({ params, searchParams }: PrintPag
   const { id } = await params;
   const { autoPrint, exportToken, isPdfExport, pageSize } = await searchParams;
 
-  const resumeRecord = await prisma.resume.findUnique({
+  const resumeRecord = await db.resume.findUnique({
     where: { id },
     select: { id: true, userId: true },
   });
@@ -76,10 +76,10 @@ export default async function ResumePrintPage({ params, searchParams }: PrintPag
   }
 
   const [resume, user] = await Promise.all([
-    prisma.resume.findUnique({
+    db.resume.findUnique({
       where: { id },
     }),
-    prisma.user.findUnique({
+    db.user.findUnique({
       where: { id: authenticatedUserId },
       include: { profile: true },
     }),

@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 
 export async function GET(
   req: NextRequest,
@@ -30,7 +30,7 @@ export async function GET(
       if (error) throw new Error(error.message);
       resume = data;
     } else {
-      resume = await prisma.resume.findFirst({
+      resume = await db.resume.findFirst({
         where: { id, userId: session.userId },
       });
     }
@@ -72,7 +72,7 @@ export async function PUT(
       if (error) throw new Error(error.message);
       existing = data;
     } else {
-      existing = await prisma.resume.findFirst({
+      existing = await db.resume.findFirst({
         where: { id, userId: session.userId },
       });
     }
@@ -109,7 +109,7 @@ export async function PUT(
       if (error || !data) throw new Error(error?.message || "Failed to update resume.");
       updated = data;
     } else {
-      updated = await prisma.resume.update({
+      updated = await db.resume.update({
         where: { id },
         data: updatePayload,
       });
@@ -148,7 +148,7 @@ export async function DELETE(
       if (error) throw new Error(error.message);
       existing = data;
     } else {
-      existing = await prisma.resume.findFirst({
+      existing = await db.resume.findFirst({
         where: { id, userId: session.userId },
       });
     }
@@ -161,7 +161,7 @@ export async function DELETE(
       const { error } = await supabase.from("resumes").delete().eq("id", id);
       if (error) throw new Error(error.message);
     } else {
-      await prisma.resume.delete({
+      await db.resume.delete({
         where: { id },
       });
     }

@@ -3,7 +3,7 @@
 
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { analyzeLinkedInProfile } from "@/lib/linkedin/analysis";
 
 export async function GET(req: Request) {
@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     }
 
     const [user, profile] = await Promise.all([
-      prisma.user.findUnique({
+      db.user.findUnique({
         where: { id: session.userId },
         include: {
           profile: true,
@@ -23,7 +23,7 @@ export async function GET(req: Request) {
           certifications: true,
         },
       }),
-      prisma.linkedInProfile.findUnique({
+      db.linkedInProfile.findUnique({
         where: { userId: session.userId },
       }),
     ]);
@@ -94,7 +94,7 @@ export async function GET(req: Request) {
 
     // Save optimization score in database
     if (profile) {
-      await prisma.linkedInProfile.update({
+      await db.linkedInProfile.update({
         where: { userId: session.userId },
         data: { optimizationScore: analysisReport.overallScore },
       });

@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { checkEntitlement } from "@/lib/monetization/entitlements";
 import { optimizeLinkedInSection, type LinkedInSectionType } from "@/lib/linkedin/optimizer";
 
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     } = body;
 
     const [user, existingLinkedIn] = await Promise.all([
-      prisma.user.findUnique({
+      db.user.findUnique({
         where: { id: session.userId },
         include: {
           profile: true,
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
           },
         },
       }),
-      prisma.linkedInProfile.findUnique({
+      db.linkedInProfile.findUnique({
         where: { userId: session.userId },
       }),
     ]);
@@ -226,7 +226,7 @@ export async function POST(req: NextRequest) {
     currentSections[sectionType] = result;
     updateData.sectionsJson = JSON.stringify(currentSections);
 
-    await prisma.linkedInProfile.upsert({
+    await db.linkedInProfile.upsert({
       where: { userId: session.userId },
       update: updateData,
       create: {

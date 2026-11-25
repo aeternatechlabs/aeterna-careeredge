@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { computeResumeContentHash } from "@/lib/resume/adapter";
 import type { FullResumeData } from "@/lib/resume/types";
 
@@ -18,7 +18,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const resume = await prisma.resume.findFirst({
+    const resume = await db.resume.findFirst({
       where: { id, userId: session.userId },
     });
 
@@ -26,7 +26,7 @@ export async function GET(
       return NextResponse.json({ error: "Resume not found or access denied." }, { status: 404 });
     }
 
-    const versions = await prisma.resumeVersion.findMany({
+    const versions = await db.resumeVersion.findMany({
       where: { resumeId: id, userId: session.userId },
       orderBy: { createdAt: "desc" },
       select: {
@@ -59,7 +59,7 @@ export async function POST(
     }
 
     const { id } = await params;
-    const resume = await prisma.resume.findFirst({
+    const resume = await db.resume.findFirst({
       where: { id, userId: session.userId },
     });
 
@@ -73,7 +73,7 @@ export async function POST(
     const fullData = snapshotData as FullResumeData;
     const contentHash = fullData?.contentHash || (fullData ? computeResumeContentHash(fullData) : "snapshot");
 
-    const newVersion = await prisma.resumeVersion.create({
+    const newVersion = await db.resumeVersion.create({
       data: {
         resumeId: id,
         userId: session.userId,

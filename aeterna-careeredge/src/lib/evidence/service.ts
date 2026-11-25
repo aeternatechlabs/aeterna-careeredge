@@ -2,7 +2,7 @@
 // Evidence Vault ("Proof Bank") Service (Day 2 Addendum Section B1)
 // Tracks verified artifacts, certificates, project URLs, and clinical logs with strict provenance.
 
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 
 export type EvidenceType =
   | "CERTIFICATE"
@@ -35,7 +35,7 @@ export interface CreateEvidenceInput {
  * Retrieve all evidence vault items for an authenticated student.
  */
 export async function getEvidenceItems(userId: string) {
-  return prisma.evidenceItem.findMany({
+  return db.evidenceItem.findMany({
     where: { userId },
     include: {
       storedDocument: {
@@ -58,7 +58,7 @@ export async function getEvidenceItems(userId: string) {
 export async function createEvidenceItem(userId: string, input: CreateEvidenceInput) {
   // If storedDocId is provided, verify it belongs to this user
   if (input.storedDocId) {
-    const doc = await prisma.storedDocument.findFirst({
+    const doc = await db.storedDocument.findFirst({
       where: { id: input.storedDocId, userId },
     });
     if (!doc) {
@@ -72,7 +72,7 @@ export async function createEvidenceItem(userId: string, input: CreateEvidenceIn
     if (!isNaN(d.getTime())) parsedDate = d;
   }
 
-  return prisma.evidenceItem.create({
+  return db.evidenceItem.create({
     data: {
       userId,
       title: input.title,
@@ -92,14 +92,14 @@ export async function createEvidenceItem(userId: string, input: CreateEvidenceIn
  * Delete an evidence item with ownership guarantee.
  */
 export async function deleteEvidenceItem(userId: string, id: string) {
-  const existing = await prisma.evidenceItem.findFirst({
+  const existing = await db.evidenceItem.findFirst({
     where: { id, userId },
   });
   if (!existing) {
     throw new Error("Evidence item not found or unauthorized.");
   }
 
-  return prisma.evidenceItem.delete({
+  return db.evidenceItem.delete({
     where: { id },
   });
 }
@@ -112,12 +112,12 @@ export async function evaluateSkillEvidence(
   userId: string,
   claimedSkills: string[]
 ): Promise<Record<string, { status: EvidenceStatus; evidenceTitles: string[] }>> {
-  const evidenceItems = await prisma.evidenceItem.findMany({
+  const evidenceItems = await db.evidenceItem.findMany({
     where: { userId },
     select: { title: true, relatedSkill: true, url: true, documentId: true },
   });
 
-  const passportSkills = await prisma.studentSkill.findMany({
+  const passportSkills = await db.studentSkill.findMany({
     where: { userId },
     select: { name: true },
   });

@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { generateResumePdf } from "@/lib/resume/pdf-export";
 
 export async function GET(
@@ -24,10 +24,10 @@ export async function GET(
 
     // Enforce strict multi-tenant ownership check
     const [resume, user] = await Promise.all([
-      prisma.resume.findFirst({
+      db.resume.findFirst({
         where: { id, userId: session.userId },
       }),
-      prisma.user.findUnique({
+      db.user.findUnique({
         where: { id: session.userId },
       }),
     ]);
