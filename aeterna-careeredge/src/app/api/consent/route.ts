@@ -6,8 +6,8 @@ import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { recordConsent, type ConsentType } from "@/lib/compliance/consent";
 
-export async function GET(): Promise<NextResponse> {
-  const session = await getSession();
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  const session = await getSession(req);
   if (!session) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
@@ -28,7 +28,7 @@ export async function GET(): Promise<NextResponse> {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const session = await getSession();
+  const session = await getSession(req);
   if (!session) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }

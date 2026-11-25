@@ -31,8 +31,8 @@ const PROFILE_COLUMNS = [
   "passportScore",
 ].join(",");
 
-export async function GET(): Promise<NextResponse> {
-  const session = await getSession();
+export async function GET(req: Request): Promise<NextResponse> {
+  const session = await getSession(req);
 
   if (!session) {
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
