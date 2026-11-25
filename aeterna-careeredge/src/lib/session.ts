@@ -43,7 +43,14 @@ function getNormalizedSecret(): string {
       }
     } catch {}
   }
-  cachedNormSecret = (secret || "xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM=").trim().replace(/^["']|["']$/g, "");
+
+  if (process.env.NODE_ENV === "production" && (!secret || secret.trim().length < 32)) {
+    throw new Error(
+      "FATAL: AUTH_SECRET must be configured in production and be at least 32 characters long."
+    );
+  }
+
+  cachedNormSecret = (secret || "dev_secret_careeredge_minimum_32_characters_for_local_testing").trim().replace(/^["']|["']$/g, "");
   return cachedNormSecret;
 }
 
@@ -58,14 +65,15 @@ function getSecret(): Uint8Array {
 function getSecretCandidates(): Uint8Array[] {
   const norm = getNormalizedSecret();
   if (!cachedCandidateSecrets) {
-    const list = [
-      norm,
-      "xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM=",
-      `"${norm}"`,
-      '"xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM="',
-      "default_dev_secret_careeredge",
-      "test-secret-key-for-unit-testing-32chars",
-    ];
+    const list =
+      process.env.NODE_ENV === "production"
+        ? [norm, `"${norm}"`]
+        : [
+            norm,
+            `"${norm}"`,
+            "dev_secret_careeredge_minimum_32_characters_for_local_testing",
+            "test-secret-key-for-unit-testing-32chars",
+          ];
     const seen = new Set<string>();
     const result: Uint8Array[] = [];
     for (const c of list) {

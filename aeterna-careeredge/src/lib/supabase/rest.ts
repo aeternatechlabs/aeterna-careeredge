@@ -12,21 +12,25 @@ export interface SupabaseRestConfig {
  * Never falls back to NEXT_PUBLIC_SUPABASE_ANON_KEY.
  */
 export function getSupabaseRestConfig(): SupabaseRestConfig | null {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey =
+  const rawUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const rawKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
 
-  if (!supabaseUrl || !serviceKey) {
+  if (!rawUrl || !rawKey) {
     return null;
   }
 
+  const baseUrl = rawUrl.trim().replace(/^["']|["']$/g, "").replace(/\/+$/, "");
+  const serviceKey = rawKey.trim().replace(/^["']|["']$/g, "");
+
   return {
-    baseUrl: supabaseUrl.replace(/\/+$/, ""),
+    baseUrl,
     headers: {
       apikey: serviceKey,
       Authorization: `Bearer ${serviceKey}`,
       "Content-Type": "application/json",
       Prefer: "return=representation",
+      "User-Agent": "Aeterna-CareerEdge-Backend/1.0 (Cloudflare-Worker)",
     },
   };
 }

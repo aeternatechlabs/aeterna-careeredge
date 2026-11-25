@@ -3,10 +3,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { db } from "@/lib/db";
 import { setSessionCookie, createSession, isSecureCookie } from "@/lib/session";
 import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
-import { getSupabaseRestConfig, supabaseRestFetch } from "@/lib/supabase/rest";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type { LoginInput } from "@/types/auth";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
@@ -17,36 +16,6 @@ interface LoginUserRecord {
   email: string;
   passwordHash: string | null;
   onboardingCompleted: boolean;
-}
-
-async function findLoginUserViaSupabaseRest(
-  isMobile: boolean,
-  lookupValue: string
-): Promise<LoginUserRecord | null> {
-  const config = getSupabaseRestConfig();
-  if (!config) {
-    throw new Error("Supabase REST fallback unavailable: missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-  }
-
-  const filterField = isMobile ? "mobile" : "email";
-  const select = "id,name,email,passwordHash,onboardingCompleted";
-  const res = await supabaseRestFetch<LoginUserRecord[]>(
-    config,
-    `/rest/v1/users?${filterField}=eq.${encodeURIComponent(lookupValue)}&select=${select}&limit=1`
-  );
-
-  if (!res.ok) {
-    throw new Error(`Supabase REST login lookup failed (${res.status}): ${res.errorText}`);
-  }
-
-  const row = Array.isArray(res.data) && res.data.length > 0 ? res.data[0] : null;
-  if (!row) return null;
-
-  return {
-    ...row,
-    passwordHash: row.passwordHash ?? null,
-    onboardingCompleted: Boolean(row.onboardingCompleted),
-  };
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -70,34 +39,40 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // ── Find the user by email or mobile ──────────────────────────────────
+    // ── Find the user by email or mobile directly via Supabase ───────────
 
     const normalizedIdentifier = identifier.trim().toLowerCase();
     const normalizedMobile = identifier.replace(/^\+91\s?/, "").replace(/\s/g, "");
     const isMobile = MOBILE_REGEX.test(normalizedMobile);
 
-    let user: LoginUserRecord | null = null;
+    const supabase = getSupabaseAdmin();
+    const query = isMobile
+      ? supabase
+          .from("users")
+          .select("id, name, email, passwordHash, onboardingCompleted")
+          .eq("mobile", normalizedMobile)
+          .maybeSingle()
+      : supabase
+          .from("users")
+          .select("id, name, email, passwordHash, onboardingCompleted")
+          .eq("email", normalizedIdentifier)
+          .maybeSingle();
 
-    try {
-      user = await db.user.findFirst({
-        where: isMobile
-          ? { mobile: normalizedMobile }
-          : { email: normalizedIdentifier },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          passwordHash: true,
-          onboardingCompleted: true,
-        },
-      });
-    } catch (prismaErr) {
-      console.warn("[Login] Prisma unavailable, using Supabase REST fallback:", prismaErr);
-      user = await findLoginUserViaSupabaseRest(
-        isMobile,
-        isMobile ? normalizedMobile : normalizedIdentifier
-      );
+    const { data: userRow, error: dbError } = await query;
+
+    if (dbError) {
+      throw new Error(`Supabase query failed: ${dbError.message}`);
     }
+
+    const user: LoginUserRecord | null = userRow
+      ? {
+          id: userRow.id,
+          name: userRow.name,
+          email: userRow.email,
+          passwordHash: userRow.passwordHash ?? null,
+          onboardingCompleted: Boolean(userRow.onboardingCompleted),
+        }
+      : null;
 
     // ── Constant-time response to prevent user enumeration ────────────────
 
@@ -154,7 +129,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     return response;
   } catch (err) {
-    console.error("[Login Error]", err);
+    console.error("[Login Route Error]", {
+      name: err instanceof Error ? err.name : "UnknownError",
+      message: err instanceof Error ? err.message : String(err),
+      route: "/api/auth/login",
+    });
     return NextResponse.json(
       { error: "Something went wrong. Please try again." },
       { status: 500 }
