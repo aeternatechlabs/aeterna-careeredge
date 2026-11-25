@@ -173,7 +173,7 @@ export function LinkedInClient({
 
   // Load Analysis Report on mount
   useEffect(() => {
-    fetch("/api/linkedin/profile")
+    fetch("/api/linkedin/profile", { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         if (data.analysisReport) setAnalysisReport(data.analysisReport);
@@ -246,6 +246,7 @@ export function LinkedInClient({
       const approvedExperiences = stagedImport.experiences.filter((_, idx) => selectedExperiences.has(idx));
 
       const res = await fetch("/api/linkedin/merge-to-passport", {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -263,7 +264,7 @@ export function LinkedInClient({
       setPassportMergedSuccess(data.message || `Merged ${data.mergedCount} verified records into your Career Passport!`);
 
       // Refresh LinkedIn profile analysis report
-      fetch("/api/linkedin/profile")
+      fetch("/api/linkedin/profile", { credentials: "include" })
         .then((r) => r.json())
         .then((d) => {
           if (d.analysisReport) setAnalysisReport(d.analysisReport);
@@ -283,6 +284,7 @@ export function LinkedInClient({
       if (section === "ABOUT") body.bio = text;
 
       const res = await fetch("/api/passport/profile", {
+          credentials: "include",
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -308,7 +310,8 @@ export function LinkedInClient({
   async function handleDisconnect() {
     setDisconnecting(true);
     try {
-      const res = await fetch("/api/auth/oauth/linkedin", { method: "DELETE" });
+      const res = await fetch("/api/auth/oauth/linkedin", {
+          credentials: "include", method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Failed to disconnect.");
@@ -336,6 +339,7 @@ export function LinkedInClient({
 
     try {
       const res = await fetch("/api/linkedin/import-text", {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rawText }),
@@ -369,6 +373,7 @@ export function LinkedInClient({
       formData.append("file", file);
 
       const res = await fetch("/api/linkedin/import-pdf", {
+          credentials: "include",
         method: "POST",
         body: formData,
       });

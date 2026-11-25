@@ -216,6 +216,7 @@ export function BuilderClient({
     try {
       const contentHash = computeResumeContentHash(dataToSave);
       const res = await fetch(`/api/resumes/${resume.id}`, {
+          credentials: "include",
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -234,6 +235,7 @@ export function BuilderClient({
       // If note provided or manual save, also create snapshot in versions
       if (note) {
         await fetch(`/api/resumes/${resume.id}/versions`, {
+          credentials: "include",
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -259,6 +261,7 @@ export function BuilderClient({
     setAnalyzingFull(true);
     try {
       const res = await fetch(`/api/resumes/${resume.id}/analyze-full`, {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -289,6 +292,7 @@ export function BuilderClient({
     setActiveSectionId(sectionId);
     try {
       const res = await fetch(`/api/resumes/${resume.id}/improve-section`, {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -475,6 +479,7 @@ export function BuilderClient({
   ): Promise<string> {
     try {
       const res = await fetch(`/api/resumes/${resume.id}/improve-bullet`, {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -497,6 +502,7 @@ export function BuilderClient({
   async function handleDuplicate() {
     try {
       const res = await fetch(`/api/resumes/${resume.id}/duplicate`, {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -516,6 +522,7 @@ export function BuilderClient({
   // ── Restore Version Snapshot ───────────────────────────────────────────────
   async function handleRestoreVersion(versionId: string) {
     const res = await fetch(`/api/resumes/${resume.id}/versions/${versionId}/restore`, {
+          credentials: "include",
       method: "POST",
     });
 
@@ -570,7 +577,8 @@ export function BuilderClient({
     setRunningTruthCheck(true);
     setShowTruthModal(true);
     try {
-      const res = await fetch(`/api/resumes/${resume.id}/truth-check`, { method: "POST" });
+      const res = await fetch(`/api/resumes/${resume.id}/truth-check`, {
+          credentials: "include", method: "POST" });
       const resData = await res.json();
       if (res.ok && resData.report) {
         setTruthReport(resData.report);
@@ -589,7 +597,7 @@ export function BuilderClient({
     const pageSize = data.style.layout?.pageSize || "A4";
     try {
       await handleSave("Auto-save before PDF export");
-      const res = await fetch(`/api/resumes/${resume.id}/export-pdf?pageSize=${pageSize}`);
+      const res = await fetch(`/api/resumes/${resume.id}/export-pdf?pageSize=${pageSize}`, { credentials: "include" });
       const contentType = res.headers.get("Content-Type") || "";
 
       if (res.ok && contentType.includes("application/pdf")) {

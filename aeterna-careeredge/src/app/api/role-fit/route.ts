@@ -1,18 +1,18 @@
 // src/app/api/role-fit/route.ts
 // Evaluate student role fit against occupational standards
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { evaluateRoleFit } from "@/lib/readiness/service";
 
-export async function GET(request: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(req.url);
     const profession = searchParams.get("profession") || "TECH";
 
     const result = await evaluateRoleFit(session.userId, profession);
@@ -26,14 +26,14 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json().catch(() => ({}));
+    const body = await req.json().catch(() => ({}));
     const profession = body.profession || "TECH";
 
     const result = await evaluateRoleFit(session.userId, profession);

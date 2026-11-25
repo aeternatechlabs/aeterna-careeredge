@@ -467,7 +467,7 @@ export default function OnboardingPage() {
   useEffect(() => {
     async function loadCurrentStudent() {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me", { credentials: "include" });
         if (
           typeof window !== "undefined" &&
           window.location.search.includes("from=dashboard")

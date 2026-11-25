@@ -1,17 +1,17 @@
 // src/app/api/applications/[id]/pack/route.ts
 // Generate or retrieve 4-part Application Pack (Resume, Cover Note, Intro, Proof Talking Points)
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { generateApplicationPack } from "@/lib/applications/pack";
 
 export async function GET(
-  _request: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -74,17 +74,17 @@ export async function GET(
 }
 
 export async function POST(
-  request: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
-    const body = await request.json().catch(() => ({}));
+    const body = await req.json().catch(() => ({}));
 
     // Check application or use body overrides
     const app = await db.jobApplication.findFirst({

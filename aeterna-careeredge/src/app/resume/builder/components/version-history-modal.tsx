@@ -35,7 +35,7 @@ export function VersionHistoryModal({
     const timer = setTimeout(() => {
       if (!isCancelled) setLoading(true);
     }, 0);
-    fetch(`/api/resumes/${resumeId}/versions`)
+    fetch(`/api/resumes/${resumeId}/versions`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         if (!isCancelled && data.versions) setVersions(data.versions);

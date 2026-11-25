@@ -6,11 +6,11 @@ import { getSession } from "@/lib/auth/session";
 import { deleteEvidenceItem } from "@/lib/evidence/service";
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session || !session.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

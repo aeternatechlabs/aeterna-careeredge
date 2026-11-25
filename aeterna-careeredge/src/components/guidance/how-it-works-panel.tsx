@@ -25,7 +25,7 @@ export function HowItWorksPanel({ sectionId, toolKey, className = "" }: HowItWor
   useEffect(() => {
     async function checkSeenStatus() {
       try {
-        const res = await fetch(`/api/guide/seen-panel?panelId=${encodeURIComponent(activeId)}`);
+        const res = await fetch(`/api/guide/seen-panel?panelId=${encodeURIComponent(activeId)}`, { credentials: "include" });
         if (res.ok) {
           const json = await res.json();
           // If never seen before, open by default
@@ -51,6 +51,7 @@ export function HowItWorksPanel({ sectionId, toolKey, className = "" }: HowItWor
     setIsOpen(false);
     try {
       await fetch("/api/guide/seen-panel", {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ panelId: activeId, dismissed: true }),

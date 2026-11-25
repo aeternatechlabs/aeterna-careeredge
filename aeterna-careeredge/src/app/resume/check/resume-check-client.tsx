@@ -63,6 +63,7 @@ export function ResumeCheckClient({
 
     try {
       const res = await fetch(`/api/resumes/${selectedResumeId}/review`, {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jobDescription }),

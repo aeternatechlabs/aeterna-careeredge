@@ -45,7 +45,7 @@ export function SprintsClient({
   const fetchSprint = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/sprints");
+      const res = await fetch("/api/sprints", { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setSprint(data.sprint || null);
@@ -60,7 +60,7 @@ export function SprintsClient({
   useEffect(() => {
     if (initialSprint !== undefined) return;
     let ignore = false;
-    fetch("/api/sprints")
+    fetch("/api/sprints", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!ignore) {
@@ -83,6 +83,7 @@ export function SprintsClient({
     setGenerating(true);
     try {
       const res = await fetch("/api/sprints", {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -106,7 +107,8 @@ export function SprintsClient({
   const handleToggleTask = async (taskId: string) => {
     setTogglingId(taskId);
     try {
-      const res = await fetch(`/api/sprints/tasks/${taskId}`, { method: "PATCH" });
+      const res = await fetch(`/api/sprints/tasks/${taskId}`, {
+          credentials: "include", method: "PATCH" });
       if (res.ok) {
         await fetchSprint();
       }

@@ -1,7 +1,7 @@
 // src/app/api/applications/[id]/route.ts
 // Update or delete a job application
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import {
   updateApplicationStatus,
@@ -10,17 +10,17 @@ import {
 } from "@/lib/applications/service";
 
 export async function PATCH(
-  request: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
-    const body = await request.json();
+    const body = await req.json();
 
     if (!body.status) {
       return NextResponse.json({ error: "Status is required" }, { status: 400 });
@@ -45,11 +45,11 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

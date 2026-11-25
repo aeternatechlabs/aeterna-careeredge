@@ -1,13 +1,13 @@
 // src/app/api/sprints/route.ts
 // Manage Gap-to-Action 30-Day Employability Sprints
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { getActiveSprint, generate30DaySprint } from "@/lib/sprints/service";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -23,14 +23,14 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = await req.json();
     const targetProfession = body.targetProfession || "Technology & Software";
     const targetRole = body.targetRole || "Junior Software Engineer";
 

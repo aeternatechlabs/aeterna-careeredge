@@ -65,6 +65,7 @@ export function TruthCheckClient({
     try {
       if (activeTab === "RESUME" && selectedResumeId) {
         const res = await fetch(`/api/resumes/${selectedResumeId}/truth-check`, {
+          credentials: "include",
           method: "POST",
         });
         const data = await res.json();
@@ -77,6 +78,7 @@ export function TruthCheckClient({
           .filter(Boolean);
 
         const res = await fetch("/api/truth-check", {
+          credentials: "include",
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -100,6 +102,7 @@ export function TruthCheckClient({
     setConfirmingClaim(item.claim);
     try {
       const res = await fetch("/api/truth-check", {
+          credentials: "include",
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

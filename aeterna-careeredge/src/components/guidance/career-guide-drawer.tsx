@@ -77,6 +77,7 @@ export function CareerGuideDrawer({
 
     try {
       const res = await fetch("/api/guide/chat", {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: q, currentPath: pathname }),

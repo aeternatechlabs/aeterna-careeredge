@@ -68,6 +68,7 @@ export function CertificationModal({
 
     try {
       const res = await fetch("/api/passport/certifications", {
+          credentials: "include",
         method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

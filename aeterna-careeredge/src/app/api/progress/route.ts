@@ -1,18 +1,18 @@
 // src/app/api/progress/route.ts
 // Retrieve student progress ledger events
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { getStudentProgressLedger } from "@/lib/guidance/progress";
 
-export async function GET(request: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get("limit") || "50", 10);
 
     const events = await getStudentProgressLedger(session.userId, limit);

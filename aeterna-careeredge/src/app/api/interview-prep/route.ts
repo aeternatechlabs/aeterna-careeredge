@@ -1,16 +1,16 @@
 // src/app/api/interview-prep/route.ts
 // Manage domain interview prep kits
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import {
   listUserInterviewKits,
   getOrCreateInterviewKit,
 } from "@/lib/interview/service";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -26,14 +26,14 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = await req.json();
     const kit = await getOrCreateInterviewKit(session.userId, {
       jobId: body.jobId,
       jobTitle: body.jobTitle || "Career Role",

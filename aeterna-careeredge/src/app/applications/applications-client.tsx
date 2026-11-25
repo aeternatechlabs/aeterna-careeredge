@@ -93,7 +93,7 @@ export function ApplicationsClient({
   const fetchApplications = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/applications");
+      const res = await fetch("/api/applications", { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setApplications(data.applications || []);
@@ -108,7 +108,7 @@ export function ApplicationsClient({
   useEffect(() => {
     if (initialApplications !== undefined) return;
     let ignore = false;
-    fetch("/api/applications")
+    fetch("/api/applications", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!ignore && data?.applications) {
@@ -131,6 +131,7 @@ export function ApplicationsClient({
     setSubmitting(true);
     try {
       const res = await fetch("/api/applications", {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -168,6 +169,7 @@ export function ApplicationsClient({
 
     try {
       const res = await fetch(`/api/applications/${app.id}`, {
+          credentials: "include",
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStage }),
@@ -184,6 +186,7 @@ export function ApplicationsClient({
     if (!confirmApplyApp) return;
     try {
       const res = await fetch(`/api/applications/${confirmApplyApp.id}`, {
+          credentials: "include",
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "APPLIED" }),
@@ -200,7 +203,8 @@ export function ApplicationsClient({
   const handleDelete = async (id: string) => {
     if (!confirm("Remove this application from your tracker?")) return;
     try {
-      const res = await fetch(`/api/applications/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/applications/${id}`, {
+          credentials: "include", method: "DELETE" });
       if (res.ok) {
         fetchApplications();
       }
@@ -215,7 +219,7 @@ export function ApplicationsClient({
     setPackLoading(true);
     setPackActiveTab("cover");
     try {
-      const res = await fetch(`/api/applications/${app.id}/pack`);
+      const res = await fetch(`/api/applications/${app.id}/pack`, { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setPackData(data);

@@ -95,7 +95,7 @@ export function JobsClient({ studentName, studentProfile }: JobsClientProps) {
         params.set("page", String(pageToFetch));
         params.set("pageSize", "9");
 
-        const res = await fetch(`/api/jobs/search?${params.toString()}`);
+        const res = await fetch(`/api/jobs/search?${params.toString()}`, { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
           const incomingJobs: JobListing[] = data.jobs || [];
@@ -142,6 +142,7 @@ export function JobsClient({ studentName, studentProfile }: JobsClientProps) {
     setMatchingLoading(true);
     try {
       const res = await fetch(`/api/jobs/${encodeURIComponent(job.id)}/match`, {
+          credentials: "include",
         method: "POST",
       });
       if (res.ok) {
@@ -158,6 +159,7 @@ export function JobsClient({ studentName, studentProfile }: JobsClientProps) {
   const handleSaveJob = async (job: JobListing) => {
     try {
       const res = await fetch("/api/applications", {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -184,6 +186,7 @@ export function JobsClient({ studentName, studentProfile }: JobsClientProps) {
   const handleTrackOutboundClick = async (job: JobListing) => {
     try {
       await fetch("/api/applications", {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -44,7 +44,7 @@ export function UploadedResumesDrawer({
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch("/api/resumes/uploaded-documents");
+        const res = await fetch("/api/resumes/uploaded-documents", { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
           setDocuments(data.documents || []);
@@ -65,6 +65,7 @@ export function UploadedResumesDrawer({
     setDeletingId(docId);
     try {
       const res = await fetch(`/api/resumes/uploaded-documents/${docId}`, {
+          credentials: "include",
         method: "DELETE",
       });
       if (res.ok) {

@@ -1,16 +1,16 @@
 // src/app/api/sprints/tasks/[id]/route.ts
 // Toggle sprint task completion
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { toggleSprintTask } from "@/lib/sprints/service";
 
 export async function PATCH(
-  _request: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

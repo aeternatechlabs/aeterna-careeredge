@@ -84,6 +84,7 @@ export function PrintClient({
     setData(updatedData);
 
     fetch(`/api/resumes/${resumeId}`, {
+          credentials: "include",
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -97,7 +98,7 @@ export function PrintClient({
     setDownloading(true);
     setDownloadSuccess(false);
     try {
-      const res = await fetch(`/api/resumes/${resumeId}/export-pdf?pageSize=${pageSize}`);
+      const res = await fetch(`/api/resumes/${resumeId}/export-pdf?pageSize=${pageSize}`, { credentials: "include" });
       const contentType = res.headers.get("Content-Type") || "";
 
       if (res.ok && contentType.includes("application/pdf")) {

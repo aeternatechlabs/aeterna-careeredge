@@ -50,7 +50,7 @@ export function InterviewPrepClient({
   const loadKitDetails = useCallback(async (kitId: string) => {
     setKitLoading(true);
     try {
-      const res = await fetch(`/api/interview-prep/${kitId}`);
+      const res = await fetch(`/api/interview-prep/${kitId}`, { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setActiveKit(data);
@@ -65,7 +65,7 @@ export function InterviewPrepClient({
   const fetchKits = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/interview-prep");
+      const res = await fetch("/api/interview-prep", { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setKits(data.kits || []);
@@ -83,13 +83,13 @@ export function InterviewPrepClient({
   useEffect(() => {
     if (initialKits !== undefined) return;
     let ignore = false;
-    fetch("/api/interview-prep")
+    fetch("/api/interview-prep", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!ignore && data?.kits) {
           setKits(data.kits);
           if (data.kits.length > 0) {
-            fetch(`/api/interview-prep/${data.kits[0].id}`)
+            fetch(`/api/interview-prep/${data.kits[0].id}`, { credentials: "include" })
               .then((r) => (r.ok ? r.json() : null))
               .then((kit) => {
                 if (!ignore && kit) setActiveKit(kit);
@@ -113,6 +113,7 @@ export function InterviewPrepClient({
     setGenerating(true);
     try {
       const res = await fetch("/api/interview-prep", {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

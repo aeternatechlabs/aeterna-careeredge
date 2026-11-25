@@ -20,7 +20,8 @@ export function StudentHeader({
 }: StudentHeaderProps) {
   const handleLogout = onLogout ?? (async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await fetch("/api/auth/logout", {
+          credentials: "include", method: "POST" });
     } catch {}
     window.location.href = "/login";
   });

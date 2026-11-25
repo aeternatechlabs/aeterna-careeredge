@@ -59,6 +59,7 @@ export function SkillModal({
 
     try {
       const res = await fetch("/api/passport/skills", {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

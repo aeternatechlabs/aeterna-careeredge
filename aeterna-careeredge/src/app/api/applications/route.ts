@@ -1,7 +1,7 @@
 // src/app/api/applications/route.ts
 // Job Applications list & create API
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import {
   listUserApplications,
@@ -9,14 +9,14 @@ import {
   type ApplicationStatus,
 } from "@/lib/applications/service";
 
-export async function GET(request: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(req.url);
     const status = (searchParams.get("status") as ApplicationStatus) || undefined;
 
     const applications = await listUserApplications(session.userId, status);
@@ -30,14 +30,14 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = await req.json();
     if (!body.jobTitle || !body.companyName) {
       return NextResponse.json(
         { error: "jobTitle and companyName are required" },

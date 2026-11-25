@@ -40,7 +40,7 @@ export function ValueClient({ studentName }: ValueClientProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/value")
+    fetch("/api/value", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.metrics) setMetrics(data.metrics);

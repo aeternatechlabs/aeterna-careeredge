@@ -77,6 +77,7 @@ export function ProfileModal({
 
     try {
       const res = await fetch("/api/passport/profile", {
+          credentials: "include",
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

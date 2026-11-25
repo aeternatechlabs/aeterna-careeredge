@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const session = (await getSession(req)) || (await getSession());
+    const session = await getSession(req);
     const cookieUid = req.cookies.get("linkedin_oauth_uid")?.value;
     const initialUserId = session?.userId || cookieUid;
 

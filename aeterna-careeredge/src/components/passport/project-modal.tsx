@@ -81,6 +81,7 @@ export function ProjectModal({
 
     try {
       const res = await fetch("/api/passport/projects", {
+          credentials: "include",
         method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

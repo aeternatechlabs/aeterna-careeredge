@@ -83,6 +83,7 @@ export function ResumeListClient({ user, initialResumes }: ResumeListClientProps
 
     try {
       const res = await fetch("/api/resumes", {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -110,7 +111,8 @@ export function ResumeListClient({ user, initialResumes }: ResumeListClientProps
     if (!confirm("Are you sure you want to delete this resume version?")) return;
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/resumes/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/resumes/${id}`, {
+          credentials: "include", method: "DELETE" });
       if (!res.ok) throw new Error("Could not delete resume.");
       setResumes((prev) => prev.filter((r) => r.id !== id));
     } catch (err: unknown) {
@@ -123,7 +125,8 @@ export function ResumeListClient({ user, initialResumes }: ResumeListClientProps
   async function handleDuplicateResume(id: string) {
     setDuplicatingId(id);
     try {
-      const res = await fetch(`/api/resumes/${id}/duplicate`, { method: "POST" });
+      const res = await fetch(`/api/resumes/${id}/duplicate`, {
+          credentials: "include", method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to duplicate resume.");
       setResumes((prev) => [data.resume, ...prev]);
@@ -137,7 +140,7 @@ export function ResumeListClient({ user, initialResumes }: ResumeListClientProps
   async function handleDownloadPdf(resumeId: string, resumeTitle: string) {
     setExportingId(resumeId);
     try {
-      const res = await fetch(`/api/resumes/${resumeId}/export-pdf?pageSize=A4`);
+      const res = await fetch(`/api/resumes/${resumeId}/export-pdf?pageSize=A4`, { credentials: "include" });
       const contentType = res.headers.get("Content-Type") || "";
 
       if (res.ok && contentType.includes("application/pdf")) {

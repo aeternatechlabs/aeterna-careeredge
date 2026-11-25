@@ -7,11 +7,11 @@ import { prisma } from "@/lib/prisma";
 import { runTruthCheck } from "@/lib/truth-check/service";
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session || !session.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

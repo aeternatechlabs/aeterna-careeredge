@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = (await getSession(req)) || (await getSession());
+    const session = await getSession(req);
     const supabase = getSupabaseAdmin();
 
     if (!session || !session.userId) {

@@ -84,6 +84,7 @@ export function ExperienceModal({
 
     try {
       const res = await fetch("/api/passport/experiences", {
+          credentials: "include",
         method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

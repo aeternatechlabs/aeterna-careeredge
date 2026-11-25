@@ -38,7 +38,7 @@ export function RoleFitClient({ studentName }: RoleFitClientProps) {
 
   useEffect(() => {
     let ignore = false;
-    fetch(`/api/role-fit?profession=${encodeURIComponent(selectedProfession)}`)
+    fetch(`/api/role-fit?profession=${encodeURIComponent(selectedProfession)}`, { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!ignore && data) {

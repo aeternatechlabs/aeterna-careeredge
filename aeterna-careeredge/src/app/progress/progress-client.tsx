@@ -35,7 +35,7 @@ export function ProgressClient({ studentName }: ProgressClientProps) {
   const [filterType, setFilterType] = useState<string>("ALL");
 
   useEffect(() => {
-    fetch("/api/progress")
+    fetch("/api/progress", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.events) setEvents(data.events);

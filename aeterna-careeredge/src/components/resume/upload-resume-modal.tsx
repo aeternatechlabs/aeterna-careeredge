@@ -188,6 +188,7 @@ export function UploadResumeModal({
       setStatusMessage("Reading document streams and extracting selectable text...");
 
       const res = await fetch("/api/resumes/upload", {
+          credentials: "include",
         method: "POST",
         body: formData,
         signal: controller.signal,
@@ -439,6 +440,7 @@ export function UploadResumeModal({
 
     try {
       const res = await fetch("/api/resumes/import", {
+          credentials: "include",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

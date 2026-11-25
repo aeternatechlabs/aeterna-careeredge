@@ -94,6 +94,7 @@ export function EducationModal({
 
     try {
       const res = await fetch("/api/passport/educations", {
+          credentials: "include",
         method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

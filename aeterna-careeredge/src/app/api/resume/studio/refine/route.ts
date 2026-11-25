@@ -20,7 +20,7 @@ interface RefineResponseData {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = (await getSession(req)) || (await getSession());
+    const session = await getSession(req);
 
     if (!session || !session.userId) {
       return NextResponse.json(
