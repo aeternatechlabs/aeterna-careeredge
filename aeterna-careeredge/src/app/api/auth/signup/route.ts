@@ -12,6 +12,114 @@ import type { SignupInput } from "@/types/auth";
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// ── Supabase REST fallback (for Cloudflare Workers where Prisma TCP is unavailable) ──
+
+type SignupRestResult =
+  | { user: { id: string; name: string; email: string; onboardingCompleted: boolean } }
+  | { error: "email_exists" | "mobile_exists" | "rest_failed" };
+
+async function signupViaSupabaseRest(data: {
+  name: string;
+  email: string;
+  mobile: string;
+  passwordHash: string;
+  counsellorConsent: boolean;
+}): Promise<SignupRestResult> {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SECRET_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !serviceKey) {
+    console.warn("[signupViaSupabaseRest] Missing Supabase URL or Service Role Key");
+    return { error: "rest_failed" };
+  }
+
+  const cleanUrl = supabaseUrl.replace(/\/+$/, "");
+  const headers = {
+    apikey: serviceKey,
+    Authorization: `Bearer ${serviceKey}`,
+    "Content-Type": "application/json",
+    Prefer: "return=representation",
+  };
+
+  try {
+    // 1. Duplicate check by email
+    const emailCheckRes = await fetch(
+      `${cleanUrl}/rest/v1/users?email=eq.${encodeURIComponent(data.email)}&select=id&limit=1`,
+      { headers }
+    );
+    const emailRows = (await emailCheckRes.json().catch(() => [])) as Array<{ id: string }>;
+    if (Array.isArray(emailRows) && emailRows.length > 0) {
+      return { error: "email_exists" };
+    }
+
+    // 2. Duplicate check by mobile
+    const mobileCheckRes = await fetch(
+      `${cleanUrl}/rest/v1/users?mobile=eq.${encodeURIComponent(data.mobile)}&select=id&limit=1`,
+      { headers }
+    );
+    const mobileRows = (await mobileCheckRes.json().catch(() => [])) as Array<{ id: string }>;
+    if (Array.isArray(mobileRows) && mobileRows.length > 0) {
+      return { error: "mobile_exists" };
+    }
+
+    // 3. Create user — generate a unique ID compatible with existing cuid-format IDs
+    const now = new Date().toISOString();
+    const newUserId =
+      "usr_" + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+
+    const createRes = await fetch(`${cleanUrl}/rest/v1/users`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        id: newUserId,
+        name: data.name,
+        email: data.email,
+        mobile: data.mobile,
+        passwordHash: data.passwordHash,
+        counsellorConsent: data.counsellorConsent,
+        onboardingCompleted: false,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    });
+
+    if (!createRes.ok) {
+      const errText = await createRes.text().catch(() => "");
+      console.error("[signupViaSupabaseRest] Failed to create user:", errText);
+      return { error: "rest_failed" };
+    }
+
+    const created = (await createRes.json().catch(() => [])) as Array<{
+      id: string;
+      name: string;
+      email: string;
+      onboardingCompleted: boolean;
+    }>;
+
+    if (!Array.isArray(created) || created.length === 0 || !created[0]?.id) {
+      console.error("[signupViaSupabaseRest] Created user row not returned");
+      return { error: "rest_failed" };
+    }
+
+    return {
+      user: {
+        id: created[0].id,
+        name: created[0].name,
+        email: created[0].email,
+        onboardingCompleted: created[0].onboardingCompleted ?? false,
+      },
+    };
+  } catch (err) {
+    console.error("[signupViaSupabaseRest] Network or parse exception:", err);
+    return { error: "rest_failed" };
+  }
+}
+
+// ── Main route handler ────────────────────────────────────────────────────────
+
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const ip = getClientIp(req);
@@ -59,51 +167,96 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // ── Duplicate check ────────────────────────────────────────────────────
-
-    const existingByEmail = await db.user.findUnique({
-      where: { email: email.toLowerCase() },
-      select: { id: true },
-    });
-
-    if (existingByEmail) {
-      return NextResponse.json(
-        { error: "An account with this email already exists.", field: "email" },
-        { status: 409 }
-      );
-    }
-
-    const existingByMobile = await db.user.findUnique({
-      where: { mobile: normalizedMobile },
-      select: { id: true },
-    });
-
-    if (existingByMobile) {
-      return NextResponse.json(
-        { error: "An account with this mobile number already exists.", field: "mobile" },
-        { status: 409 }
-      );
-    }
-
-    // ── Create user ────────────────────────────────────────────────────────
+    // ── Hash password before any DB operation ─────────────────────────────
 
     const passwordHash = await bcrypt.hash(password, 12);
 
-    const user = await db.user.create({
-      data: {
+    // ── Attempt 1: Prisma (Node.js / local dev) ───────────────────────────
+
+    let user: { id: string; name: string; email: string; onboardingCompleted: boolean } | null =
+      null;
+
+    try {
+      const existingByEmail = await db.user.findUnique({
+        where: { email: email.toLowerCase() },
+        select: { id: true },
+      });
+
+      if (existingByEmail) {
+        return NextResponse.json(
+          { error: "An account with this email already exists.", field: "email" },
+          { status: 409 }
+        );
+      }
+
+      const existingByMobile = await db.user.findUnique({
+        where: { mobile: normalizedMobile },
+        select: { id: true },
+      });
+
+      if (existingByMobile) {
+        return NextResponse.json(
+          { error: "An account with this mobile number already exists.", field: "mobile" },
+          { status: 409 }
+        );
+      }
+
+      user = await db.user.create({
+        data: {
+          name: name.trim(),
+          email: email.toLowerCase(),
+          mobile: normalizedMobile,
+          passwordHash,
+          counsellorConsent: counsellorConsent ?? false,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          onboardingCompleted: true,
+        },
+      });
+    } catch (prismaErr) {
+      // ── Attempt 2: Supabase REST (Cloudflare Workers runtime) ────────────
+      console.error("[Signup] Prisma failed, trying Supabase REST fallback:", prismaErr);
+
+      const result = await signupViaSupabaseRest({
         name: name.trim(),
         email: email.toLowerCase(),
         mobile: normalizedMobile,
         passwordHash,
         counsellorConsent: counsellorConsent ?? false,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        onboardingCompleted: true,
-      },
-    });
+      });
+
+      if ("error" in result) {
+        if (result.error === "email_exists") {
+          return NextResponse.json(
+            { error: "An account with this email already exists.", field: "email" },
+            { status: 409 }
+          );
+        }
+        if (result.error === "mobile_exists") {
+          return NextResponse.json(
+            { error: "An account with this mobile number already exists.", field: "mobile" },
+            { status: 409 }
+          );
+        }
+        // rest_failed
+        return NextResponse.json(
+          { error: "Something went wrong. Please try again." },
+          { status: 500 }
+        );
+      }
+
+      user = result.user;
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Something went wrong. Please try again." },
+        { status: 500 }
+      );
+    }
 
     // ── Set session cookie ─────────────────────────────────────────────────
 
