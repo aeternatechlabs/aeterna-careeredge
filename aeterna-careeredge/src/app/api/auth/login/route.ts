@@ -6,9 +6,48 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { setSessionCookie, createSession, isSecureCookie } from "@/lib/session";
 import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
+import { getSupabaseRestConfig, supabaseRestFetch } from "@/lib/supabase/rest";
 import type { LoginInput } from "@/types/auth";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
+
+interface LoginUserRecord {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash: string | null;
+  onboardingCompleted: boolean;
+}
+
+async function findLoginUserViaSupabaseRest(
+  isMobile: boolean,
+  lookupValue: string
+): Promise<LoginUserRecord | null> {
+  const config = getSupabaseRestConfig();
+  if (!config) {
+    throw new Error("Supabase REST fallback unavailable: missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+  }
+
+  const filterField = isMobile ? "mobile" : "email";
+  const select = "id,name,email,passwordHash,onboardingCompleted";
+  const res = await supabaseRestFetch<LoginUserRecord[]>(
+    config,
+    `/rest/v1/users?${filterField}=eq.${encodeURIComponent(lookupValue)}&select=${select}&limit=1`
+  );
+
+  if (!res.ok) {
+    throw new Error(`Supabase REST login lookup failed (${res.status}): ${res.errorText}`);
+  }
+
+  const row = Array.isArray(res.data) && res.data.length > 0 ? res.data[0] : null;
+  if (!row) return null;
+
+  return {
+    ...row,
+    passwordHash: row.passwordHash ?? null,
+    onboardingCompleted: Boolean(row.onboardingCompleted),
+  };
+}
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
@@ -37,18 +76,28 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const normalizedMobile = identifier.replace(/^\+91\s?/, "").replace(/\s/g, "");
     const isMobile = MOBILE_REGEX.test(normalizedMobile);
 
-    const user = await db.user.findFirst({
-      where: isMobile
-        ? { mobile: normalizedMobile }
-        : { email: normalizedIdentifier },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        passwordHash: true,
-        onboardingCompleted: true,
-      },
-    });
+    let user: LoginUserRecord | null = null;
+
+    try {
+      user = await db.user.findFirst({
+        where: isMobile
+          ? { mobile: normalizedMobile }
+          : { email: normalizedIdentifier },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          passwordHash: true,
+          onboardingCompleted: true,
+        },
+      });
+    } catch (prismaErr) {
+      console.warn("[Login] Prisma unavailable, using Supabase REST fallback:", prismaErr);
+      user = await findLoginUserViaSupabaseRest(
+        isMobile,
+        isMobile ? normalizedMobile : normalizedIdentifier
+      );
+    }
 
     // ── Constant-time response to prevent user enumeration ────────────────
 
@@ -79,7 +128,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       onboardingCompleted: user.onboardingCompleted,
     };
     const sessionToken = await createSession(sessionPayload);
-    await setSessionCookie(sessionPayload);
+    try {
+      await setSessionCookie(sessionPayload);
+    } catch {
+      // response.cookies.set below sets the cookie directly on the HTTP response
+    }
 
     const response = NextResponse.json({
       message: "Logged in successfully.",
