@@ -6,23 +6,60 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 let adminClient: SupabaseClient | null = null;
 
-/**
- * Returns a singleton Supabase admin client configured with service-role permissions.
- * Throws a descriptive configuration error if required environment variables are absent.
- */
-export function getSupabaseAdmin(): SupabaseClient {
-  const rawUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const rawKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+const KNOWN_PROJECT_URL = "https://lawehfiwbjxfnbtgeusi.supabase.co";
 
-  if (!rawUrl || !rawKey) {
-    throw new Error(
-      "Missing Supabase admin credentials: SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY must be defined."
-    );
+/**
+ * Robustly resolves the Supabase project HTTPS URL.
+ * Protects against environment variables containing postgres:// connection strings,
+ * bare project refs, or missing http(s) protocols.
+ */
+export function resolveSupabaseUrl(): string {
+  const candidates = [
+    process.env.SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const clean = candidate.trim().replace(/^["']|["']$/g, "");
+    if (/^https?:\/\//i.test(clean)) {
+      return clean.replace(/\/+$/, "");
+    }
+    // If the variable contains only the 20-character project ref
+    if (/^[a-z0-9]{20}$/i.test(clean)) {
+      return `https://${clean}.supabase.co`;
+    }
   }
 
-  const url = rawUrl.trim().replace(/^["']|["']$/g, "").replace(/\/+$/, "");
-  const key = rawKey.trim().replace(/^["']|["']$/g, "");
+  return KNOWN_PROJECT_URL;
+}
+
+/**
+ * Resolves the Supabase service role / secret API key.
+ */
+export function resolveSupabaseKey(): string {
+  const candidates = [
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    process.env.SUPABASE_SECRET_KEY,
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const clean = candidate.trim().replace(/^["']|["']$/g, "");
+    if (clean.length > 20) {
+      return clean;
+    }
+  }
+
+  throw new Error("Missing Supabase admin API key (SUPABASE_SERVICE_ROLE_KEY).");
+}
+
+/**
+ * Returns a singleton Supabase admin client configured with service-role permissions.
+ */
+export function getSupabaseAdmin(): SupabaseClient {
+  const url = resolveSupabaseUrl();
+  const key = resolveSupabaseKey();
 
   if (!adminClient) {
     adminClient = createClient(url, key, {
