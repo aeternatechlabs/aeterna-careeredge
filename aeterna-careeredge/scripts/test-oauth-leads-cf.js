@@ -68,6 +68,8 @@ async function main() {
   const oauthMod = await jiti.import("@/lib/auth/oauth");
   const oauthRouteMod = await jiti.import("@/app/api/auth/oauth/google/route");
   const leadsRouteMod = await jiti.import("@/app/api/leads/route");
+  const loginRouteMod = await jiti.import("@/app/api/auth/login/route");
+  const bcrypt = require("bcryptjs");
 
   const origFindUnique = dbMod.db.user.findUnique.bind(dbMod.db.user);
   const origFindFirst = dbMod.db.user.findFirst.bind(dbMod.db.user);
@@ -212,6 +214,70 @@ async function main() {
     } finally {
       if (prevServiceKey !== undefined) process.env.SUPABASE_SERVICE_ROLE_KEY = prevServiceKey;
       if (prevSecretKey !== undefined) process.env.SUPABASE_SECRET_KEY = prevSecretKey;
+    }
+
+    // ── 5. POST /api/auth/login REST fallback ────────────────────────────────
+    console.log("\nTest 5: POST /api/auth/login falls back to Supabase REST when Prisma throws");
+    const loginEmail = `login.cf.test.${ts}@aeternatechlabs.com`;
+    const loginMobile = `7${String(ts + 5).slice(-9)}`;
+    const loginPass = "LoginTestPass123!";
+    const loginHash = await bcrypt.hash(loginPass, 10);
+    const loginUserId = `usr_logintest_${ts}`;
+
+    await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+      method: "POST",
+      headers: {
+        apikey: SERVICE_KEY,
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({
+        id: loginUserId,
+        name: "CF Login Tester",
+        email: loginEmail,
+        mobile: loginMobile,
+        passwordHash: loginHash,
+        onboardingCompleted: false,
+        counsellorConsent: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }),
+    });
+
+    try {
+      const loginEmailReq = new NextRequest("http://localhost:3000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-forwarded-for": "10.91.1.1" },
+        body: JSON.stringify({ identifier: loginEmail, password: loginPass }),
+      });
+      const loginEmailRes = await loginRouteMod.POST(loginEmailReq);
+      const loginEmailBody = await loginEmailRes.json();
+      assert(
+        loginEmailRes.status === 200 && loginEmailBody.user?.email === loginEmail,
+        "Email login succeeds via Supabase REST fallback",
+        `status=${loginEmailRes.status}, body=${JSON.stringify(loginEmailBody)}`
+      );
+      const loginCookie = loginEmailRes.headers.get("set-cookie") || "";
+      assert(loginCookie.includes("ace_session="), "Login sets ace_session cookie", loginCookie);
+
+      const loginMobileReq = new NextRequest("http://localhost:3000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-forwarded-for": "10.91.1.2" },
+        body: JSON.stringify({ identifier: loginMobile, password: loginPass }),
+      });
+      const loginMobileRes = await loginRouteMod.POST(loginMobileReq);
+      assert(loginMobileRes.status === 200, "Mobile login succeeds via Supabase REST fallback", `Got ${loginMobileRes.status}`);
+
+      const badPassReq = new NextRequest("http://localhost:3000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-forwarded-for": "10.91.1.3" },
+        body: JSON.stringify({ identifier: loginEmail, password: "WrongPassword!" }),
+      });
+      const badPassRes = await loginRouteMod.POST(badPassReq);
+      assert(badPassRes.status === 401, "Wrong password still returns HTTP 401", `Got ${badPassRes.status}`);
+    } finally {
+      await supabaseDelete(`/rest/v1/users?id=eq.${encodeURIComponent(loginUserId)}`);
     }
   } finally {
     dbMod.db.user.findUnique = origFindUnique;
