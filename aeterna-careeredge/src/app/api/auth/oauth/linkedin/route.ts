@@ -9,11 +9,25 @@ import {
   disconnectLinkedInAccount,
 } from "@/lib/linkedin/oauth";
 
+export const dynamic = "force-dynamic";
+
+function resolveOrigin(req: NextRequest): string {
+  const envOrigin = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
+  if (envOrigin) return envOrigin.replace(/\/$/, "");
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+  if (host) {
+    const protocol = host.includes("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
+    return `${protocol}://${host}`;
+  }
+  return req.nextUrl.origin;
+}
+
 export async function GET(req: NextRequest) {
+  const origin = resolveOrigin(req);
   try {
     const session = await getSession(req);
     if (!session || !session.userId) {
-      return NextResponse.redirect(new URL("/login?next=/linkedin", req.url));
+      return NextResponse.redirect(new URL("/login?next=/linkedin", origin));
     }
 
     if (!isLinkedInConfigured()) {
@@ -21,14 +35,12 @@ export async function GET(req: NextRequest) {
         new URL(
           "/linkedin?error=" +
             encodeURIComponent("LinkedIn integration credentials are not configured on this server."),
-          req.url
+          origin
         )
       );
     }
 
-    const host = req.headers.get("host") || "localhost:3000";
-    const protocol = host.includes("localhost") ? "http" : "https";
-    const redirectUri = `${protocol}://${host}/api/auth/oauth/linkedin/callback`;
+    const redirectUri = `${origin}/api/auth/oauth/linkedin/callback`;
 
     const { url: authUrl, state, nonce } = generateLinkedInAuthUrl(redirectUri);
 
@@ -60,7 +72,7 @@ export async function GET(req: NextRequest) {
   } catch (err: unknown) {
     const message = (err as Error).message || "Could not initialize LinkedIn OAuth.";
     return NextResponse.redirect(
-      new URL(`/linkedin?error=${encodeURIComponent(message)}`, req.url)
+      new URL(`/linkedin?error=${encodeURIComponent(message)}`, origin)
     );
   }
 }

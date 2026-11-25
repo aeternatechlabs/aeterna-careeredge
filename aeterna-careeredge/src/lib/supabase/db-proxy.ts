@@ -112,6 +112,9 @@ const RELATION_MAP: Record<string, Record<string, RelationDef>> = {
   resumes: {
     user: { table: "users", foreignKey: "id", localKey: "userId", isMany: false },
   },
+  linkedin_profiles: {
+    user: { table: "users", foreignKey: "id", localKey: "userId", isMany: false },
+  },
   user_subscriptions: {
     plan: { table: "plans", foreignKey: "id", localKey: "planId", isMany: false },
   },

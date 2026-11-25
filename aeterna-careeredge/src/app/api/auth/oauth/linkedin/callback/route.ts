@@ -10,7 +10,21 @@ import {
   linkLinkedInAccount,
 } from "@/lib/linkedin/oauth";
 
+export const dynamic = "force-dynamic";
+
+function resolveOrigin(req: NextRequest): string {
+  const envOrigin = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
+  if (envOrigin) return envOrigin.replace(/\/$/, "");
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+  if (host) {
+    const protocol = host.includes("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
+    return `${protocol}://${host}`;
+  }
+  return req.nextUrl.origin;
+}
+
 export async function GET(req: NextRequest) {
+  const origin = resolveOrigin(req);
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
@@ -19,13 +33,13 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     return NextResponse.redirect(
-      new URL(`/linkedin?error=${encodeURIComponent(errorDescription || error)}`, req.url)
+      new URL(`/linkedin?error=${encodeURIComponent(errorDescription || error)}`, origin)
     );
   }
 
   if (!code || !state) {
     return NextResponse.redirect(
-      new URL("/linkedin?error=Missing+authorization+code+or+state", req.url)
+      new URL("/linkedin?error=Missing+authorization+code+or+state", origin)
     );
   }
 
@@ -33,7 +47,7 @@ export async function GET(req: NextRequest) {
   const savedState = req.cookies.get("linkedin_oauth_state")?.value;
   if (!savedState || savedState !== state) {
     return NextResponse.redirect(
-      new URL("/linkedin?error=Invalid+or+expired+state+parameter+detected", req.url)
+      new URL("/linkedin?error=Invalid+or+expired+state+parameter+detected", origin)
     );
   }
 
@@ -42,9 +56,7 @@ export async function GET(req: NextRequest) {
     const cookieUid = req.cookies.get("linkedin_oauth_uid")?.value;
     const initialUserId = session?.userId || cookieUid;
 
-    const host = req.headers.get("host") || "localhost:3000";
-    const protocol = host.includes("localhost") ? "http" : "https";
-    const redirectUri = `${protocol}://${host}/api/auth/oauth/linkedin/callback`;
+    const redirectUri = `${origin}/api/auth/oauth/linkedin/callback`;
 
     // 1. Exchange Code on Server
     const accessToken = await exchangeLinkedInCode({ code, redirectUri });
@@ -76,7 +88,7 @@ export async function GET(req: NextRequest) {
         new URL(
           "/login?next=/linkedin&error=" +
             encodeURIComponent("Please log in to your CareerEdge account before connecting LinkedIn."),
-          req.url
+          origin
         )
       );
     }
@@ -92,7 +104,7 @@ export async function GET(req: NextRequest) {
       onboardingCompleted: resolvedUser.onboardingCompleted,
     });
 
-    const res = NextResponse.redirect(new URL("/linkedin?connected=true", req.url));
+    const res = NextResponse.redirect(new URL("/linkedin?connected=true", origin));
     res.cookies.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
       secure: isSecureCookie(),
@@ -106,7 +118,7 @@ export async function GET(req: NextRequest) {
     return res;
   } catch (err: unknown) {
     return NextResponse.redirect(
-      new URL(`/linkedin?error=${encodeURIComponent((err as Error).message || "Connection failed")}`, req.url)
+      new URL(`/linkedin?error=${encodeURIComponent((err as Error).message || "Connection failed")}`, origin)
     );
   }
 }
