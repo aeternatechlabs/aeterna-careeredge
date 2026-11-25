@@ -8,11 +8,14 @@ import { HowItWorksPanel } from "@/components/guidance/how-it-works-panel";
 import { Settings, User, Sparkles, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function SettingsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
   const supabase = getSupabaseAdmin();
+  if (!supabase) redirect("/login");
 
   const [{ data: userRow }, userPlanInfo] = await Promise.all([
     supabase
