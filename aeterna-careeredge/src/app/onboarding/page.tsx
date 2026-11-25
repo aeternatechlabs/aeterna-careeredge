@@ -583,6 +583,7 @@ export default function OnboardingPage() {
     try {
       const res = await fetch("/api/onboarding", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, partialSave: true }),
       });
@@ -621,6 +622,7 @@ export default function OnboardingPage() {
     try {
       const res = await fetch("/api/onboarding", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
@@ -634,7 +636,7 @@ export default function OnboardingPage() {
         return;
       }
 
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     } catch {
       setError("Could not connect to the server. Please try again.");
     } finally {

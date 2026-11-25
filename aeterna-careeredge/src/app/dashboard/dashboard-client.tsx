@@ -217,8 +217,13 @@ export function DashboardClient({ user }: DashboardClientProps) {
       studentDomain={academicDomain}
       targetRole={preferredJobRole}
       onLogout={async () => {
-        await fetch("/api/auth/logout", { method: "POST" });
-        router.push("/login");
+        try {
+          await fetch("/api/auth/logout", {
+            method: "POST",
+            credentials: "include",
+          });
+        } catch {}
+        window.location.href = "/login";
       }}
     >
       {/* Full available width on all screens, 24px vertical rhythm (space-y-6) */}

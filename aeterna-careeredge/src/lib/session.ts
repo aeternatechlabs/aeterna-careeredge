@@ -28,7 +28,6 @@ let cachedPrimarySecret: Uint8Array | null = null;
 let cachedCandidateSecrets: Uint8Array[] | null = null;
 
 function getNormalizedSecret(): string {
-  if (cachedNormSecret) return cachedNormSecret;
   let secret = process.env.AUTH_SECRET;
   if (!secret) {
     try {
@@ -50,7 +49,12 @@ function getNormalizedSecret(): string {
     );
   }
 
-  cachedNormSecret = (secret || "dev_secret_careeredge_minimum_32_characters_for_local_testing").trim().replace(/^["']|["']$/g, "");
+  const norm = (secret || "dev_secret_careeredge_minimum_32_characters_for_local_testing").trim().replace(/^["']|["']$/g, "");
+  if (norm !== cachedNormSecret) {
+    cachedNormSecret = norm;
+    cachedPrimarySecret = null;
+    cachedCandidateSecrets = null;
+  }
   return cachedNormSecret;
 }
 
