@@ -7,6 +7,11 @@ import { db } from "@/lib/db";
 import { sendLeadNotificationEmail } from "@/lib/email/client";
 import { recordConsent } from "@/lib/compliance/consent";
 import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
+import {
+  getSupabaseRestConfig,
+  makeRestId,
+  supabaseRestFetch,
+} from "@/lib/supabase/rest";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -94,6 +99,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const ipAddress =
+      req.headers.get("x-forwarded-for") ||
+      req.headers.get("x-real-ip") ||
+      "127.0.0.1";
+    const userAgent = req.headers.get("user-agent") || "unknown";
+
     // 2. Resolve or create associated user record for relational integrity
     let leadRecordId: string | undefined;
 
@@ -137,12 +148,6 @@ export async function POST(req: NextRequest) {
       leadRecordId = leadRecord.id;
 
       // 4. Record compliance consent
-      const ipAddress =
-        req.headers.get("x-forwarded-for") ||
-        req.headers.get("x-real-ip") ||
-        "127.0.0.1";
-      const userAgent = req.headers.get("user-agent") || "unknown";
-
       if (counsellorConsent) {
         await recordConsent({
           userId: user.id,
@@ -160,23 +165,34 @@ export async function POST(req: NextRequest) {
         code: err.code,
       });
 
-      // Edge runtime / Cloudflare Workers fallback via Supabase PostgREST HTTP API
-      try {
-        const restLeadId = await saveLeadViaSupabaseRest({
-          name: name.trim(),
-          email: normalizedEmail,
-          mobile: normalizedMobile,
-          city: city.trim(),
-          educationLevel: status.trim(),
-          careerInterest: interest.trim(),
-          counsellorConsent: Boolean(counsellorConsent),
-        });
-        if (restLeadId) {
-          leadRecordId = restLeadId;
+      // Only invoke REST fallback if the lead was not already persisted above
+      if (!leadRecordId) {
+        try {
+          const restLeadId = await saveLeadViaSupabaseRest({
+            name: name.trim(),
+            email: normalizedEmail,
+            mobile: normalizedMobile,
+            city: city.trim(),
+            educationLevel: status.trim(),
+            careerInterest: interest.trim(),
+            counsellorConsent: Boolean(counsellorConsent),
+            ipAddress,
+            userAgent,
+          });
+          if (restLeadId) {
+            leadRecordId = restLeadId;
+          }
+        } catch (restError) {
+          console.error("[Supabase REST Fallback Error]:", restError);
         }
-      } catch (restError) {
-        console.error("[Supabase REST Fallback Error]:", restError);
       }
+    }
+
+    if (!leadRecordId) {
+      return NextResponse.json(
+        { error: "Failed to save your details. Please try again." },
+        { status: 500 }
+      );
     }
 
     // 5. Dispatch Email Notification via Brevo/Resend to the company inbox
@@ -208,9 +224,34 @@ export async function POST(req: NextRequest) {
   }
 }
 
+async function findLeadUserViaRest(
+  config: NonNullable<ReturnType<typeof getSupabaseRestConfig>>,
+  email: string,
+  mobile: string
+): Promise<string | null> {
+  // Query email first, then mobile separately to avoid PostgREST or= syntax issues
+  const byEmail = await supabaseRestFetch<Array<{ id: string }>>(
+    config,
+    `/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=id&limit=1`
+  );
+  if (byEmail.ok && Array.isArray(byEmail.data) && byEmail.data[0]?.id) {
+    return byEmail.data[0].id;
+  }
+
+  const byMobile = await supabaseRestFetch<Array<{ id: string }>>(
+    config,
+    `/rest/v1/users?mobile=eq.${encodeURIComponent(mobile)}&select=id&limit=1`
+  );
+  if (byMobile.ok && Array.isArray(byMobile.data) && byMobile.data[0]?.id) {
+    return byMobile.data[0].id;
+  }
+
+  return null;
+}
+
 /**
  * Fallback direct persistence using Supabase PostgREST HTTP API.
- * Ensures leads are securely saved even in serverless edge runtimes
+ * Ensures leads and consent audit records are securely saved in edge runtimes
  * where Prisma native TCP connections might be restricted.
  */
 async function saveLeadViaSupabaseRest(data: {
@@ -221,92 +262,113 @@ async function saveLeadViaSupabaseRest(data: {
   educationLevel: string;
   careerInterest: string;
   counsellorConsent: boolean;
+  ipAddress: string;
+  userAgent: string;
 }): Promise<string | null> {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_SECRET_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !serviceKey) {
-    console.warn("[saveLeadViaSupabaseRest] Missing Supabase URL or Service Key");
+  const config = getSupabaseRestConfig();
+  if (!config) {
+    console.warn("[saveLeadViaSupabaseRest] Missing Supabase URL or Service Role Key");
     return null;
   }
 
-  const cleanUrl = supabaseUrl.replace(/\/+$/, "");
-  const headers = {
-    apikey: serviceKey,
-    Authorization: `Bearer ${serviceKey}`,
-    "Content-Type": "application/json",
-    Prefer: "return=representation",
-  };
-
   try {
     // 1. Resolve or create user record
-    let userId: string | null = null;
-    const userQueryRes = await fetch(
-      `${cleanUrl}/rest/v1/users?or=(email.eq.${encodeURIComponent(data.email)},mobile.eq.${encodeURIComponent(data.mobile)})&select=id&limit=1`,
-      { headers }
-    );
+    let userId = await findLeadUserViaRest(config, data.email, data.mobile);
 
-    const existingUsers = (await userQueryRes.json().catch(() => [])) as Array<{ id: string }>;
-    if (Array.isArray(existingUsers) && existingUsers.length > 0 && existingUsers[0]?.id) {
-      userId = existingUsers[0].id;
-    } else {
-      const newUserId = "usr_" + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
-      const createUserRes = await fetch(`${cleanUrl}/rest/v1/users`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          id: newUserId,
-          name: data.name,
-          email: data.email,
-          mobile: data.mobile,
-          counsellorConsent: data.counsellorConsent,
-          onboardingCompleted: false,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }),
-      });
+    if (!userId) {
+      const now = new Date().toISOString();
+      const newUserId = makeRestId("usr");
+      const createUserRes = await supabaseRestFetch<Array<{ id: string }>>(
+        config,
+        "/rest/v1/users",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            id: newUserId,
+            name: data.name,
+            email: data.email,
+            mobile: data.mobile,
+            passwordHash: null,
+            counsellorConsent: data.counsellorConsent,
+            onboardingCompleted: false,
+            createdAt: now,
+            updatedAt: now,
+          }),
+        }
+      );
 
       if (createUserRes.ok) {
-        userId = newUserId;
+        userId = (Array.isArray(createUserRes.data) && createUserRes.data[0]?.id) || newUserId;
+      } else if (createUserRes.status === 409) {
+        // Concurrent request raced to insert the same email/mobile; re-query
+        userId = await findLeadUserViaRest(config, data.email, data.mobile);
       } else {
-        const errText = await createUserRes.text().catch(() => "");
-        console.error("[saveLeadViaSupabaseRest] Failed to create user:", errText);
+        console.error("[saveLeadViaSupabaseRest] Failed to create user:", createUserRes.errorText);
       }
     }
 
     if (!userId) return null;
 
     // 2. Insert into crm_leads table
-    const leadId = "lead_" + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
-    const insertLeadRes = await fetch(`${cleanUrl}/rest/v1/crm_leads`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        id: leadId,
-        userId,
-        name: data.name,
-        email: data.email,
-        mobile: data.mobile,
-        city: data.city,
-        educationLevel: data.educationLevel,
-        careerInterest: data.careerInterest,
-        counsellorConsent: data.counsellorConsent,
-        syncStatus: "PENDING",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }),
-    });
+    const now = new Date().toISOString();
+    const leadId = makeRestId("lead");
+    const insertLeadRes = await supabaseRestFetch<Array<{ id: string }>>(
+      config,
+      "/rest/v1/crm_leads",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          id: leadId,
+          userId,
+          name: data.name,
+          email: data.email,
+          mobile: data.mobile,
+          city: data.city,
+          educationLevel: data.educationLevel,
+          careerInterest: data.careerInterest,
+          counsellorConsent: data.counsellorConsent,
+          syncStatus: "PENDING",
+          createdAt: now,
+          updatedAt: now,
+        }),
+      }
+    );
 
-    if (insertLeadRes.ok) {
-      const created = (await insertLeadRes.json().catch(() => [])) as Array<{ id: string }>;
-      return (Array.isArray(created) && created[0]?.id) || leadId;
-    } else {
-      const errText = await insertLeadRes.text().catch(() => "");
-      console.error("[saveLeadViaSupabaseRest] Failed to insert lead:", errText);
+    if (!insertLeadRes.ok) {
+      console.error("[saveLeadViaSupabaseRest] Failed to insert lead:", insertLeadRes.errorText);
+      return null;
     }
+
+    const persistedLeadId =
+      (Array.isArray(insertLeadRes.data) && insertLeadRes.data[0]?.id) || leadId;
+
+    // 3. Record compliance consent audit trail when granted (parity with Prisma path)
+    if (data.counsellorConsent) {
+      const consentRes = await supabaseRestFetch<Array<{ id: string }>>(
+        config,
+        "/rest/v1/consent_records",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            id: makeRestId("cns"),
+            userId,
+            consentType: "COUNSELLOR_CONTACT",
+            isGranted: true,
+            grantedAt: now,
+            revokedAt: null,
+            ipAddress: data.ipAddress,
+            userAgent: data.userAgent,
+            version: "1.0",
+          }),
+        }
+      );
+
+      if (!consentRes.ok) {
+        console.error("[saveLeadViaSupabaseRest] Failed to record consent:", consentRes.errorText);
+      }
+    }
+
+    return persistedLeadId;
   } catch (err) {
     console.error("[saveLeadViaSupabaseRest] Network or syntax exception:", err);
   }
