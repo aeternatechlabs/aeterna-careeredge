@@ -1,7 +1,7 @@
 // src/app/settings/page.tsx
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { db } from "@/lib/db";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { getUserPlan } from "@/lib/monetization/entitlements";
 import { StudentLayout } from "@/components/layouts/student-layout";
 import { HowItWorksPanel } from "@/components/guidance/how-it-works-panel";
@@ -12,15 +12,29 @@ export default async function SettingsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const [user, userPlanInfo] = await Promise.all([
-    db.user.findUnique({
-      where: { id: session.userId },
-      include: { profile: true },
-    }),
+  const supabase = getSupabaseAdmin();
+
+  const [{ data: userRow }, userPlanInfo] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id, name, email")
+      .eq("id", session.userId)
+      .maybeSingle(),
     getUserPlan(session.userId),
   ]);
 
-  if (!user) redirect("/login");
+  if (!userRow) redirect("/login");
+
+  const { data: profileRow } = await supabase
+    .from("student_profiles")
+    .select("academicDomain, educationLevel, institution")
+    .eq("userId", session.userId)
+    .maybeSingle();
+
+  const user = {
+    ...userRow,
+    profile: profileRow || null,
+  };
 
   return (
     <StudentLayout userName={user.name}>
@@ -61,51 +75,45 @@ export default async function SettingsPage() {
               </div>
 
               <div className="p-3 rounded-xl bg-stone-50 border border-stone-100 space-y-1">
-                <span className="text-stone-400 font-medium">Target Professional Role</span>
+                <span className="text-stone-400 font-medium">Institution</span>
                 <p className="font-semibold text-gray-900 text-sm">
-                  {user.profile?.preferredJobRole || "Not specified"}
+                  {user.profile?.institution || "Not specified"}
                 </p>
               </div>
             </div>
 
-            <div className="pt-2 flex items-center justify-between">
+            <div className="pt-2">
               <Link
-                href="/onboarding?from=dashboard"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#7A0F1F] px-4 py-2 text-xs font-bold text-white hover:bg-[#600C18] transition"
+                href="/passport"
+                className="inline-flex items-center gap-2 text-xs font-medium text-[#7A0F1F] hover:underline"
               >
-                Update Profile & Academic Info
+                <span>Edit your full profile in the Universal Career Passport</span>
+                <ArrowRight size={14} />
               </Link>
             </div>
           </div>
 
-          {/* Membership & Subscription Details */}
           <div className="bg-white rounded-2xl border border-stone-200 p-6 space-y-4 shadow-xs">
             <h2 className="text-sm font-bold text-gray-900 border-b border-stone-100 pb-3 flex items-center gap-2">
               <Sparkles size={16} className="text-[#7A0F1F]" />
-              <span>Membership &amp; Subscription</span>
+              <span>Subscription & Entitlements</span>
             </h2>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-stone-50 border border-stone-100">
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">
-                  Active Tier
-                </span>
-                <p className="text-base font-bold text-gray-900">
-                  {userPlanInfo.planConfig.displayName}
+              <div>
+                <span className="text-xs text-stone-400 font-medium">Current Plan</span>
+                <p className="font-bold text-gray-900 text-lg">{userPlanInfo.planConfig.name}</p>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Status: <span className="font-medium text-emerald-600">{userPlanInfo.status}</span>
                 </p>
-                {userPlanInfo.validUntil && (
-                  <p className="text-xs text-stone-500">
-                    Valid until {new Date(userPlanInfo.validUntil).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                  </p>
-                )}
               </div>
 
               <Link
                 href="/pricing"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#7A0F1F] px-4 py-2 text-xs font-bold text-white hover:bg-[#600C18] transition"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#7A0F1F] text-white text-xs font-semibold hover:bg-[#8F1425] transition"
               >
-                <span>{userPlanInfo.planConfig.id === "FREE" ? "Upgrade Membership" : "Manage / View Plans"}</span>
-                <ArrowRight size={13} />
+                <span>View Plans & Upgrades</span>
+                <ArrowRight size={14} />
               </Link>
             </div>
           </div>

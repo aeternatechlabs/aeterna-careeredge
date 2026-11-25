@@ -107,30 +107,34 @@ export async function getUserPlan(userId: string): Promise<{
   validUntil: Date | null;
   source: string;
 }> {
-  const sub = await db.userSubscription.findUnique({
-    where: { userId },
-    include: { plan: true },
-  });
+  try {
+    const sub = await db.userSubscription.findUnique({
+      where: { userId },
+      include: { plan: true },
+    });
 
-  const now = new Date();
+    const now = new Date();
 
-  // If sub exists and is still valid
-  if (sub && sub.status === "ACTIVE") {
-    if (!sub.validUntil || sub.validUntil > now) {
-      const config = PLANS[sub.planId] || PLANS.FREE;
-      return {
-        planConfig: config,
-        status: sub.status,
-        validUntil: sub.validUntil,
-        source: sub.source,
-      };
-    } else {
-      // Expired short-term pass or subscription: update status
-      await db.userSubscription.update({
-        where: { userId },
-        data: { status: "EXPIRED" },
-      });
+    // If sub exists and is still valid
+    if (sub && sub.status === "ACTIVE") {
+      if (!sub.validUntil || sub.validUntil > now) {
+        const config = PLANS[sub.planId] || PLANS.FREE;
+        return {
+          planConfig: config,
+          status: sub.status,
+          validUntil: sub.validUntil,
+          source: sub.source,
+        };
+      } else {
+        // Expired short-term pass or subscription: update status
+        await db.userSubscription.update({
+          where: { userId },
+          data: { status: "EXPIRED" },
+        });
+      }
     }
+  } catch {
+    // Edge runtime fallback to default free plan
   }
 
   // Default to FREE

@@ -3,7 +3,7 @@
 
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { db } from "@/lib/db";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { LinkedInClient } from "./linkedin-client";
 import { isLinkedInConfigured } from "@/lib/linkedin/oauth";
 
@@ -22,48 +22,40 @@ export default async function LinkedInPage({ searchParams }: PageProps) {
   const errorParam = typeof resolved.error === "string" ? resolved.error : undefined;
   const connectedParam = typeof resolved.connected === "string" ? resolved.connected : undefined;
 
-  const user = await db.user.findUnique({
-    where: { id: session.userId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      profile: {
-        select: {
-          academicDomain: true,
-          preferredJobRole: true,
-          course: true,
-          institution: true,
-        },
-      },
-      skills: {
-        select: { id: true, name: true, category: true },
-      },
-      experiences: {
-        select: { id: true, jobTitle: true, companyName: true },
-      },
-      linkedInProfile: true,
-    },
-  });
+  const supabase = getSupabaseAdmin();
 
-  if (!user) {
+  const [
+    { data: userRow },
+    { data: profileRow },
+    { data: skillsRows },
+    { count: experiencesCount },
+    { data: linkedInRow },
+  ] = await Promise.all([
+    supabase.from("users").select("id, name, email").eq("id", session.userId).maybeSingle(),
+    supabase.from("student_profiles").select("academicDomain, preferredJobRole, course, institution").eq("userId", session.userId).maybeSingle(),
+    supabase.from("student_skills").select("id, name, category").eq("userId", session.userId),
+    supabase.from("student_experiences").select("*", { count: "exact", head: true }).eq("userId", session.userId),
+    supabase.from("linkedin_profiles").select("*").eq("userId", session.userId).maybeSingle(),
+  ]);
+
+  if (!userRow) {
     redirect("/login");
   }
 
   return (
     <LinkedInClient
       user={{
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        academicDomain: user.profile?.academicDomain || "Multi-Domain",
-        preferredJobRole: user.profile?.preferredJobRole || undefined,
-        course: user.profile?.course || undefined,
-        institution: user.profile?.institution || undefined,
+        id: userRow.id,
+        name: userRow.name,
+        email: userRow.email,
+        academicDomain: profileRow?.academicDomain || "Multi-Domain",
+        preferredJobRole: profileRow?.preferredJobRole || undefined,
+        course: profileRow?.course || undefined,
+        institution: profileRow?.institution || undefined,
       }}
-      initialProfile={user.linkedInProfile}
-      skills={user.skills}
-      experiencesCount={user.experiences.length}
+      initialProfile={linkedInRow || null}
+      skills={skillsRows || []}
+      experiencesCount={experiencesCount || 0}
       isOidcConfigured={isLinkedInConfigured()}
       errorParam={errorParam}
       connectedParam={connectedParam}

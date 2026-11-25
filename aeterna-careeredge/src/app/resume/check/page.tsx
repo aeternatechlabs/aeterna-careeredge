@@ -3,7 +3,7 @@
 
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { db } from "@/lib/db";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { ResumeCheckClient } from "./resume-check-client";
 
 export default async function ResumeCheckPage({
@@ -18,48 +18,37 @@ export default async function ResumeCheckPage({
   }
 
   const { resumeId } = await searchParams;
+  const supabase = getSupabaseAdmin();
 
-  const user = await db.user.findUnique({
-    where: { id: session.userId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      profile: {
-        select: {
-          academicDomain: true,
-          preferredJobRole: true,
-        },
-      },
-      resumes: {
-        select: {
-          id: true,
-          title: true,
-          targetRole: true,
-          atsScore: true,
-          structuredData: true,
-          feedback: true,
-        },
-        orderBy: { updatedAt: "desc" },
-      },
-    },
-  });
+  const [
+    { data: userRow },
+    { data: profileRow },
+    { data: resumesRows },
+  ] = await Promise.all([
+    supabase.from("users").select("id, name, email").eq("id", session.userId).maybeSingle(),
+    supabase.from("student_profiles").select("academicDomain, preferredJobRole").eq("userId", session.userId).maybeSingle(),
+    supabase
+      .from("resumes")
+      .select("id, title, targetRole, atsScore, structuredData, feedback")
+      .eq("userId", session.userId)
+      .order("updatedAt", { ascending: false }),
+  ]);
 
-  if (!user) {
+  if (!userRow) {
     redirect("/login");
   }
 
   return (
     <ResumeCheckClient
       user={{
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        academicDomain: user.profile?.academicDomain || "Multi-Domain",
-        preferredJobRole: user.profile?.preferredJobRole || undefined,
+        id: userRow.id,
+        name: userRow.name,
+        email: userRow.email,
+        academicDomain: profileRow?.academicDomain || "Multi-Domain",
+        preferredJobRole: profileRow?.preferredJobRole || undefined,
       }}
-      resumes={user.resumes}
-      initialResumeId={resumeId}
+      resumes={resumesRows || []}
+      initialResumeId={resumeId || resumesRows?.[0]?.id}
     />
   );
 }

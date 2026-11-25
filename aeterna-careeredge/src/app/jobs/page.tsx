@@ -3,7 +3,7 @@
 
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { db } from "@/lib/db";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { JobsClient } from "./jobs-client";
 import { mapAcademicDomainToJobDomain, cleanRoleTitle } from "@/lib/jobs/domain-mapper";
 
@@ -13,45 +13,35 @@ export default async function JobsPage() {
     redirect("/login");
   }
 
-  const user = await db.user.findUnique({
-    where: { id: session.userId },
-    select: {
-      id: true,
-      name: true,
-      profile: {
-        select: {
-          academicDomain: true,
-          preferredJobRole: true,
-          course: true,
-          institution: true,
-        },
-      },
-      skills: {
-        select: { name: true },
-      },
-      resumes: {
-        select: { targetRole: true },
-        take: 1,
-        orderBy: { updatedAt: "desc" },
-      },
-    },
-  });
+  const supabase = getSupabaseAdmin();
 
-  const studentDomain = user?.profile?.academicDomain || "Engineering & Technology";
+  const [
+    { data: userRow },
+    { data: profileRow },
+    { data: skillsRows },
+    { data: resumesRows },
+  ] = await Promise.all([
+    supabase.from("users").select("id, name").eq("id", session.userId).maybeSingle(),
+    supabase.from("student_profiles").select("academicDomain, preferredJobRole, course, institution").eq("userId", session.userId).maybeSingle(),
+    supabase.from("student_skills").select("name").eq("userId", session.userId),
+    supabase.from("resumes").select("targetRole").eq("userId", session.userId).order("updatedAt", { ascending: false }).limit(1),
+  ]);
+
+  const studentDomain = profileRow?.academicDomain || "Engineering & Technology";
   const defaultJobDomain = mapAcademicDomainToJobDomain(studentDomain);
-  const rawPreferredRole = user?.profile?.preferredJobRole || user?.resumes?.[0]?.targetRole || "";
+  const rawPreferredRole = profileRow?.preferredJobRole || resumesRows?.[0]?.targetRole || "";
   const preferredRole = cleanRoleTitle(rawPreferredRole);
-  const studentSkills = user?.skills.map((s) => s.name) || [];
+  const studentSkills = skillsRows?.map((s) => s.name) || [];
 
   return (
     <JobsClient
-      studentName={user?.name || session.name || "Student"}
+      studentName={userRow?.name || session.name || "Student"}
       studentProfile={{
         academicDomain: studentDomain,
-        defaultJobDomain,
-        preferredRole,
+        defaultJobDomain: defaultJobDomain,
+        preferredRole: preferredRole,
         skills: studentSkills,
-        course: user?.profile?.course || undefined,
+        course: profileRow?.course || undefined,
       }}
     />
   );

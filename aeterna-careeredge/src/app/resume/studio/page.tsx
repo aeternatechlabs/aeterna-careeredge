@@ -3,7 +3,7 @@
 
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { db } from "@/lib/db";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { StudentLayout } from "@/components/layouts/student-layout";
 import { ResumeStudioClient } from "./studio-client";
 
@@ -14,54 +14,38 @@ export default async function ResumeStudioPage() {
     redirect("/login");
   }
 
-  const user = await db.user.findUnique({
-    where: { id: session.userId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      profile: {
-        select: {
-          academicDomain: true,
-          preferredJobRole: true,
-        },
-      },
-      resumes: {
-        orderBy: { updatedAt: "desc" },
-        select: {
-          id: true,
-          title: true,
-          targetRole: true,
-          templateId: true,
-          atsScore: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      },
-    },
-  });
+  const supabase = getSupabaseAdmin();
 
-  if (!user) {
+  const [
+    { data: userRow },
+    { data: profileRow },
+    { data: resumesRows },
+  ] = await Promise.all([
+    supabase.from("users").select("id, name, email").eq("id", session.userId).maybeSingle(),
+    supabase.from("student_profiles").select("academicDomain, preferredJobRole").eq("userId", session.userId).maybeSingle(),
+    supabase
+      .from("resumes")
+      .select("id, title, targetRole, templateId, atsScore, createdAt, updatedAt")
+      .eq("userId", session.userId)
+      .order("updatedAt", { ascending: false }),
+  ]);
+
+  if (!userRow) {
     redirect("/login");
   }
 
-  const formattedResumes = user.resumes.map((r) => ({
+  const formattedResumes = (resumesRows || []).map((r) => ({
     id: r.id,
     title: r.title,
     targetRole: r.targetRole,
     templateId: r.templateId,
     atsScore: r.atsScore,
-    createdAt: r.createdAt.toISOString(),
-    updatedAt: r.updatedAt.toISOString(),
+    createdAt: typeof r.createdAt === "string" ? r.createdAt : new Date(r.createdAt).toISOString(),
+    updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : new Date(r.updatedAt).toISOString(),
   }));
 
   return (
-    <StudentLayout
-      userName={user.name}
-      userInitial={user.name ? user.name.charAt(0).toUpperCase() : "S"}
-      studentDomain={user.profile?.academicDomain || undefined}
-      targetRole={user.profile?.preferredJobRole || undefined}
-    >
+    <StudentLayout userName={userRow.name}>
       <ResumeStudioClient initialResumes={formattedResumes} />
     </StudentLayout>
   );
