@@ -468,6 +468,10 @@ export default function OnboardingPage() {
     async function loadCurrentStudent() {
       try {
         const res = await fetch("/api/auth/me", { credentials: "include" });
+        if (res.status === 401) {
+          window.location.href = "/login?next=/onboarding";
+          return;
+        }
         if (
           typeof window !== "undefined" &&
           window.location.search.includes("from=dashboard")

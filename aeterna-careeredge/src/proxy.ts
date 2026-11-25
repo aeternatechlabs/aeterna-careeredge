@@ -72,14 +72,17 @@ function getPrimarySecretBytes(): Uint8Array {
 function getCandidateSecretBytes(): Uint8Array[] {
   const norm = getNormalizedSecret();
   if (!cachedCandidateSecrets || cachedNormSecret !== norm) {
-    const list = [
-      norm,
-      "xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM=",
-      `"${norm}"`,
-      '"xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM="',
-      "default_dev_secret_careeredge",
-      "test-secret-key-for-unit-testing-32chars",
-    ];
+    const list =
+      process.env.NODE_ENV === "production"
+        ? [norm, `"${norm}"`]
+        : [
+            norm,
+            "xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM=",
+            `"${norm}"`,
+            '"xo5odNE2wssVxrcloxtSOgYXkHOLSwIW8/jHNSlsewM="',
+            "default_dev_secret_careeredge",
+            "test-secret-key-for-unit-testing-32chars",
+          ];
     const seen = new Set<string>();
     const result: Uint8Array[] = [];
     for (const item of list) {
