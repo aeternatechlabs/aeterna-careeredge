@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { generateId } from "@/lib/supabase/db-proxy";
 import { prisma } from "@/lib/prisma";
 import { getFrameworkForDomain } from "@/lib/resume/frameworks";
 
@@ -277,12 +278,14 @@ export async function POST(req: NextRequest) {
       const { data: created, error: createError } = await supabase
         .from("resumes")
         .insert({
+          id: generateId(),
           userId: session.userId,
           title: resumeTitle,
           targetRole: resolvedRole,
           templateId,
           structuredData: JSON.stringify(structuredDataObj),
           atsScore: 78,
+          updatedAt: new Date().toISOString(),
         })
         .select()
         .single();

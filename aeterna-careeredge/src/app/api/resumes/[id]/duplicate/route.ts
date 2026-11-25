@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { generateId } from "@/lib/supabase/db-proxy";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(
@@ -59,7 +60,7 @@ export async function POST(
     if (supabase) {
       const { data, error } = await supabase
         .from("resumes")
-        .insert(duplicatePayload)
+        .insert({ id: generateId(), ...duplicatePayload, updatedAt: new Date().toISOString() })
         .select()
         .single();
       if (error || !data) throw new Error(error?.message || "Failed to duplicate resume.");

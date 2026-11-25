@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { generateId } from "@/lib/supabase/db-proxy";
 import { db } from "@/lib/db";
 import { recalculateAndSavePassportScore } from "@/lib/passport/score";
 
@@ -42,12 +43,14 @@ export async function POST(req: NextRequest) {
       const { data: created, error: createError } = await supabase
         .from("student_skills")
         .insert({
+          id: generateId(),
           userId: session.userId,
           name: trimmedName,
           category: category || "TECHNICAL",
           proficiencyLevel: proficiencyLevel || "INTERMEDIATE",
           dataOrigin: "STUDENT_INPUT",
           isVerified: false,
+          updatedAt: new Date().toISOString(),
         })
         .select()
         .single();

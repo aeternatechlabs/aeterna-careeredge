@@ -3,6 +3,7 @@
 
 import { db } from "@/lib/db";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { generateId } from "@/lib/supabase/db-proxy";
 
 export type ConsentType =
   | "TERMS_AND_PRIVACY"
@@ -26,6 +27,7 @@ export async function recordConsent(params: {
     const { data, error } = await supabase
       .from("consent_records")
       .insert({
+        id: generateId(),
         userId: params.userId,
         consentType: params.consentType,
         isGranted: params.isGranted,

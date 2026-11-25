@@ -4,6 +4,7 @@
 import fs from "fs";
 import path from "path";
 import os from "os";
+import { resolveSupabaseUrl, resolveSupabaseKey } from "@/lib/supabase/server";
 
 export interface StorageProvider {
   name: string;
@@ -140,22 +141,14 @@ export class SupabaseStorageProvider implements StorageProvider {
   private supabaseUrl: string;
   private apiKey: string;
   private bucket: string;
-  private fallback: LocalPrivateStorageProvider;
+  private fallback: LocalPrivateStorageProvider | null = null;
   private bucketEnsured = false;
 
   constructor() {
-    this.fallback = new LocalPrivateStorageProvider();
-
-    this.supabaseUrl = (
-      process.env.SUPABASE_URL ||
-      process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      ""
-    ).replace(/\/$/, "");
-
+    this.supabaseUrl = resolveSupabaseUrl() || "";
     this.apiKey =
+      resolveSupabaseKey() ||
       process.env.SUPABASE_SECRET_KEY ||
-      process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.SUPABASE_SERVICE_KEY ||
       process.env.SUPABASE_KEY ||
       process.env.SUPABASE_PUBLISHABLE_KEY ||
       process.env.SUPABASE_ANON_KEY ||
@@ -165,8 +158,15 @@ export class SupabaseStorageProvider implements StorageProvider {
     this.bucket = process.env.SUPABASE_STORAGE_BUCKET || "documents";
 
     if (!this.apiKey) {
-      console.warn("⚠️ [SUPABASE STORAGE] No Supabase API key (SUPABASE_SECRET_KEY or SUPABASE_KEY) found. Using serverless scratch fallback.");
+      console.warn("⚠️ [SUPABASE STORAGE] No Supabase API key found. Using serverless scratch fallback.");
     }
+  }
+
+  private getFallback(): LocalPrivateStorageProvider {
+    if (!this.fallback) {
+      this.fallback = new LocalPrivateStorageProvider();
+    }
+    return this.fallback;
   }
 
   private cleanKey(key: string): string {
@@ -226,7 +226,7 @@ export class SupabaseStorageProvider implements StorageProvider {
     }
 
     // Serverless scratch storage fallback
-    return await this.fallback.upload(key, buffer, mimeType);
+    return await this.getFallback().upload(key, buffer, mimeType);
   }
 
   async download(key: string): Promise<Buffer> {
@@ -262,7 +262,7 @@ export class SupabaseStorageProvider implements StorageProvider {
     }
 
     // Fallback to local / serverless scratch
-    return await this.fallback.download(key);
+    return await this.getFallback().download(key);
   }
 
   async delete(key: string): Promise<void> {
@@ -283,7 +283,7 @@ export class SupabaseStorageProvider implements StorageProvider {
       } catch {}
     }
 
-    await this.fallback.delete(key);
+    await this.getFallback().delete(key).catch(() => {});
   }
 
   async exists(key: string): Promise<boolean> {
@@ -302,7 +302,7 @@ export class SupabaseStorageProvider implements StorageProvider {
       } catch {}
     }
 
-    return await this.fallback.exists(key);
+    return await this.getFallback().exists(key);
   }
 }
 

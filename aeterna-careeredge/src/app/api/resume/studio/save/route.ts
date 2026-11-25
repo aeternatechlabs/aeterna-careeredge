@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { generateId } from "@/lib/supabase/db-proxy";
 import { db } from "@/lib/db";
 import { DEFAULT_STYLE_CONFIG } from "@/lib/resume/templates";
 import { computeResumeContentHash } from "@/lib/resume/adapter";
@@ -179,7 +180,7 @@ export async function POST(req: NextRequest) {
     if (supabase) {
       const { data: created, error: insertError } = await supabase
         .from("resumes")
-        .insert(resumePayload)
+        .insert({ id: generateId(), ...resumePayload, updatedAt: new Date().toISOString() })
         .select("id, title")
         .single();
       if (insertError || !created) {

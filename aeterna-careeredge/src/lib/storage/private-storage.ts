@@ -4,6 +4,7 @@
 
 import { db } from "@/lib/db";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { generateId } from "@/lib/supabase/db-proxy";
 import crypto from "crypto";
 import { getStorageProvider } from "./provider";
 
@@ -192,6 +193,7 @@ export async function storeStudentDocument({
     const { data, error } = await supabase
       .from("stored_documents")
       .insert({
+        id: generateId(),
         userId,
         originalFileName: fileName,
         storageKey,
@@ -200,6 +202,7 @@ export async function storeStudentDocument({
         category,
         isPrivate: true,
         storageEngine: provider.name,
+        updatedAt: new Date().toISOString(),
       })
       .select("id, originalFileName, storageKey, mimeType, fileSizeBytes, category, userId")
       .single();

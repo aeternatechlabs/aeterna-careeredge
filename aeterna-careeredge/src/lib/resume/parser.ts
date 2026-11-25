@@ -1076,13 +1076,13 @@ ${rawText.slice(0, 8000)}
 
       return {
         contactInfo: {
-          name: (data as any).name || deterministic.contactInfo.name,
-          email: (data as any).email || deterministic.contactInfo.email,
-          phone: (data as any).phone || deterministic.contactInfo.phone,
-          location: (data as any).location || deterministic.contactInfo.location,
-          linkedinUrl: (data as any).linkedinUrl || deterministic.contactInfo.linkedinUrl,
-          githubUrl: (data as any).githubUrl || deterministic.contactInfo.githubUrl,
-          portfolioUrl: (data as any).portfolioUrl || deterministic.contactInfo.portfolioUrl,
+          name: (data as any).contactInfo?.name || (data as any).name || deterministic.contactInfo.name,
+          email: (data as any).contactInfo?.email || (data as any).email || deterministic.contactInfo.email,
+          phone: (data as any).contactInfo?.phone || (data as any).phone || deterministic.contactInfo.phone,
+          location: (data as any).contactInfo?.location || (data as any).location || deterministic.contactInfo.location,
+          linkedinUrl: (data as any).contactInfo?.linkedinUrl || (data as any).linkedinUrl || deterministic.contactInfo.linkedinUrl,
+          githubUrl: (data as any).contactInfo?.githubUrl || (data as any).githubUrl || deterministic.contactInfo.githubUrl,
+          portfolioUrl: (data as any).contactInfo?.portfolioUrl || (data as any).portfolioUrl || deterministic.contactInfo.portfolioUrl,
         },
         summary: data.summary || deterministic.summary,
         education: finalEducation,

@@ -6,6 +6,7 @@ import { ServerAiService } from "@/lib/ai/provider";
 import { recordUsage } from "@/lib/monetization/entitlements";
 import { prisma } from "@/lib/prisma";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { generateId } from "@/lib/supabase/db-proxy";
 import type {
   FullResumeData,
   FullResumeAnalysisReport,
@@ -229,8 +230,8 @@ Return ONLY valid JSON matching this schema:
     };
 
     if (supabase) {
-      await supabase.from("resume_analyses").insert(analysisPayload);
-      await supabase.from("resumes").update(resumeUpdatePayload).eq("id", resumeId);
+      await supabase.from("resume_analyses").insert({ id: generateId(), ...analysisPayload });
+      await supabase.from("resumes").update({ ...resumeUpdatePayload, updatedAt: new Date().toISOString() }).eq("id", resumeId);
     } else {
       await prisma.resumeAnalysisRecord.create({
         data: analysisPayload,

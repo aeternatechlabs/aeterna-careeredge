@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, setSessionCookie, createSession, isSecureCookie } from "@/lib/session";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { generateId } from "@/lib/supabase/db-proxy";
 import { db } from "@/lib/db";
 import type { OnboardingData } from "@/types/onboarding";
 
@@ -74,12 +75,30 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     // 1. Persist the student profile (upsert — idempotent)
     if (supabase) {
-      const { error: profileError } = await supabase
+      const { data: existingProfile } = await supabase
         .from("student_profiles")
-        .upsert(profileData, { onConflict: "userId" });
-      if (profileError) {
-        console.error("[Onboarding] Supabase profile upsert error:", profileError.message);
-        throw new Error(profileError.message);
+        .select("id")
+        .eq("userId", session.userId)
+        .maybeSingle();
+
+      const nowIso = new Date().toISOString();
+      if (existingProfile) {
+        const { error: profileError } = await supabase
+          .from("student_profiles")
+          .update({ ...profileData, updatedAt: nowIso })
+          .eq("userId", session.userId);
+        if (profileError) {
+          console.error("[Onboarding] Supabase profile update error:", profileError.message);
+          throw new Error(profileError.message);
+        }
+      } else {
+        const { error: profileError } = await supabase
+          .from("student_profiles")
+          .insert({ id: generateId(), ...profileData, updatedAt: nowIso });
+        if (profileError) {
+          console.error("[Onboarding] Supabase profile insert error:", profileError.message);
+          throw new Error(profileError.message);
+        }
       }
     } else {
       await db.studentProfile.upsert({
@@ -111,7 +130,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
         if (supabase) {
           await supabase.from("student_projects").delete().eq("userId", session.userId);
-          await supabase.from("student_projects").insert(projectRows);
+          const nowIso = new Date().toISOString();
+          await supabase
+            .from("student_projects")
+            .insert(projectRows.map((row) => ({ id: generateId(), ...row, updatedAt: nowIso })));
         } else {
           await db.studentProject.deleteMany({ where: { userId: session.userId } });
           await db.studentProject.createMany({ data: projectRows });

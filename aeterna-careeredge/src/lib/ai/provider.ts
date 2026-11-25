@@ -21,6 +21,32 @@ const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 // QUALITY (e.g. Gemini 2.0 Pro / Claude Sonnet): $1.25 input, $5.00 output
 const USD_TO_INR = 86.5;
 
+function extractJsonFromLlmText<T>(rawText: string): T {
+  let cleaned = rawText
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .trim();
+
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  }
+
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch {
+    const firstBrace = cleaned.indexOf("{");
+    const lastBrace = cleaned.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      return JSON.parse(cleaned.slice(firstBrace, lastBrace + 1)) as T;
+    }
+    const firstBracket = cleaned.indexOf("[");
+    const lastBracket = cleaned.lastIndexOf("]");
+    if (firstBracket !== -1 && lastBracket > firstBracket) {
+      return JSON.parse(cleaned.slice(firstBracket, lastBracket + 1)) as T;
+    }
+    throw new Error(`Invalid JSON from AI provider: ${cleaned.slice(0, 120)}`);
+  }
+}
+
 function calculateCost(tier: AiModelTier, inputTokens: number, outputTokens: number): { usd: number; inr: number } {
   const isFast = tier === "FAST";
   const inputRate = isFast ? 0.10 / 1_000_000 : 1.25 / 1_000_000;
@@ -285,7 +311,7 @@ IMPORTANT PRODUCT INVARIANTS:
           const raw = await geminiRes.json();
           const candidateText = raw?.candidates?.[0]?.content?.parts?.[0]?.text;
           if (candidateText) {
-            const parsedData = JSON.parse(candidateText.trim()) as T;
+            const parsedData = extractJsonFromLlmText<T>(candidateText);
             const inputTokens = raw?.usageMetadata?.promptTokenCount || 250;
             const outputTokens = raw?.usageMetadata?.candidatesTokenCount || 150;
             const cost = calculateCost(params.tier, inputTokens, outputTokens);
@@ -427,11 +453,7 @@ IMPORTANT PRODUCT INVARIANTS:
         if (openAiRes && openAiRes.ok) {
           const raw = await openAiRes.json();
           const rawText = raw?.choices?.[0]?.message?.content || "";
-          let cleanJson = rawText.trim();
-          if (cleanJson.startsWith("```")) {
-            cleanJson = cleanJson.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
-          }
-          const parsedData = JSON.parse(cleanJson) as T;
+          const parsedData = extractJsonFromLlmText<T>(rawText);
           const inputTokens = raw?.usage?.prompt_tokens || 200;
           const outputTokens = raw?.usage?.completion_tokens || 100;
           const cost = calculateCost(params.tier, inputTokens, outputTokens);
