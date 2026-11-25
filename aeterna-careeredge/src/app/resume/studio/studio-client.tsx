@@ -191,11 +191,14 @@ export function ResumeStudioClient({ initialResumes = [] }: ResumeStudioClientPr
     try {
       const res = await fetch("/api/resumes/upload", {
         method: "POST",
+        credentials: "include",
         body: formData,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "File upload failed");
-      setUploadedPayload(data.parsedPayload);
+      const parsed = data.parsedPayload || data.parsed || data.parsedData || null;
+      if (!parsed) throw new Error("Could not extract structured details from the uploaded resume.");
+      setUploadedPayload(parsed);
     } catch (err: any) {
       setGenerationError(err.message || "Failed to parse resume document.");
     }
@@ -211,6 +214,10 @@ export function ResumeStudioClient({ initialResumes = [] }: ResumeStudioClientPr
   // Trigger generation
   const handleGenerate = async () => {
     if (!targetRolePrompt.trim() && !uploadedFile && sourceType !== "passport") return;
+    if (sourceType === "upload" && !uploadedPayload) {
+      setGenerationError("Please upload a resume document and wait for parsing to complete before generating.");
+      return;
+    }
 
     setIsGenerating(true);
     setGenerationStepIndex(0);

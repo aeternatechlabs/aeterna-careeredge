@@ -6,9 +6,9 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { analyzeLinkedInProfile } from "@/lib/linkedin/analysis";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session || !session.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

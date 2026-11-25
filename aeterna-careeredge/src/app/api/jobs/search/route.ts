@@ -10,7 +10,7 @@ import type { EmploymentType, JobDomain, JobListing } from "@/lib/jobs/types";
 
 export async function GET(request: Request) {
   try {
-    const session = await getSession();
+    const session = await getSession(request);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

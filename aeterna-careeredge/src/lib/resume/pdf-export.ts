@@ -22,8 +22,15 @@ const CHROME_CANDIDATE_PATHS = [
 ].filter(Boolean) as string[];
 
 export async function findChromeBinary(): Promise<string | null> {
-  // Vercel / AWS Lambda serverless runtimes do not bundle headless Chrome
-  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  // Serverless / edge runtimes (Cloudflare Workers, Vercel, AWS Lambda) do not bundle headless Chrome
+  if (
+    process.env.VERCEL ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.CF_PAGES ||
+    process.env.CF_WORKER ||
+    process.env.WORKERS_ENV ||
+    process.env.OPENNEXT
+  ) {
     return null;
   }
 

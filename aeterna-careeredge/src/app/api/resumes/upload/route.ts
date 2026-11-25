@@ -207,6 +207,7 @@ export async function POST(req: NextRequest) {
         format,
         parsed: parsedPayload,
         parsedData: parsedPayload,
+        parsedPayload,
         rawTextSnippet: parsedPayload.rawTextSnippet,
         message:
           "Resume extracted successfully. Please review the details below before saving or creating your resume draft.",

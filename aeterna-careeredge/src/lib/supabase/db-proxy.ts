@@ -136,8 +136,20 @@ export function generateId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 }
 
+function serializeDates(obj: Record<string, any>): Record<string, any> {
+  const out: Record<string, any> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v instanceof Date) {
+      out[k] = v.toISOString();
+    } else if (v !== undefined) {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
 function withInsertDefaults(tableName: string, row: Record<string, any>): Record<string, any> {
-  const enriched: Record<string, any> = { ...row };
+  const enriched: Record<string, any> = serializeDates(row);
   if (enriched.id === undefined || enriched.id === null) {
     enriched.id = generateId();
   }
@@ -148,7 +160,7 @@ function withInsertDefaults(tableName: string, row: Record<string, any>): Record
 }
 
 function withUpdateDefaults(tableName: string, data: Record<string, any>): Record<string, any> {
-  const enriched: Record<string, any> = { ...data };
+  const enriched: Record<string, any> = serializeDates(data);
   if (TABLES_WITH_UPDATED_AT.has(tableName) && enriched.updatedAt === undefined) {
     enriched.updatedAt = new Date().toISOString();
   }
@@ -161,10 +173,49 @@ function resolveTableName(model: string): string {
   return snake.endsWith("s") ? snake : `${snake}s`;
 }
 
-function applyWhere(query: any, where?: Record<string, any>): any {
-  if (!where || typeof where !== "object") return query;
+const PRISMA_OPERATORS = new Set([
+  "equals",
+  "not",
+  "in",
+  "gte",
+  "lte",
+  "gt",
+  "lt",
+  "contains",
+  "startsWith",
+  "endsWith",
+]);
 
+function flattenWhere(where?: Record<string, any>): Record<string, any> {
+  if (!where || typeof where !== "object") return {};
+  const flat: Record<string, any> = {};
   for (const [key, value] of Object.entries(where)) {
+    if (value === undefined) continue;
+    if (
+      key !== "NOT" &&
+      key !== "not" &&
+      key.includes("_") &&
+      typeof value === "object" &&
+      value !== null &&
+      !Array.isArray(value) &&
+      !(value instanceof Date) &&
+      !Object.keys(value).some((k) => PRISMA_OPERATORS.has(k))
+    ) {
+      for (const [subKey, subVal] of Object.entries(value)) {
+        if (subVal !== undefined) flat[subKey] = subVal;
+      }
+    } else {
+      flat[key] = value;
+    }
+  }
+  return flat;
+}
+
+function applyWhere(query: any, where?: Record<string, any>): any {
+  const normalizedWhere = flattenWhere(where);
+  if (!normalizedWhere || Object.keys(normalizedWhere).length === 0) return query;
+
+  for (const [key, value] of Object.entries(normalizedWhere)) {
     if (value === undefined) continue;
 
     if (key === "NOT" || key === "not") {
@@ -497,7 +548,8 @@ export function createSupabasePrismaProxy(getSupabase: () => SupabaseClient | nu
               if (error) throw new Error(error.message);
               return resolveRelationsForRow(supabase, tableName, data, relations);
             } else {
-              const insertData = withInsertDefaults(tableName, { ...args.where, ...args.create });
+              const flatWhere = flattenWhere(args.where);
+              const insertData = withInsertDefaults(tableName, { ...flatWhere, ...args.create });
               const { data, error } = await supabase.from(tableName).insert(insertData).select(selectStr).single();
               if (error) throw new Error(error.message);
               return resolveRelationsForRow(supabase, tableName, data, relations);

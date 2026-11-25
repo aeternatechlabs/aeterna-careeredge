@@ -8,11 +8,11 @@ import { matchStudentToJob } from "@/lib/jobs/matching";
 import { trackProgressEvent } from "@/lib/guidance/progress";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
+    const session = await getSession(request);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

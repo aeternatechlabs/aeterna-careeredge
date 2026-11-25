@@ -6,7 +6,7 @@ import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  const session = await getSession();
+  const session = await getSession(req);
   if (!session) {
     return NextResponse.json({ seen: false, dismissed: false });
   }
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const session = await getSession();
+  const session = await getSession(req);
   if (!session) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }

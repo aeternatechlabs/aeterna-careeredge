@@ -17,7 +17,7 @@ interface GuideChatRequest {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const session = await getSession();
+  const session = await getSession(req);
   if (!session) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
