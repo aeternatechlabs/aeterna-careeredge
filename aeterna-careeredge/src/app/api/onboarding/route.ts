@@ -16,6 +16,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const session = await getSession(req);
 
   if (!session) {
+    console.warn("[Onboarding POST 401]", {
+      hasCookieHeader: Boolean(req.headers.get("cookie")),
+      hasAceSessionCookie: Boolean(req.cookies.get("ace_session")?.value),
+    });
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
   }
 

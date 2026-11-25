@@ -157,11 +157,13 @@ export async function verifySession(
     }
 
     let payload: Record<string, unknown> | null = null;
+    let lastError: string | null = null;
     // Fast path: verify with primary secret first
     try {
       const res = await jwtVerify(cleanToken, getSecret());
       payload = res.payload as Record<string, unknown>;
-    } catch {
+    } catch (err) {
+      lastError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
       // Fallback path: iterate through candidates
       const secrets = getSecretCandidates();
       for (const secret of secrets) {
@@ -175,6 +177,7 @@ export async function verifySession(
 
     // Strictly require cryptographic signature verification with secrets
     if (!payload) {
+      console.warn("[verifySession] JWT verification failed:", lastError || "unknown");
       return null;
     }
 
@@ -269,6 +272,19 @@ export async function getSession(req?: {
   if (token) {
     const verified = await verifySession(token);
     if (verified) return verified;
+  }
+
+  // 3b. If multiple ace_session cookies exist in raw Cookie header, try all of them
+  if (req?.headers && typeof req.headers.get === "function") {
+    const rawCookie = req.headers.get("cookie") || "";
+    const allMatches = rawCookie.matchAll(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([^;]+)`, "g"));
+    for (const m of allMatches) {
+      const candidate = m[1];
+      if (candidate && candidate !== token) {
+        const verified = await verifySession(candidate);
+        if (verified) return verified;
+      }
+    }
   }
 
   // 4. If req token verification failed or was empty, attempt cookieStore directly as second chance
