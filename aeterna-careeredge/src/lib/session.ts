@@ -177,7 +177,11 @@ export async function verifySession(
 
     // Strictly require cryptographic signature verification with secrets
     if (!payload) {
-      console.warn("[verifySession] JWT verification failed:", lastError || "unknown");
+      const partLengths = cleanToken.split(".").map((p) => p.length);
+      console.warn("[verifySession] JWT verification failed:", {
+        error: lastError || "unknown",
+        partLengths,
+      });
       return null;
     }
 
