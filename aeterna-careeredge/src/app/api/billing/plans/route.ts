@@ -14,9 +14,9 @@ function cleanKey(val?: string): string {
   return val.trim().replace(/^["']|["']$/g, "").trim();
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const session = await getSession();
+    const session = await getSession(req);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

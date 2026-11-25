@@ -44,7 +44,10 @@ export function PricingClient({ studentName }: PricingClientProps) {
 
   const loadPlans = useCallback(async () => {
     try {
-      const res = await fetch("/api/billing/plans", { cache: "no-store" });
+      const res = await fetch("/api/billing/plans", {
+        cache: "no-store",
+        credentials: "include",
+      });
       if (res.ok) {
         const data = await res.json();
         if (data?.currentPlan?.id) {
@@ -71,6 +74,7 @@ export function PricingClient({ studentName }: PricingClientProps) {
       // ── Paid Plan: Step 1 Create Razorpay Order ─────────────────────────────
       const orderRes = await fetch("/api/billing/order", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ planId }),
       });
@@ -114,6 +118,7 @@ export function PricingClient({ studentName }: PricingClientProps) {
           try {
             const verifyRes = await fetch("/api/billing/verify", {
               method: "POST",
+              credentials: "include",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 planId,
