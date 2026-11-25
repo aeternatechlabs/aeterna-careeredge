@@ -23,7 +23,7 @@ export function resolveSupabaseUrl(): string {
     if (!candidate) continue;
     const clean = candidate.trim().replace(/^["']|["']$/g, "");
     if (/^https?:\/\//i.test(clean)) {
-      return clean.replace(/\/+$/, "");
+      return clean.replace(/\/rest\/v1\/?$/i, "").replace(/\/+$/, "");
     }
     // If the variable contains only the 20-character project ref
     if (/^[a-z0-9]{20}$/i.test(clean)) {
