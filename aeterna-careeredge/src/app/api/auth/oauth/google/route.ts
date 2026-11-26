@@ -6,18 +6,14 @@ import {
   isGoogleOAuthConfigured,
   generateOAuthState,
   getGoogleAuthUrl,
+  resolveRequestOrigin,
 } from "@/lib/auth/oauth";
 import { isSecureCookie } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const origin =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXTAUTH_URL ||
-    req.headers.get("origin") ||
-    req.nextUrl.origin ||
-    "http://localhost:3000";
+  const origin = resolveRequestOrigin(req);
 
   const next = req.nextUrl.searchParams.get("next");
 

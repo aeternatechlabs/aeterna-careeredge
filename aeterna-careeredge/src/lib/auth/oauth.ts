@@ -2,8 +2,24 @@
 // Real Google OAuth architecture with native Supabase user persistence
 
 import crypto from "crypto";
+import type { NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { makeRestId } from "@/lib/supabase/rest";
+
+export function resolveRequestOrigin(req: NextRequest): string {
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+  if (host) {
+    const cleanHost = host.split(",")[0].trim();
+    const isLocal = cleanHost.includes("localhost") || cleanHost.startsWith("127.0.0.1");
+    if (!isLocal || process.env.NODE_ENV !== "production") {
+      const protocol = isLocal ? "http" : "https";
+      return `${protocol}://${cleanHost}`;
+    }
+  }
+  const envOrigin = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
+  if (envOrigin) return envOrigin.replace(/\/$/, "");
+  return req.nextUrl.origin || "http://localhost:3000";
+}
 
 export interface GoogleUserProfile {
   sub: string;

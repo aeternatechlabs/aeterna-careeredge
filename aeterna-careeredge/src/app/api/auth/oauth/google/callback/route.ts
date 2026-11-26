@@ -6,6 +6,7 @@ import {
   exchangeGoogleCodeForTokens,
   fetchGoogleUserInfo,
   handleGoogleIdentity,
+  resolveRequestOrigin,
 } from "@/lib/auth/oauth";
 import { setSessionCookie, createSession, isSecureCookie } from "@/lib/session";
 
@@ -17,12 +18,7 @@ export async function GET(req: NextRequest) {
   const state = searchParams.get("state");
   const oauthError = searchParams.get("error");
 
-  const origin =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXTAUTH_URL ||
-    req.headers.get("origin") ||
-    req.nextUrl.origin ||
-    "http://localhost:3000";
+  const origin = resolveRequestOrigin(req);
 
   if (oauthError) {
     console.error("[OAuth Error from Google]:", oauthError);
