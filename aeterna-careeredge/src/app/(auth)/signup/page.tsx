@@ -149,6 +149,7 @@ export default function SignupPage() {
     try {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
@@ -174,8 +175,9 @@ export default function SignupPage() {
         return;
       }
 
-      // New users always go to onboarding
-      router.push("/onboarding");
+      // New users always go to onboarding (hard redirect after cookie commit)
+      await new Promise<void>((resolve) => setTimeout(resolve, 250));
+      window.location.replace("/onboarding");
     } catch {
       setError("Could not connect to the server. Please try again.");
     } finally {

@@ -417,7 +417,9 @@ export function ResumeStudioClient({ initialResumes = [] }: ResumeStudioClientPr
   const handleDownloadSavedPdf = async (resumeId: string, resumeTitle: string) => {
     setDownloadingResumeId(resumeId);
     try {
-      const res = await fetch(`/api/resumes/${resumeId}/export-pdf?pageSize=A4`);
+      const res = await fetch(`/api/resumes/${resumeId}/export-pdf?pageSize=A4`, {
+        credentials: "include",
+      });
       const contentType = res.headers.get("Content-Type") || "";
 
       if (res.ok && contentType.includes("application/pdf")) {
@@ -444,7 +446,10 @@ export function ResumeStudioClient({ initialResumes = [] }: ResumeStudioClientPr
   const handleDuplicateSavedResume = async (resumeId: string) => {
     setDuplicatingResumeId(resumeId);
     try {
-      const res = await fetch(`/api/resumes/${resumeId}/duplicate`, { method: "POST" });
+      const res = await fetch(`/api/resumes/${resumeId}/duplicate`, {
+        method: "POST",
+        credentials: "include",
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to duplicate resume.");
       setSavedResumesList((prev) => [
@@ -470,7 +475,10 @@ export function ResumeStudioClient({ initialResumes = [] }: ResumeStudioClientPr
     if (!confirm("Are you sure you want to delete this resume?")) return;
     setDeletingResumeId(resumeId);
     try {
-      const res = await fetch(`/api/resumes/${resumeId}`, { method: "DELETE" });
+      const res = await fetch(`/api/resumes/${resumeId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Could not delete resume.");
       setSavedResumesList((prev) => prev.filter((r) => r.id !== resumeId));
     } catch (err: any) {
@@ -507,7 +515,9 @@ export function ResumeStudioClient({ initialResumes = [] }: ResumeStudioClientPr
       exportedResumeId = data.resumeId;
 
       // 2. Download generated ATS PDF
-      const pdfRes = await fetch(`/api/resumes/${data.resumeId}/export-pdf?pageSize=A4`);
+      const pdfRes = await fetch(`/api/resumes/${data.resumeId}/export-pdf?pageSize=A4`, {
+        credentials: "include",
+      });
       const contentType = pdfRes.headers.get("Content-Type") || "";
 
       if (pdfRes.ok && contentType.includes("application/pdf")) {

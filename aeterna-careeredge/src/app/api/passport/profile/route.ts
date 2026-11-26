@@ -2,7 +2,7 @@
 // PUT /api/passport/profile — updates student profile and basic user contact details
 
 import { NextRequest, NextResponse } from "next/server";
-import { getSession, setSessionCookie } from "@/lib/session";
+import { getSession, createSession, isSecureCookie, SESSION_COOKIE_NAME } from "@/lib/session";
 import { db } from "@/lib/db";
 import { recalculateAndSavePassportScore } from "@/lib/passport/score";
 
@@ -31,6 +31,8 @@ export async function PUT(req: NextRequest) {
       targetIndustry,
     } = body;
 
+    let refreshedToken: string | null = null;
+
     // 1. Update User name & mobile if provided
     if (name?.trim() || mobile?.trim()) {
       const normalizedMobile = mobile
@@ -46,7 +48,7 @@ export async function PUT(req: NextRequest) {
       });
 
       if (name?.trim() && name.trim() !== session.name) {
-        await setSessionCookie({
+        refreshedToken = await createSession({
           ...session,
           name: name.trim(),
         });
@@ -94,7 +96,7 @@ export async function PUT(req: NextRequest) {
       select: { id: true, name: true, email: true, mobile: true },
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: updatedUser,
       profile: {
@@ -103,6 +105,18 @@ export async function PUT(req: NextRequest) {
       },
       score: newScore,
     });
+
+    if (refreshedToken) {
+      response.cookies.set(SESSION_COOKIE_NAME, refreshedToken, {
+        httpOnly: true,
+        secure: isSecureCookie(),
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    }
+
+    return response;
   } catch (err) {
     console.error("[Passport Profile Update Error]", err);
     return NextResponse.json(
