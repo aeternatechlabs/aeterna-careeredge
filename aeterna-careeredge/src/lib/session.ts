@@ -1,24 +1,8 @@
 // src/lib/session.ts
-// JWT session management using jose (edge-compatible)
+// JWT session management using pure Web Crypto (edge & CF Workers compatible)
 
-import { SignJWT, jwtVerify, decodeJwt } from "jose";
 import { cookies, headers } from "next/headers";
-
-// Node 24 / Turbopack experimental Uint8Array Base64 methods are incomplete:
-// Uint8Array.prototype.toBase64 ignores { alphabet: 'base64url', omitPadding: true } and produces standard padded Base64.
-// Disable both experimental methods so jose uses its bulletproof, spec-compliant JS base64url encoder/decoder.
-if (typeof Uint8Array !== "undefined") {
-  try {
-    delete (Uint8Array.prototype as any).toBase64;
-  } catch {
-    (Uint8Array.prototype as any).toBase64 = undefined;
-  }
-  try {
-    delete (Uint8Array as any).fromBase64;
-  } catch {
-    (Uint8Array as any).fromBase64 = undefined;
-  }
-}
+import { signHs256Jwt, verifyHs256Jwt } from "@/lib/jwt";
 
 const SESSION_COOKIE = "ace_session";
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
@@ -122,14 +106,7 @@ export function toBase64UrlToken(token: string): string {
 
 export async function createSession(payload: SessionPayload): Promise<string> {
   const secret = getSecret();
-
-  const rawToken = await new SignJWT({ ...payload })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime(`${SESSION_DURATION_SECONDS}s`)
-    .sign(secret);
-
-  return toBase64UrlToken(rawToken);
+  return signHs256Jwt({ ...payload }, secret, SESSION_DURATION_SECONDS);
 }
 
 // ── Verify and decode a JWT ───────────────────────────────────────────────────
@@ -160,16 +137,14 @@ export async function verifySession(
     let lastError: string | null = null;
     // Fast path: verify with primary secret first
     try {
-      const res = await jwtVerify(cleanToken, getSecret());
-      payload = res.payload as Record<string, unknown>;
+      payload = await verifyHs256Jwt(cleanToken, getSecret());
     } catch (err) {
       lastError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
       // Fallback path: iterate through candidates
       const secrets = getSecretCandidates();
       for (const secret of secrets) {
         try {
-          const res = await jwtVerify(cleanToken, secret);
-          payload = res.payload as Record<string, unknown>;
+          payload = await verifyHs256Jwt(cleanToken, secret);
           break;
         } catch {}
       }

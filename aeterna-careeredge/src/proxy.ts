@@ -5,23 +5,7 @@
 // See: node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md
 
 import { NextRequest, NextResponse } from "next/server";
-import { jwtVerify, decodeJwt } from "jose";
-
-// Node 24 / Turbopack experimental Uint8Array Base64 methods are incomplete:
-// Uint8Array.prototype.toBase64 ignores { alphabet: 'base64url', omitPadding: true } and produces standard padded Base64.
-// Disable both experimental methods so jose uses its bulletproof, spec-compliant JS base64url encoder/decoder.
-if (typeof Uint8Array !== "undefined") {
-  try {
-    delete (Uint8Array.prototype as any).toBase64;
-  } catch {
-    (Uint8Array.prototype as any).toBase64 = undefined;
-  }
-  try {
-    delete (Uint8Array as any).fromBase64;
-  } catch {
-    (Uint8Array as any).fromBase64 = undefined;
-  }
-}
+import { verifyHs256Jwt } from "@/lib/jwt";
 
 const SESSION_COOKIE = "ace_session";
 
@@ -132,15 +116,13 @@ async function verifyCandidateToken(
 
     // Fast path: verify with the primary secret first (succeeds 99.9% of the time in 1 call)
     try {
-      const res = await jwtVerify(cleanToken, getPrimarySecretBytes());
-      payload = res.payload as Record<string, unknown>;
+      payload = await verifyHs256Jwt(cleanToken, getPrimarySecretBytes());
     } catch {
       // Fallback path: test remaining candidate secrets
       const candidates = getCandidateSecretBytes();
       for (const secret of candidates) {
         try {
-          const res = await jwtVerify(cleanToken, secret);
-          payload = res.payload as Record<string, unknown>;
+          payload = await verifyHs256Jwt(cleanToken, secret);
           break;
         } catch {}
       }
