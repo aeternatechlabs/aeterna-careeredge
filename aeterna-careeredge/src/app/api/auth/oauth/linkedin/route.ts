@@ -17,8 +17,7 @@ function resolveOrigin(req: NextRequest): string {
     const cleanHost = host.split(",")[0].trim();
     const isLocal = cleanHost.includes("localhost") || cleanHost.startsWith("127.0.0.1");
     if (!isLocal || process.env.NODE_ENV !== "production") {
-      const protoHeader = req.headers.get("x-forwarded-proto");
-      const protocol = protoHeader ? protoHeader.split(",")[0].trim() : isLocal ? "http" : "https";
+      const protocol = isLocal ? "http" : "https";
       return `${protocol}://${cleanHost}`;
     }
   }
