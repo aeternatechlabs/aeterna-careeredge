@@ -631,7 +631,7 @@ export default function OnboardingPage() {
         body: JSON.stringify(data),
       });
 
-      const json = (await res.json()) as { error?: string };
+      const json = (await res.json()) as { error?: string; user?: { onboardingCompleted?: boolean } };
 
       if (!res.ok) {
         setError(
@@ -640,7 +640,12 @@ export default function OnboardingPage() {
         return;
       }
 
-      window.location.href = "/dashboard";
+      // Wait briefly for the Set-Cookie header from the onboarding response to be
+      // committed by the browser before we navigate. Without this delay, the browser
+      // may send the *old* ace_session JWT on the GET /dashboard request, which
+      // still has onboardingCompleted: false and causes the proxy to bounce back.
+      await new Promise<void>((resolve) => setTimeout(resolve, 400));
+      window.location.replace("/dashboard");
     } catch {
       setError("Could not connect to the server. Please try again.");
     } finally {

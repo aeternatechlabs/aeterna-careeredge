@@ -191,12 +191,18 @@ export default async function proxy(request: NextRequest): Promise<NextResponse>
   const isLoggedIn = session !== null;
 
   // ── Redirect logged-in users away from auth pages ─────────────────────
+  // NOTE: We only redirect to /dashboard when onboardingCompleted is true in the JWT.
+  // If onboardingCompleted is false (stale JWT or just-completed onboarding), we let
+  // the user stay on /login so /api/auth/me can re-read the DB and issue a fresh cookie.
+  // This prevents the login→onboarding→login redirect loop caused by stale JWT cookies.
 
   if (isLoggedIn && isAuthRoute) {
-    if (!session.onboardingCompleted) {
-      return NextResponse.redirect(new URL("/onboarding", request.url));
+    if (session.onboardingCompleted) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    // onboardingCompleted is false in JWT — could be stale; let /login load and
+    // the client-side /api/auth/me call will redirect to /dashboard if DB says completed.
+    return NextResponse.next();
   }
 
   // Allow dedicated print routes with exportToken query param (cryptographically verified in page handler)

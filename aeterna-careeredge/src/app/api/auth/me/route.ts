@@ -1,8 +1,8 @@
 // src/app/api/auth/me/route.ts
 // GET /api/auth/me — returns the current user's public info (session-gated) directly via Supabase
 
-import { NextResponse } from "next/server";
-import { getSession } from "@/lib/session";
+import { NextRequest, NextResponse } from "next/server";
+import { getSession, createSession, isSecureCookie, SESSION_COOKIE_NAME } from "@/lib/session";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 const PROFILE_COLUMNS = [
@@ -31,7 +31,7 @@ const PROFILE_COLUMNS = [
   "passportScore",
 ].join(",");
 
-export async function GET(req: Request): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   const session = await getSession(req);
 
   if (!session) {
@@ -61,7 +61,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       .eq("userId", session.userId)
       .maybeSingle();
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       user: {
         id: userRow.id,
         name: userRow.name,
@@ -71,6 +71,26 @@ export async function GET(req: Request): Promise<NextResponse> {
         profile: profileRow || null,
       },
     });
+
+    // If the JWT has stale onboardingCompleted (false) but DB says true, refresh the cookie.
+    // This fixes the proxy loop where the user completed onboarding but their JWT is old.
+    if (!session.onboardingCompleted && userRow.onboardingCompleted) {
+      const freshToken = await createSession({
+        userId: userRow.id,
+        email: userRow.email,
+        name: userRow.name,
+        onboardingCompleted: true,
+      });
+      response.cookies.set(SESSION_COOKIE_NAME, freshToken, {
+        httpOnly: true,
+        secure: isSecureCookie(),
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    }
+
+    return response;
   } catch (err) {
     console.error("[/api/auth/me Route Error]:", {
       name: err instanceof Error ? err.name : "UnknownError",

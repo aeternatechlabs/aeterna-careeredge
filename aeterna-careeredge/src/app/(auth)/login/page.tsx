@@ -60,6 +60,34 @@ export default function LoginPage() {
     }
   }, []);
 
+  // Auto-detect already-authenticated users whose JWT is stale (onboardingCompleted: false)
+  // but DB says they already completed onboarding. The proxy lets them reach /login now;
+  // we immediately check /api/auth/me and redirect to dashboard if they are authenticated.
+  useEffect(() => {
+    async function checkAlreadyLoggedIn() {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" });
+        if (res.ok) {
+          const data = (await res.json()) as { user?: { onboardingCompleted?: boolean } };
+          if (data?.user) {
+            const params = new URLSearchParams(window.location.search);
+            const next = params.get("next");
+            const destination =
+              next && next.startsWith("/") && !next.startsWith("//")
+                ? next
+                : data.user.onboardingCompleted
+                ? "/dashboard"
+                : "/onboarding";
+            window.location.replace(destination);
+          }
+        }
+      } catch {
+        // Not logged in, stay on login page
+      }
+    }
+    checkAlreadyLoggedIn();
+  }, []);
+
   // ── Form submit ───────────────────────────────────────────────────────────
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -90,6 +118,7 @@ export default function LoginPage() {
 
       const res = await fetch("/api/auth/login", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
