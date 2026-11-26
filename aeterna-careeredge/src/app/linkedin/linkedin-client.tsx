@@ -515,6 +515,51 @@ export function LinkedInClient({
           </div>
         )}
 
+        {/* Connected LinkedIn Account Card */}
+        {profile?.linkedInSubId && (
+          <div className="rounded-2xl border border-emerald-200 bg-white p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              {profile.linkedInPictureUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={profile.linkedInPictureUrl}
+                  alt={profile.linkedInName || "LinkedIn Profile"}
+                  className="h-12 w-12 rounded-full object-cover border border-emerald-200 shrink-0"
+                />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#0A66C2] text-white font-bold text-lg shrink-0">
+                  {(profile.linkedInName || user.name || "L").charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-bold text-[#2B1B1B]">
+                    {profile.linkedInName || user.name}
+                  </p>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-200">
+                    <CheckCircle2 size={11} />
+                    LinkedIn Connected
+                  </span>
+                </div>
+                {profile.linkedInEmail && (
+                  <p className="text-xs text-slate-500 mt-0.5">{profile.linkedInEmail}</p>
+                )}
+                <p className="text-[11px] text-slate-500 mt-1">
+                  LinkedIn Sign-In verifies your name, email &amp; photo. Use <strong>Import Profile</strong> to pull in your full work history, education &amp; skills.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowImportModal(true)}
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#7A0F1F] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#5c0b17] transition-colors shrink-0"
+            >
+              <Upload size={14} />
+              <span>Import Full Profile</span>
+            </button>
+          </div>
+        )}
+
         {/* Guidance Panel */}
         <HowItWorksPanel toolKey="linkedin-check" />
 

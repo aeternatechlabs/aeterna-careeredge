@@ -13,13 +13,18 @@ import {
 export const dynamic = "force-dynamic";
 
 function resolveOrigin(req: NextRequest): string {
-  const envOrigin = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
-  if (envOrigin) return envOrigin.replace(/\/$/, "");
   const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
   if (host) {
-    const protocol = host.includes("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
-    return `${protocol}://${host}`;
+    const cleanHost = host.split(",")[0].trim();
+    const isLocal = cleanHost.includes("localhost") || cleanHost.startsWith("127.0.0.1");
+    if (!isLocal || process.env.NODE_ENV !== "production") {
+      const protoHeader = req.headers.get("x-forwarded-proto");
+      const protocol = protoHeader ? protoHeader.split(",")[0].trim() : isLocal ? "http" : "https";
+      return `${protocol}://${cleanHost}`;
+    }
   }
+  const envOrigin = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
+  if (envOrigin) return envOrigin.replace(/\/$/, "");
   return req.nextUrl.origin;
 }
 

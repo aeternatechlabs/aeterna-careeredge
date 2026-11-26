@@ -96,15 +96,9 @@ function getCandidateSecretBytes(): Uint8Array[] {
   return cachedCandidateSecrets;
 }
 
-async function getSessionFromRequest(
-  request: NextRequest
+async function verifyCandidateToken(
+  token: string
 ): Promise<{ userId: string; onboardingCompleted: boolean } | null> {
-  let token = request.cookies.get(SESSION_COOKIE)?.value;
-  if (!token) {
-    const rawCookie = request.headers.get("cookie") || "";
-    const match = rawCookie.match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([^;]+)`));
-    if (match) token = match[1];
-  }
   if (!token) return null;
 
   try {
@@ -163,6 +157,40 @@ async function getSessionFromRequest(
   } catch {
     return null;
   }
+}
+
+async function getSessionFromRequest(
+  request: NextRequest
+): Promise<{ userId: string; onboardingCompleted: boolean } | null> {
+  const candidates: string[] = [];
+  const seen = new Set<string>();
+
+  for (const c of request.cookies.getAll(SESSION_COOKIE)) {
+    if (c.value && !seen.has(c.value)) {
+      seen.add(c.value);
+      candidates.push(c.value);
+    }
+  }
+
+  const rawCookie = request.headers.get("cookie") || "";
+  for (const m of rawCookie.matchAll(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([^;]+)`, "g"))) {
+    if (m[1] && !seen.has(m[1])) {
+      seen.add(m[1]);
+      candidates.push(m[1]);
+    }
+  }
+
+  // Prefer a verified token that has onboardingCompleted: true if multiple exist
+  let fallbackValid: { userId: string; onboardingCompleted: boolean } | null = null;
+  for (const token of candidates) {
+    const verified = await verifyCandidateToken(token);
+    if (verified) {
+      if (verified.onboardingCompleted) return verified;
+      if (!fallbackValid) fallbackValid = verified;
+    }
+  }
+
+  return fallbackValid;
 }
 
 export default async function proxy(request: NextRequest): Promise<NextResponse> {

@@ -7,6 +7,8 @@ import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { LinkedInClient } from "./linkedin-client";
 import { isLinkedInConfigured } from "@/lib/linkedin/oauth";
 
+export const dynamic = "force-dynamic";
+
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }

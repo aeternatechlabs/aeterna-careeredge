@@ -2,7 +2,7 @@
 // JWT session management using jose (edge-compatible)
 
 import { SignJWT, jwtVerify, decodeJwt } from "jose";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 // Node 24 / Turbopack experimental Uint8Array Base64 methods are incomplete:
 // Uint8Array.prototype.toBase64 ignores { alphabet: 'base64url', omitPadding: true } and produces standard padded Base64.
@@ -291,13 +291,29 @@ export async function getSession(req?: {
     }
   }
 
-  // 4. If req token verification failed or was empty, attempt cookieStore directly as second chance
-  if (req) {
+  // 4. Fallback to cookieStore.getAll() and next/headers cookie header (critical for Server Components on CF Workers)
+  try {
+    const cookieStore = await cookies();
+    const allStoreCookies = cookieStore.getAll(SESSION_COOKIE);
+    for (const c of allStoreCookies) {
+      if (c.value && c.value !== token) {
+        const verified = await verifySession(c.value);
+        if (verified) return verified;
+      }
+    }
+  } catch {}
+
+  if (!req) {
     try {
-      const cookieStore = await cookies();
-      const fallbackToken = cookieStore.get(SESSION_COOKIE)?.value;
-      if (fallbackToken && fallbackToken !== token) {
-        return verifySession(fallbackToken);
+      const headerStore = await headers();
+      const rawCookie = headerStore.get("cookie") || "";
+      const allMatches = rawCookie.matchAll(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([^;]+)`, "g"));
+      for (const m of allMatches) {
+        const candidate = m[1];
+        if (candidate && candidate !== token) {
+          const verified = await verifySession(candidate);
+          if (verified) return verified;
+        }
       }
     } catch {}
   }

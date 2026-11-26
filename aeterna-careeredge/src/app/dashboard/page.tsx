@@ -6,6 +6,8 @@ import { getSession } from "@/lib/session";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { DashboardClient } from "./dashboard-client";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Dashboard",
   robots: { index: false, follow: false },
@@ -17,7 +19,7 @@ async function getDashboardUserData(userId: string) {
   // 1. Fetch user core
   const { data: user, error: userErr } = await supabase
     .from("users")
-    .select("id, name, email")
+    .select("id, name, email, onboardingCompleted")
     .eq("id", userId)
     .maybeSingle();
 
@@ -75,6 +77,7 @@ async function getDashboardUserData(userId: string) {
     id: user.id,
     name: user.name,
     email: user.email,
+    onboardingCompleted: Boolean(user.onboardingCompleted),
     profile: profile || null,
     storedDocuments: storedDocuments || [],
     resumes: resumes || [],
@@ -100,14 +103,14 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  if (!session.onboardingCompleted) {
-    redirect("/onboarding");
-  }
-
   const user = await getDashboardUserData(session.userId);
 
   if (!user) {
     redirect("/login");
+  }
+
+  if (!session.onboardingCompleted && !user.onboardingCompleted) {
+    redirect("/onboarding");
   }
 
   return <DashboardClient user={user} />;
