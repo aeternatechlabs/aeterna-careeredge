@@ -59,15 +59,22 @@ model User {
   truthCheckResults   TruthCheckResult[]
   roleFitResults      RoleFitResult[]
   sprintPlans         SprintPlan[]
-  applicationPacks    ApplicationPack[]
-  interviewPrepKits   InterviewPrepKit[]
-  progressEvents      ProgressEvent[]
+  applicationPacks      ApplicationPack[]
+  interviewPrepKits     InterviewPrepKit[]
+  roadmapProgress       StudentRoadmapProgress[]
+  resourceProgress      StudentResourceProgress[]
+  practiceSubmissions   PracticeSubmission[]
+  mockInterviewSessions MockInterviewSession[]
+  studyPlans            StudyPlan[]
+  progressEvents        ProgressEvent[]
   guideConversations  GuideConversation[]
   subscription        UserSubscription?
   usageRecords        UsageRecord[]
   analyticsEvents     AnalyticsEvent[]
   resumeVersions      ResumeVersion[]
   resumeAnalyses      ResumeAnalysisRecord[]
+  adminMember         AdminMember?
+  adminAuditLogs      AdminAuditLog[]
 
   @@map("users")
 }
@@ -1080,22 +1087,464 @@ model ApplicationPack {
 }
 
 model InterviewPrepKit {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                     String    @id @default(cuid())
+  userId                 String
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  jobId         String
-  jobTitle      String
-  companyName   String?
-  themesJson    String   // JSON array of question themes + evidence links
-  aiOperationId String?
+  jobId                  String
+  jobTitle               String
+  companyName            String?
+  domain                 String?
+  targetIndustry         String?
+  location               String?
+  opportunityType        String?
+  experienceLevel        String?
+  targetLevel            String?
+  interviewTypesJson     String?   // JSON array of selected interview types & domain focus topics
+  expectedInterviewDate  DateTime?
+  preparationDuration    String?
+  weeklyAvailability     String?
+  learningFormatsJson    String?   // JSON array of preferred learning formats
+  preferredLanguage      String?   @default("English")
+  useCareerPassport      Boolean   @default(false)
+  passportContextJson    String?   // JSON snapshot of student-approved Career Passport context
+  focusAreasJson         String?   // JSON object of strengthenSkills, difficultTopics, targetRoleSkills, priorityAreas
+  jobDescriptionText     String?   // Optional sanitized job description saved for Phase 2+ analysis
+  activeRoadmapVersionId String?
+  themesJson             String    // JSON array of question themes + evidence links
+  aiOperationId          String?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  roadmapProgress        StudentRoadmapProgress[]
+  resourceProgress       StudentResourceProgress[]
+  practiceSubmissions    PracticeSubmission[]
+  mockInterviewSessions  MockInterviewSession[]
+  studyPlans             StudyPlan[]
+
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   @@index([userId])
   @@index([jobId])
+  @@index([activeRoadmapVersionId])
   @@map("interview_prep_kits")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INTERVIEW PREP 2.0 — NORMALIZED ROADMAPS, RESOURCES, PROGRESS & MOCK INTERVIEWS
+// ══════════════════════════════════════════════════════════════════════════════
+
+model CareerRoadmap {
+  id          String           @id @default(cuid())
+  slug        String           @unique
+  domain      String
+  roleTitle   String
+  description String?
+  isPublished Boolean          @default(false)
+
+  versions    RoadmapVersion[]
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([domain])
+  @@index([isPublished])
+  @@map("career_roadmaps")
+}
+
+model RoadmapVersion {
+  id            String         @id @default(cuid())
+  roadmapId     String
+  roadmap       CareerRoadmap  @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+
+  versionNumber Int            @default(1)
+  status        String         @default("DRAFT") // "DRAFT" | "PUBLISHED" | "ARCHIVED"
+  notes         String?
+  publishedAt   DateTime?
+
+  phases        RoadmapPhase[]
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@unique([roadmapId, versionNumber])
+  @@index([roadmapId, status])
+  @@map("roadmap_versions")
+}
+
+model RoadmapPhase {
+  id             String             @id @default(cuid())
+  versionId      String
+  version        RoadmapVersion     @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  orderIndex     Int
+  title          String
+  description    String?
+  estimatedHours Int                @default(4)
+
+  topics         RoadmapTopic[]
+  exercises      PracticeExercise[]
+
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([versionId, orderIndex])
+  @@map("roadmap_phases")
+}
+
+model RoadmapTopic {
+  id                     String                    @id @default(cuid())
+  phaseId                String
+  phase                  RoadmapPhase              @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+
+  slug                   String
+  orderIndex             Int
+  title                  String
+  overview               String
+  whyItMatters           String
+  difficulty             String                    @default("BEGINNER") // "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
+  priority               String                    @default("ESSENTIAL") // "ESSENTIAL" | "RECOMMENDED" | "OPTIONAL"
+  estimatedMinutes       Int                       @default(45)
+  subtopicsJson          String                    @default("[]")
+  learningOutcomesJson   String                    @default("[]")
+  completionCriteriaJson String                    @default("[]")
+  practicePromptsJson    String                    @default("[]")
+
+  prerequisites          RoadmapPrerequisite[]     @relation("TopicPrerequisites")
+  dependentTopics        RoadmapPrerequisite[]     @relation("PrerequisiteFor")
+  resources              TopicResource[]
+  studentProgress        StudentRoadmapProgress[]
+  exercises              PracticeExercise[]
+  questions              InterviewQuestionRecord[]
+
+  createdAt              DateTime                  @default(now())
+  updatedAt              DateTime                  @updatedAt
+
+  @@unique([phaseId, slug])
+  @@index([phaseId, orderIndex])
+  @@map("roadmap_topics")
+}
+
+model RoadmapPrerequisite {
+  id                  String       @id @default(cuid())
+  topicId             String
+  topic               RoadmapTopic @relation("TopicPrerequisites", fields: [topicId], references: [id], onDelete: Cascade)
+  prerequisiteTopicId String
+  prerequisiteTopic   RoadmapTopic @relation("PrerequisiteFor", fields: [prerequisiteTopicId], references: [id], onDelete: Cascade)
+
+  createdAt           DateTime     @default(now())
+
+  @@unique([topicId, prerequisiteTopicId])
+  @@index([prerequisiteTopicId])
+  @@map("roadmap_prerequisites")
+}
+
+model LearningResource {
+  id                   String                    @id @default(cuid())
+  url                  String                    @unique
+  canonicalUrl         String?                   @unique
+  title                String
+  provider             String
+  resourceType         String                    // "OFFICIAL_DOCS" | "FREE_COURSE" | "VIDEO" | "ARTICLE" | "INTERACTIVE" | "PRACTICE" | "OPEN_SOURCE" | "STANDARDS"
+  description          String
+  difficulty           String                    @default("BEGINNER")
+  language             String                    @default("English")
+  estimatedMinutes     Int?
+  accessClassification String                    @default("UNVERIFIED") // "COMPLETELY_FREE" | "FREE_WITH_PAID_CERT" | "FREEMIUM" | "FREE_ACCOUNT_REQUIRED" | "PAID" | "UNVERIFIED"
+  accessRequirements   String?
+  certificateAvailable String                    @default("UNKNOWN") // "NONE" | "FREE_CERTIFICATE" | "PAID_CERTIFICATE" | "UNKNOWN"
+  license              String?
+  sourceCategory       String?
+  isCurated            Boolean                   @default(false)
+  subtopicsJson        String?
+  discoverySource      String                    @default("MANUAL_CURATED")
+  reviewStatus         String                    @default("PENDING_REVIEW") // "DISCOVERED" | "PENDING_REVIEW" | "APPROVED" | "PUBLISHED" | "REJECTED" | "ARCHIVED"
+  reviewedById         String?
+  reviewedAt           DateTime?
+  rejectionReason      String?
+  verificationStatus   String                    @default("PENDING_REVIEW") // "PENDING_REVIEW" | "VERIFIED" | "NEEDS_RECHECK" | "UNAVAILABLE" | "INCONCLUSIVE"
+  lastVerifiedAt       DateTime?
+  sourceAttribution    String?
+  domain               String
+
+  topicLinks           TopicResource[]
+  verificationLogs     ResourceVerificationLog[]
+  studentProgress      StudentResourceProgress[]
+
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+
+  @@index([domain, reviewStatus, verificationStatus])
+  @@index([domain, verificationStatus])
+  @@index([accessClassification])
+  @@map("learning_resources")
+}
+
+model AdminMember {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        String    // "SUPER_ADMIN" | "CONTENT_REVIEWER" | "MODERATOR"
+  isActive    Boolean   @default(true)
+  grantedById String?
+  grantedAt   DateTime  @default(now())
+  revokedAt   DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  @@index([role, isActive])
+  @@map("admin_members")
+}
+
+model AdminAuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String
+  actor       User     @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+  action      String
+  targetType  String
+  targetId    String
+  reason      String?
+  metadataJson String?
+  createdAt   DateTime @default(now())
+
+  @@index([targetType, targetId])
+  @@index([actorUserId, createdAt])
+  @@map("admin_audit_logs")
+}
+
+model TopicResource {
+  id               String           @id @default(cuid())
+  topicId          String
+  topic            RoadmapTopic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  resourceId       String
+  resource         LearningResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  recommendedOrder Int              @default(1)
+  whyRecommended   String?
+
+  createdAt        DateTime         @default(now())
+
+  @@unique([topicId, resourceId])
+  @@index([topicId, recommendedOrder])
+  @@map("topic_resources")
+}
+
+model ResourceVerificationLog {
+  id         String           @id @default(cuid())
+  resourceId String
+  resource   LearningResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  httpStatus Int?
+  status     String           // "VERIFIED" | "BROKEN" | "NEEDS_RECHECK"
+  notes      String?
+  checkedBy  String?
+  checkedAt  DateTime         @default(now())
+
+  @@index([resourceId, checkedAt])
+  @@map("resource_verification_logs")
+}
+
+model StudentRoadmapProgress {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kitId       String
+  kit         InterviewPrepKit @relation(fields: [kitId], references: [id], onDelete: Cascade)
+  topicId     String
+  topic       RoadmapTopic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  status      String           @default("NOT_STARTED") // "NOT_STARTED" | "AVAILABLE" | "IN_PROGRESS" | "COMPLETED" | "NEEDS_REVISION"
+  bookmarked  Boolean          @default(false)
+  notes       String?
+  completedAt DateTime?
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([userId, kitId, topicId])
+  @@index([userId, kitId])
+  @@map("student_roadmap_progress")
+}
+
+model StudentResourceProgress {
+  id             String           @id @default(cuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kitId          String
+  kit            InterviewPrepKit @relation(fields: [kitId], references: [id], onDelete: Cascade)
+  resourceId     String
+  resource       LearningResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  studied        Boolean          @default(false)
+  saved          Boolean          @default(false)
+  reportedBroken Boolean          @default(false)
+  notes          String?
+  studiedAt      DateTime?
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([userId, kitId, resourceId])
+  @@index([userId, kitId])
+  @@map("student_resource_progress")
+}
+
+model PracticeExercise {
+  id                  String               @id @default(cuid())
+  topicId             String?
+  topic               RoadmapTopic?        @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  phaseId             String?
+  phase               RoadmapPhase?        @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+
+  title               String
+  objective           String
+  skillsPracticedJson String               @default("[]")
+  requirementsJson    String               @default("[]")
+  expectedOutput      String
+  checklistJson       String               @default("[]")
+  rubricJson          String?
+  difficulty          String               @default("BEGINNER")
+  estimatedMinutes    Int                  @default(60)
+
+  submissions         PracticeSubmission[]
+
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  @@index([topicId])
+  @@index([phaseId])
+  @@map("practice_exercises")
+}
+
+model PracticeSubmission {
+  id             String           @id @default(cuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kitId          String
+  kit            InterviewPrepKit @relation(fields: [kitId], references: [id], onDelete: Cascade)
+  exerciseId     String
+  exercise       PracticeExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  status         String           @default("NOT_STARTED") // "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
+  notes          String?
+  artifactUrl    String?
+  evidenceItemId String?
+  completedAt    DateTime?
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([userId, kitId, exerciseId])
+  @@index([userId, kitId])
+  @@map("practice_submissions")
+}
+
+model InterviewQuestionRecord {
+  id                 String        @id @default(cuid())
+  domain             String
+  roleTitle          String?
+  topicId            String?
+  topic              RoadmapTopic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
+
+  stage              String        @default("TECHNICAL") // "HR" | "TECHNICAL" | "BEHAVIORAL" | "SCENARIO" | "PROJECT"
+  questionType       String        @default("CONCEPTUAL")
+  difficulty         String        @default("INTERMEDIATE")
+  questionText       String
+  evaluatorFocus     String
+  responseFramework  String
+  commonMistakesJson String        @default("[]")
+  followUpsJson      String        @default("[]")
+
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([domain, stage])
+  @@index([topicId])
+  @@map("interview_question_records")
+}
+
+model MockInterviewSession {
+  id                  String              @id @default(cuid())
+  userId              String
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kitId               String
+  kit                 InterviewPrepKit    @relation(fields: [kitId], references: [id], onDelete: Cascade)
+
+  roleTitle           String
+  interviewMode       String              // "HR" | "TECHNICAL" | "SUBJECT" | "BEHAVIORAL" | "PROJECT" | "SCENARIO" | "MIXED"
+  difficulty          String              @default("INTERMEDIATE")
+  totalQuestions      Int                 @default(5)
+  status              String              @default("IN_PROGRESS") // "IN_PROGRESS" | "COMPLETED" | "ABANDONED"
+  overallScore        Int?                // CareerEdge practice assessment score (0-100), not hiring probability
+  feedbackSummaryJson String?
+  startedAt           DateTime            @default(now())
+  completedAt         DateTime?
+
+  turns               MockInterviewTurn[]
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([userId, kitId])
+  @@map("mock_interview_sessions")
+}
+
+model MockInterviewTurn {
+  id             String               @id @default(cuid())
+  sessionId      String
+  session        MockInterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  turnOrder      Int
+  questionText   String
+  userAnswer     String?
+  aiFeedbackJson String?
+  score          Int?
+
+  createdAt      DateTime             @default(now())
+
+  @@index([sessionId, turnOrder])
+  @@map("mock_interview_turns")
+}
+
+model StudyPlan {
+  id          String          @id @default(cuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kitId       String
+  kit         InterviewPrepKit @relation(fields: [kitId], references: [id], onDelete: Cascade)
+
+  title       String
+  weeklyHours Int             @default(5)
+  status      String          @default("ACTIVE") // "ACTIVE" | "PAUSED" | "COMPLETED"
+
+  tasks       StudyPlanTask[]
+
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([userId, kitId])
+  @@map("study_plans")
+}
+
+model StudyPlanTask {
+  id               String    @id @default(cuid())
+  studyPlanId      String
+  studyPlan        StudyPlan @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+
+  weekNumber       Int
+  dayNumber        Int?
+  topicId          String?
+  title            String
+  taskType         String    @default("TOPIC") // "TOPIC" | "RESOURCE" | "EXERCISE" | "PRACTICE" | "REVISION"
+  estimatedMinutes Int       @default(45)
+  status           String    @default("PENDING") // "PENDING" | "COMPLETED" | "DEFERRED" | "SKIPPED"
+  scheduledDate    DateTime?
+  completedAt      DateTime?
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([studyPlanId, weekNumber])
+  @@index([status])
+  @@map("study_plan_tasks")
 }
 
 model ProgressEvent {

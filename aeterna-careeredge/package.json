@@ -16,6 +16,7 @@
   "dependencies": {
     "@floating-ui/dom": "^1.8.0",
     "@supabase/supabase-js": "^2.119.2",
+    "@xyflow/react": "^13.0.3",
     "bcryptjs": "^3.0.3",
     "cookie": "0.7.2",
     "jose": "^6.2.17",

@@ -1,0 +1,17 @@
+-- AlterTable
+ALTER TABLE "interview_prep_kits" ADD COLUMN     "domain" TEXT,
+ADD COLUMN     "expectedInterviewDate" TIMESTAMP(3),
+ADD COLUMN     "experienceLevel" TEXT,
+ADD COLUMN     "focusAreasJson" TEXT,
+ADD COLUMN     "interviewTypesJson" TEXT,
+ADD COLUMN     "jobDescriptionText" TEXT,
+ADD COLUMN     "learningFormatsJson" TEXT,
+ADD COLUMN     "location" TEXT,
+ADD COLUMN     "opportunityType" TEXT,
+ADD COLUMN     "passportContextJson" TEXT,
+ADD COLUMN     "preferredLanguage" TEXT DEFAULT 'English',
+ADD COLUMN     "preparationDuration" TEXT,
+ADD COLUMN     "targetIndustry" TEXT,
+ADD COLUMN     "targetLevel" TEXT,
+ADD COLUMN     "useCareerPassport" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "weeklyAvailability" TEXT;

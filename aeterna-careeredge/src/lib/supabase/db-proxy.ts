@@ -48,6 +48,25 @@ const MODEL_TO_TABLE: Record<string, string> = {
   careerGoal: "career_goals",
   onboardingState: "onboarding_states",
   guideSeenPanel: "guide_seen_panels",
+  careerRoadmap: "career_roadmaps",
+  roadmapVersion: "roadmap_versions",
+  roadmapPhase: "roadmap_phases",
+  roadmapTopic: "roadmap_topics",
+  roadmapPrerequisite: "roadmap_prerequisites",
+  learningResource: "learning_resources",
+  topicResource: "topic_resources",
+  resourceVerificationLog: "resource_verification_logs",
+  studentRoadmapProgress: "student_roadmap_progress",
+  studentResourceProgress: "student_resource_progress",
+  practiceExercise: "practice_exercises",
+  practiceSubmission: "practice_submissions",
+  interviewQuestionRecord: "interview_question_records",
+  mockInterviewSession: "mock_interview_sessions",
+  mockInterviewTurn: "mock_interview_turns",
+  studyPlan: "study_plans",
+  studyPlanTask: "study_plan_tasks",
+  adminMember: "admin_members",
+  adminAuditLog: "admin_audit_logs",
 };
 
 const TABLES_WITH_UPDATED_AT = new Set([
@@ -76,9 +95,23 @@ const TABLES_WITH_UPDATED_AT = new Set([
   "sprint_tasks",
   "application_packs",
   "interview_prep_kits",
+  "career_roadmaps",
+  "roadmap_versions",
+  "roadmap_phases",
+  "roadmap_topics",
+  "learning_resources",
+  "student_roadmap_progress",
+  "student_resource_progress",
+  "practice_exercises",
+  "practice_submissions",
+  "interview_question_records",
+  "mock_interview_sessions",
+  "study_plans",
+  "study_plan_tasks",
   "guide_conversations",
   "plans",
   "user_subscriptions",
+  "admin_members",
 ]);
 
 interface RelationDef {
@@ -129,6 +162,42 @@ const RELATION_MAP: Record<string, Record<string, RelationDef>> = {
   },
   guide_conversations: {
     messages: { table: "guide_messages", foreignKey: "conversationId", localKey: "id", isMany: true },
+  },
+  career_roadmaps: {
+    versions: { table: "roadmap_versions", foreignKey: "roadmapId", localKey: "id", isMany: true },
+  },
+  roadmap_versions: {
+    roadmap: { table: "career_roadmaps", foreignKey: "id", localKey: "roadmapId", isMany: false },
+    phases: { table: "roadmap_phases", foreignKey: "versionId", localKey: "id", isMany: true },
+  },
+  roadmap_phases: {
+    version: { table: "roadmap_versions", foreignKey: "id", localKey: "versionId", isMany: false },
+    topics: { table: "roadmap_topics", foreignKey: "phaseId", localKey: "id", isMany: true },
+    exercises: { table: "practice_exercises", foreignKey: "phaseId", localKey: "id", isMany: true },
+  },
+  roadmap_topics: {
+    phase: { table: "roadmap_phases", foreignKey: "id", localKey: "phaseId", isMany: false },
+    prerequisites: { table: "roadmap_prerequisites", foreignKey: "topicId", localKey: "id", isMany: true },
+    resources: { table: "topic_resources", foreignKey: "topicId", localKey: "id", isMany: true },
+    exercises: { table: "practice_exercises", foreignKey: "topicId", localKey: "id", isMany: true },
+    questions: { table: "interview_question_records", foreignKey: "topicId", localKey: "id", isMany: true },
+  },
+  roadmap_prerequisites: {
+    topic: { table: "roadmap_topics", foreignKey: "id", localKey: "topicId", isMany: false },
+    prerequisiteTopic: { table: "roadmap_topics", foreignKey: "id", localKey: "prerequisiteTopicId", isMany: false },
+  },
+  topic_resources: {
+    topic: { table: "roadmap_topics", foreignKey: "id", localKey: "topicId", isMany: false },
+    resource: { table: "learning_resources", foreignKey: "id", localKey: "resourceId", isMany: false },
+  },
+  learning_resources: {
+    verificationLogs: { table: "resource_verification_logs", foreignKey: "resourceId", localKey: "id", isMany: true },
+  },
+  mock_interview_sessions: {
+    turns: { table: "mock_interview_turns", foreignKey: "sessionId", localKey: "id", isMany: true },
+  },
+  study_plans: {
+    tasks: { table: "study_plan_tasks", foreignKey: "studyPlanId", localKey: "id", isMany: true },
   },
 };
 

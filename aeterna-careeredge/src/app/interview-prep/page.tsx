@@ -4,8 +4,15 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
-import { listUserInterviewKits, type PreparedInterviewKit } from "@/lib/interview/service";
+import {
+  listUserInterviewKits,
+  serializeInterviewKit,
+  type PreparedInterviewKit,
+} from "@/lib/interview/service";
+import { getInterviewPassportPreview } from "@/lib/interview/passport-preview";
 import { InterviewPrepClient } from "./interview-prep-client";
+
+export const dynamic = "force-dynamic";
 
 export default async function InterviewPrepPage({
   searchParams,
@@ -17,30 +24,32 @@ export default async function InterviewPrepPage({
     redirect("/login");
   }
 
-  const [kits, resolved] = await Promise.all([
+  const [kits, passportPreview, resolved] = await Promise.all([
     listUserInterviewKits(session.userId).catch(() => []),
+    getInterviewPassportPreview(session.userId),
     searchParams,
   ]);
 
+  const requestedKitId = typeof resolved.kit === "string" ? resolved.kit : undefined;
+  const requestedTab = typeof resolved.tab === "string" ? resolved.tab : undefined;
+  const validTabs = new Set(["OVERVIEW", "ROADMAP", "QUESTIONS_STAR", "MOCK_INTERVIEW", "STUDY_PLAN"]);
+  const initialTab =
+    requestedTab && validTabs.has(requestedTab)
+      ? (requestedTab as "OVERVIEW" | "ROADMAP" | "QUESTIONS_STAR" | "MOCK_INTERVIEW" | "STUDY_PLAN")
+      : "OVERVIEW";
+
   let initialActiveKit: PreparedInterviewKit | null = null;
   if (kits.length > 0) {
-    const firstKit = await db.interviewPrepKit.findFirst({
-      where: { id: kits[0].id, userId: session.userId },
-    }).catch(() => null);
+    const preferredId =
+      requestedKitId && kits.some((k) => k.id === requestedKitId) ? requestedKitId : kits[0].id;
+    const firstKit = await db.interviewPrepKit
+      .findFirst({
+        where: { id: preferredId, userId: session.userId },
+      })
+      .catch(() => null);
 
     if (firstKit) {
-      let themes = [];
-      try {
-        themes = JSON.parse(firstKit.themesJson);
-      } catch {}
-      initialActiveKit = {
-        id: firstKit.id,
-        jobId: firstKit.jobId,
-        jobTitle: firstKit.jobTitle,
-        companyName: firstKit.companyName,
-        themes,
-        createdAt: firstKit.createdAt.toISOString(),
-      };
+      initialActiveKit = serializeInterviewKit(firstKit);
     }
   }
 
@@ -53,9 +62,11 @@ export default async function InterviewPrepPage({
       studentName={session.name || "Student"}
       initialKits={kits}
       initialActiveKit={initialActiveKit}
+      passportPreview={passportPreview}
       initialJobTitle={initialJobTitle}
       initialCompany={initialCompany}
       initialDomain={initialDomain}
+      initialTab={initialTab}
     />
   );
 }
